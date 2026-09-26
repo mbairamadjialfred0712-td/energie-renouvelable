@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/energie-renouvelable-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -40,6 +42,14 @@ function Index() {
         <p className="mt-6 max-w-2xl text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground sm:text-base">
           Analyse · Simulation · Planification énergétique
         </p>
+        <p className="mt-6 max-w-xl text-sm leading-6 text-muted-foreground">
+          Une base professionnelle pour structurer les données, documenter les hypothèses
+          et préparer des études énergétiques reproductibles.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Button asChild size="lg"><Link to="/login">Accéder à la plateforme <ArrowRight /></Link></Button>
+          <Button asChild size="lg" variant="outline"><Link to="/register"><ShieldCheck />Créer un espace sécurisé</Link></Button>
+        </div>
       </div>
     </main>
   );

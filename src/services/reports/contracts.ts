@@ -1,0 +1,1 @@
+export const reportSections = ["contexte","localisation","données","ressources","demande","hypothèses","technologies","dimensionnement","simulations","scénarios","finance","résultats","limites","sources"] as const;
