@@ -35,9 +35,9 @@ import { Route as AuthenticatedResourcesBiomassRouteImport } from './routes/_aut
 import { Route as AuthenticatedResourcesSolarRouteImport } from './routes/_authenticated/resources.solar'
 import { Route as AuthenticatedResourcesWasteRouteImport } from './routes/_authenticated/resources.waste'
 import { Route as AuthenticatedResourcesWindRouteImport } from './routes/_authenticated/resources.wind'
-import { Route as AuthenticatedSimulationsRouteImport } from './routes/_authenticated/simulations.'
+import { Route as AuthenticatedSimulationsIdRouteImport } from './routes/_authenticated/simulations.$id'
 import { Route as AuthenticatedSimulationsNewRouteImport } from './routes/_authenticated/simulations.new'
-import { Route as AuthenticatedSimulationsResultsRouteImport } from './routes/_authenticated/simulations..results'
+import { Route as AuthenticatedSimulationsIdResultsRouteImport } from './routes/_authenticated/simulations.$id.results'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -178,10 +178,10 @@ const AuthenticatedResourcesWindRoute =
     path: '/wind',
     getParentRoute: () => AuthenticatedResourcesRoute,
   } as any)
-const AuthenticatedSimulationsRoute =
-  AuthenticatedSimulationsRouteImport.update({
-    id: '/',
-    path: '/',
+const AuthenticatedSimulationsIdRoute =
+  AuthenticatedSimulationsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
     getParentRoute: () => AuthenticatedSimulationsRoute,
   } as any)
 const AuthenticatedSimulationsNewRoute =
@@ -190,11 +190,11 @@ const AuthenticatedSimulationsNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedSimulationsRoute,
   } as any)
-const AuthenticatedSimulationsResultsRoute =
-  AuthenticatedSimulationsResultsRouteImport.update({
+const AuthenticatedSimulationsIdResultsRoute =
+  AuthenticatedSimulationsIdResultsRouteImport.update({
     id: '/results',
     path: '/results',
-    getParentRoute: () => AuthenticatedSimulationsRoute,
+    getParentRoute: () => AuthenticatedSimulationsIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -215,7 +215,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/simulations': typeof AuthenticatedSimulationsRouteWithChildren
   '/technologies': typeof AuthenticatedTechnologiesRoute
-  '/simulations/': typeof AuthenticatedSimulationsRoute
   '/geography/countries': typeof AuthenticatedGeographyCountriesRoute
   '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
@@ -224,8 +223,9 @@ export interface FileRoutesByFullPath {
   '/resources/solar': typeof AuthenticatedResourcesSolarRoute
   '/resources/waste': typeof AuthenticatedResourcesWasteRoute
   '/resources/wind': typeof AuthenticatedResourcesWindRoute
+  '/simulations/$id': typeof AuthenticatedSimulationsIdRouteWithChildren
   '/simulations/new': typeof AuthenticatedSimulationsNewRoute
-  '/simulations/results': typeof AuthenticatedSimulationsResultsRoute
+  '/simulations/$id/results': typeof AuthenticatedSimulationsIdResultsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -243,8 +243,8 @@ export interface FileRoutesByTo {
   '/resources': typeof AuthenticatedResourcesRouteWithChildren
   '/scenarios': typeof AuthenticatedScenariosRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/simulations': typeof AuthenticatedSimulationsRouteWithChildren
   '/technologies': typeof AuthenticatedTechnologiesRoute
-  '/simulations': typeof AuthenticatedSimulationsRoute
   '/geography/countries': typeof AuthenticatedGeographyCountriesRoute
   '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
@@ -253,8 +253,9 @@ export interface FileRoutesByTo {
   '/resources/solar': typeof AuthenticatedResourcesSolarRoute
   '/resources/waste': typeof AuthenticatedResourcesWasteRoute
   '/resources/wind': typeof AuthenticatedResourcesWindRoute
+  '/simulations/$id': typeof AuthenticatedSimulationsIdRouteWithChildren
   '/simulations/new': typeof AuthenticatedSimulationsNewRoute
-  '/simulations/results': typeof AuthenticatedSimulationsResultsRoute
+  '/simulations/$id/results': typeof AuthenticatedSimulationsIdResultsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -276,7 +277,6 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/simulations': typeof AuthenticatedSimulationsRouteWithChildren
   '/_authenticated/technologies': typeof AuthenticatedTechnologiesRoute
-  '/_authenticated/simulations/': typeof AuthenticatedSimulationsRoute
   '/_authenticated/geography/countries': typeof AuthenticatedGeographyCountriesRoute
   '/_authenticated/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/_authenticated/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
@@ -285,8 +285,9 @@ export interface FileRoutesById {
   '/_authenticated/resources/solar': typeof AuthenticatedResourcesSolarRoute
   '/_authenticated/resources/waste': typeof AuthenticatedResourcesWasteRoute
   '/_authenticated/resources/wind': typeof AuthenticatedResourcesWindRoute
+  '/_authenticated/simulations/$id': typeof AuthenticatedSimulationsIdRouteWithChildren
   '/_authenticated/simulations/new': typeof AuthenticatedSimulationsNewRoute
-  '/_authenticated/simulations/results': typeof AuthenticatedSimulationsResultsRoute
+  '/_authenticated/simulations/$id/results': typeof AuthenticatedSimulationsIdResultsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -308,7 +309,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/simulations'
     | '/technologies'
-    | '/simulations/'
     | '/geography/countries'
     | '/geography/departments'
     | '/geography/localities'
@@ -317,8 +317,9 @@ export interface FileRouteTypes {
     | '/resources/solar'
     | '/resources/waste'
     | '/resources/wind'
+    | '/simulations/$id'
     | '/simulations/new'
-    | '/simulations/results'
+    | '/simulations/$id/results'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -336,8 +337,8 @@ export interface FileRouteTypes {
     | '/resources'
     | '/scenarios'
     | '/settings'
-    | '/technologies'
     | '/simulations'
+    | '/technologies'
     | '/geography/countries'
     | '/geography/departments'
     | '/geography/localities'
@@ -346,8 +347,9 @@ export interface FileRouteTypes {
     | '/resources/solar'
     | '/resources/waste'
     | '/resources/wind'
+    | '/simulations/$id'
     | '/simulations/new'
-    | '/simulations/results'
+    | '/simulations/$id/results'
   id:
     | '__root__'
     | '/'
@@ -368,7 +370,6 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/simulations'
     | '/_authenticated/technologies'
-    | '/_authenticated/simulations/'
     | '/_authenticated/geography/countries'
     | '/_authenticated/geography/departments'
     | '/_authenticated/geography/localities'
@@ -377,8 +378,9 @@ export interface FileRouteTypes {
     | '/_authenticated/resources/solar'
     | '/_authenticated/resources/waste'
     | '/_authenticated/resources/wind'
+    | '/_authenticated/simulations/$id'
     | '/_authenticated/simulations/new'
-    | '/_authenticated/simulations/results'
+    | '/_authenticated/simulations/$id/results'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -574,11 +576,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResourcesWindRouteImport
       parentRoute: typeof AuthenticatedResourcesRoute
     }
-    '/_authenticated/simulations/': {
-      id: '/_authenticated/simulations/'
-      path: '/'
-      fullPath: '/simulations/'
-      preLoaderRoute: typeof AuthenticatedSimulationsRouteImport
+    '/_authenticated/simulations/$id': {
+      id: '/_authenticated/simulations/$id'
+      path: '/$id'
+      fullPath: '/simulations/$id'
+      preLoaderRoute: typeof AuthenticatedSimulationsIdRouteImport
       parentRoute: typeof AuthenticatedSimulationsRoute
     }
     '/_authenticated/simulations/new': {
@@ -588,12 +590,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSimulationsNewRouteImport
       parentRoute: typeof AuthenticatedSimulationsRoute
     }
-    '/_authenticated/simulations/results': {
-      id: '/_authenticated/simulations/results'
+    '/_authenticated/simulations/$id/results': {
+      id: '/_authenticated/simulations/$id/results'
       path: '/results'
-      fullPath: '/simulations/results'
-      preLoaderRoute: typeof AuthenticatedSimulationsResultsRouteImport
-      parentRoute: typeof AuthenticatedSimulationsRoute
+      fullPath: '/simulations/$id/results'
+      preLoaderRoute: typeof AuthenticatedSimulationsIdResultsRouteImport
+      parentRoute: typeof AuthenticatedSimulationsIdRoute
     }
   }
 }
@@ -640,17 +642,31 @@ const AuthenticatedResourcesRouteWithChildren =
     AuthenticatedResourcesRouteChildren,
   )
 
+interface AuthenticatedSimulationsIdRouteChildren {
+  AuthenticatedSimulationsIdResultsRoute: typeof AuthenticatedSimulationsIdResultsRoute
+}
+
+const AuthenticatedSimulationsIdRouteChildren: AuthenticatedSimulationsIdRouteChildren =
+  {
+    AuthenticatedSimulationsIdResultsRoute:
+      AuthenticatedSimulationsIdResultsRoute,
+  }
+
+const AuthenticatedSimulationsIdRouteWithChildren =
+  AuthenticatedSimulationsIdRoute._addFileChildren(
+    AuthenticatedSimulationsIdRouteChildren,
+  )
+
 interface AuthenticatedSimulationsRouteChildren {
-  AuthenticatedSimulationsRoute: typeof AuthenticatedSimulationsRoute
+  AuthenticatedSimulationsIdRoute: typeof AuthenticatedSimulationsIdRouteWithChildren
   AuthenticatedSimulationsNewRoute: typeof AuthenticatedSimulationsNewRoute
-  AuthenticatedSimulationsResultsRoute: typeof AuthenticatedSimulationsResultsRoute
 }
 
 const AuthenticatedSimulationsRouteChildren: AuthenticatedSimulationsRouteChildren =
   {
-    AuthenticatedSimulationsRoute: AuthenticatedSimulationsRoute,
+    AuthenticatedSimulationsIdRoute:
+      AuthenticatedSimulationsIdRouteWithChildren,
     AuthenticatedSimulationsNewRoute: AuthenticatedSimulationsNewRoute,
-    AuthenticatedSimulationsResultsRoute: AuthenticatedSimulationsResultsRoute,
   }
 
 const AuthenticatedSimulationsRouteWithChildren =
