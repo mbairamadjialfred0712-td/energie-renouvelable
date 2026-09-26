@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Project architecture
+
+- Use Lovable Assets pointers for uploaded application imagery; this keeps source media out of the repository while preserving stable imports.
