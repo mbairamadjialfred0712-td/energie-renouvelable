@@ -10,33 +10,384 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDemandRouteImport } from './routes/_authenticated/demand'
+import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
+import { Route as AuthenticatedGeographyRouteImport } from './routes/_authenticated/geography'
+import { Route as AuthenticatedImportsRouteImport } from './routes/_authenticated/imports'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedResourcesRouteImport } from './routes/_authenticated/resources'
+import { Route as AuthenticatedScenariosRouteImport } from './routes/_authenticated/scenarios'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSimulationsRouteImport } from './routes/_authenticated/simulations'
+import { Route as AuthenticatedTechnologiesRouteImport } from './routes/_authenticated/technologies'
+import { Route as AuthenticatedGeographyCountriesRouteImport } from './routes/_authenticated/geography.countries'
+import { Route as AuthenticatedGeographyDepartmentsRouteImport } from './routes/_authenticated/geography.departments'
+import { Route as AuthenticatedGeographyLocalitiesRouteImport } from './routes/_authenticated/geography.localities'
+import { Route as AuthenticatedGeographyRegionsRouteImport } from './routes/_authenticated/geography.regions'
+import { Route as AuthenticatedResourcesBiomassRouteImport } from './routes/_authenticated/resources.biomass'
+import { Route as AuthenticatedResourcesSolarRouteImport } from './routes/_authenticated/resources.solar'
+import { Route as AuthenticatedResourcesWasteRouteImport } from './routes/_authenticated/resources.waste'
+import { Route as AuthenticatedResourcesWindRouteImport } from './routes/_authenticated/resources.wind'
+import { Route as AuthenticatedSimulationsRouteImport } from './routes/_authenticated/simulations.'
+import { Route as AuthenticatedSimulationsNewRouteImport } from './routes/_authenticated/simulations.new'
+import { Route as AuthenticatedSimulationsResultsRouteImport } from './routes/_authenticated/simulations..results'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDemandRoute = AuthenticatedDemandRouteImport.update({
+  id: '/demand',
+  path: '/demand',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFinanceRoute = AuthenticatedFinanceRouteImport.update({
+  id: '/finance',
+  path: '/finance',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGeographyRoute = AuthenticatedGeographyRouteImport.update({
+  id: '/geography',
+  path: '/geography',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImportsRoute = AuthenticatedImportsRouteImport.update({
+  id: '/imports',
+  path: '/imports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedResourcesRoute = AuthenticatedResourcesRouteImport.update({
+  id: '/resources',
+  path: '/resources',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedScenariosRoute = AuthenticatedScenariosRouteImport.update({
+  id: '/scenarios',
+  path: '/scenarios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSimulationsRoute =
+  AuthenticatedSimulationsRouteImport.update({
+    id: '/simulations',
+    path: '/simulations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTechnologiesRoute =
+  AuthenticatedTechnologiesRouteImport.update({
+    id: '/technologies',
+    path: '/technologies',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGeographyCountriesRoute =
+  AuthenticatedGeographyCountriesRouteImport.update({
+    id: '/countries',
+    path: '/countries',
+    getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
+const AuthenticatedGeographyDepartmentsRoute =
+  AuthenticatedGeographyDepartmentsRouteImport.update({
+    id: '/departments',
+    path: '/departments',
+    getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
+const AuthenticatedGeographyLocalitiesRoute =
+  AuthenticatedGeographyLocalitiesRouteImport.update({
+    id: '/localities',
+    path: '/localities',
+    getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
+const AuthenticatedGeographyRegionsRoute =
+  AuthenticatedGeographyRegionsRouteImport.update({
+    id: '/regions',
+    path: '/regions',
+    getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
+const AuthenticatedResourcesBiomassRoute =
+  AuthenticatedResourcesBiomassRouteImport.update({
+    id: '/biomass',
+    path: '/biomass',
+    getParentRoute: () => AuthenticatedResourcesRoute,
+  } as any)
+const AuthenticatedResourcesSolarRoute =
+  AuthenticatedResourcesSolarRouteImport.update({
+    id: '/solar',
+    path: '/solar',
+    getParentRoute: () => AuthenticatedResourcesRoute,
+  } as any)
+const AuthenticatedResourcesWasteRoute =
+  AuthenticatedResourcesWasteRouteImport.update({
+    id: '/waste',
+    path: '/waste',
+    getParentRoute: () => AuthenticatedResourcesRoute,
+  } as any)
+const AuthenticatedResourcesWindRoute =
+  AuthenticatedResourcesWindRouteImport.update({
+    id: '/wind',
+    path: '/wind',
+    getParentRoute: () => AuthenticatedResourcesRoute,
+  } as any)
+const AuthenticatedSimulationsRoute =
+  AuthenticatedSimulationsRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSimulationsRoute,
+  } as any)
+const AuthenticatedSimulationsNewRoute =
+  AuthenticatedSimulationsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedSimulationsRoute,
+  } as any)
+const AuthenticatedSimulationsResultsRoute =
+  AuthenticatedSimulationsResultsRouteImport.update({
+    id: '/results',
+    path: '/results',
+    getParentRoute: () => AuthenticatedSimulationsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/demand': typeof AuthenticatedDemandRoute
+  '/finance': typeof AuthenticatedFinanceRoute
+  '/geography': typeof AuthenticatedGeographyRouteWithChildren
+  '/imports': typeof AuthenticatedImportsRoute
+  '/projects': typeof AuthenticatedProjectsRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/resources': typeof AuthenticatedResourcesRouteWithChildren
+  '/scenarios': typeof AuthenticatedScenariosRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/simulations': typeof AuthenticatedSimulationsRouteWithChildren
+  '/technologies': typeof AuthenticatedTechnologiesRoute
+  '/simulations/': typeof AuthenticatedSimulationsRoute
+  '/geography/countries': typeof AuthenticatedGeographyCountriesRoute
+  '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
+  '/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
+  '/geography/regions': typeof AuthenticatedGeographyRegionsRoute
+  '/resources/biomass': typeof AuthenticatedResourcesBiomassRoute
+  '/resources/solar': typeof AuthenticatedResourcesSolarRoute
+  '/resources/waste': typeof AuthenticatedResourcesWasteRoute
+  '/resources/wind': typeof AuthenticatedResourcesWindRoute
+  '/simulations/new': typeof AuthenticatedSimulationsNewRoute
+  '/simulations/results': typeof AuthenticatedSimulationsResultsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/demand': typeof AuthenticatedDemandRoute
+  '/finance': typeof AuthenticatedFinanceRoute
+  '/geography': typeof AuthenticatedGeographyRouteWithChildren
+  '/imports': typeof AuthenticatedImportsRoute
+  '/projects': typeof AuthenticatedProjectsRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/resources': typeof AuthenticatedResourcesRouteWithChildren
+  '/scenarios': typeof AuthenticatedScenariosRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/technologies': typeof AuthenticatedTechnologiesRoute
+  '/simulations': typeof AuthenticatedSimulationsRoute
+  '/geography/countries': typeof AuthenticatedGeographyCountriesRoute
+  '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
+  '/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
+  '/geography/regions': typeof AuthenticatedGeographyRegionsRoute
+  '/resources/biomass': typeof AuthenticatedResourcesBiomassRoute
+  '/resources/solar': typeof AuthenticatedResourcesSolarRoute
+  '/resources/waste': typeof AuthenticatedResourcesWasteRoute
+  '/resources/wind': typeof AuthenticatedResourcesWindRoute
+  '/simulations/new': typeof AuthenticatedSimulationsNewRoute
+  '/simulations/results': typeof AuthenticatedSimulationsResultsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/demand': typeof AuthenticatedDemandRoute
+  '/_authenticated/finance': typeof AuthenticatedFinanceRoute
+  '/_authenticated/geography': typeof AuthenticatedGeographyRouteWithChildren
+  '/_authenticated/imports': typeof AuthenticatedImportsRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/resources': typeof AuthenticatedResourcesRouteWithChildren
+  '/_authenticated/scenarios': typeof AuthenticatedScenariosRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/simulations': typeof AuthenticatedSimulationsRouteWithChildren
+  '/_authenticated/technologies': typeof AuthenticatedTechnologiesRoute
+  '/_authenticated/simulations/': typeof AuthenticatedSimulationsRoute
+  '/_authenticated/geography/countries': typeof AuthenticatedGeographyCountriesRoute
+  '/_authenticated/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
+  '/_authenticated/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
+  '/_authenticated/geography/regions': typeof AuthenticatedGeographyRegionsRoute
+  '/_authenticated/resources/biomass': typeof AuthenticatedResourcesBiomassRoute
+  '/_authenticated/resources/solar': typeof AuthenticatedResourcesSolarRoute
+  '/_authenticated/resources/waste': typeof AuthenticatedResourcesWasteRoute
+  '/_authenticated/resources/wind': typeof AuthenticatedResourcesWindRoute
+  '/_authenticated/simulations/new': typeof AuthenticatedSimulationsNewRoute
+  '/_authenticated/simulations/results': typeof AuthenticatedSimulationsResultsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/forgot-password'
+    | '/login'
+    | '/register'
+    | '/reset-password'
+    | '/dashboard'
+    | '/demand'
+    | '/finance'
+    | '/geography'
+    | '/imports'
+    | '/projects'
+    | '/reports'
+    | '/resources'
+    | '/scenarios'
+    | '/settings'
+    | '/simulations'
+    | '/technologies'
+    | '/simulations/'
+    | '/geography/countries'
+    | '/geography/departments'
+    | '/geography/localities'
+    | '/geography/regions'
+    | '/resources/biomass'
+    | '/resources/solar'
+    | '/resources/waste'
+    | '/resources/wind'
+    | '/simulations/new'
+    | '/simulations/results'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/forgot-password'
+    | '/login'
+    | '/register'
+    | '/reset-password'
+    | '/dashboard'
+    | '/demand'
+    | '/finance'
+    | '/geography'
+    | '/imports'
+    | '/projects'
+    | '/reports'
+    | '/resources'
+    | '/scenarios'
+    | '/settings'
+    | '/technologies'
+    | '/simulations'
+    | '/geography/countries'
+    | '/geography/departments'
+    | '/geography/localities'
+    | '/geography/regions'
+    | '/resources/biomass'
+    | '/resources/solar'
+    | '/resources/waste'
+    | '/resources/wind'
+    | '/simulations/new'
+    | '/simulations/results'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/forgot-password'
+    | '/login'
+    | '/register'
+    | '/reset-password'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/demand'
+    | '/_authenticated/finance'
+    | '/_authenticated/geography'
+    | '/_authenticated/imports'
+    | '/_authenticated/projects'
+    | '/_authenticated/reports'
+    | '/_authenticated/resources'
+    | '/_authenticated/scenarios'
+    | '/_authenticated/settings'
+    | '/_authenticated/simulations'
+    | '/_authenticated/technologies'
+    | '/_authenticated/simulations/'
+    | '/_authenticated/geography/countries'
+    | '/_authenticated/geography/departments'
+    | '/_authenticated/geography/localities'
+    | '/_authenticated/geography/regions'
+    | '/_authenticated/resources/biomass'
+    | '/_authenticated/resources/solar'
+    | '/_authenticated/resources/waste'
+    | '/_authenticated/resources/wind'
+    | '/_authenticated/simulations/new'
+    | '/_authenticated/simulations/results'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +399,305 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/demand': {
+      id: '/_authenticated/demand'
+      path: '/demand'
+      fullPath: '/demand'
+      preLoaderRoute: typeof AuthenticatedDemandRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance': {
+      id: '/_authenticated/finance'
+      path: '/finance'
+      fullPath: '/finance'
+      preLoaderRoute: typeof AuthenticatedFinanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/geography': {
+      id: '/_authenticated/geography'
+      path: '/geography'
+      fullPath: '/geography'
+      preLoaderRoute: typeof AuthenticatedGeographyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/imports': {
+      id: '/_authenticated/imports'
+      path: '/imports'
+      fullPath: '/imports'
+      preLoaderRoute: typeof AuthenticatedImportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/projects': {
+      id: '/_authenticated/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/resources': {
+      id: '/_authenticated/resources'
+      path: '/resources'
+      fullPath: '/resources'
+      preLoaderRoute: typeof AuthenticatedResourcesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/scenarios': {
+      id: '/_authenticated/scenarios'
+      path: '/scenarios'
+      fullPath: '/scenarios'
+      preLoaderRoute: typeof AuthenticatedScenariosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/simulations': {
+      id: '/_authenticated/simulations'
+      path: '/simulations'
+      fullPath: '/simulations'
+      preLoaderRoute: typeof AuthenticatedSimulationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/technologies': {
+      id: '/_authenticated/technologies'
+      path: '/technologies'
+      fullPath: '/technologies'
+      preLoaderRoute: typeof AuthenticatedTechnologiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/geography/countries': {
+      id: '/_authenticated/geography/countries'
+      path: '/countries'
+      fullPath: '/geography/countries'
+      preLoaderRoute: typeof AuthenticatedGeographyCountriesRouteImport
+      parentRoute: typeof AuthenticatedGeographyRoute
+    }
+    '/_authenticated/geography/departments': {
+      id: '/_authenticated/geography/departments'
+      path: '/departments'
+      fullPath: '/geography/departments'
+      preLoaderRoute: typeof AuthenticatedGeographyDepartmentsRouteImport
+      parentRoute: typeof AuthenticatedGeographyRoute
+    }
+    '/_authenticated/geography/localities': {
+      id: '/_authenticated/geography/localities'
+      path: '/localities'
+      fullPath: '/geography/localities'
+      preLoaderRoute: typeof AuthenticatedGeographyLocalitiesRouteImport
+      parentRoute: typeof AuthenticatedGeographyRoute
+    }
+    '/_authenticated/geography/regions': {
+      id: '/_authenticated/geography/regions'
+      path: '/regions'
+      fullPath: '/geography/regions'
+      preLoaderRoute: typeof AuthenticatedGeographyRegionsRouteImport
+      parentRoute: typeof AuthenticatedGeographyRoute
+    }
+    '/_authenticated/resources/biomass': {
+      id: '/_authenticated/resources/biomass'
+      path: '/biomass'
+      fullPath: '/resources/biomass'
+      preLoaderRoute: typeof AuthenticatedResourcesBiomassRouteImport
+      parentRoute: typeof AuthenticatedResourcesRoute
+    }
+    '/_authenticated/resources/solar': {
+      id: '/_authenticated/resources/solar'
+      path: '/solar'
+      fullPath: '/resources/solar'
+      preLoaderRoute: typeof AuthenticatedResourcesSolarRouteImport
+      parentRoute: typeof AuthenticatedResourcesRoute
+    }
+    '/_authenticated/resources/waste': {
+      id: '/_authenticated/resources/waste'
+      path: '/waste'
+      fullPath: '/resources/waste'
+      preLoaderRoute: typeof AuthenticatedResourcesWasteRouteImport
+      parentRoute: typeof AuthenticatedResourcesRoute
+    }
+    '/_authenticated/resources/wind': {
+      id: '/_authenticated/resources/wind'
+      path: '/wind'
+      fullPath: '/resources/wind'
+      preLoaderRoute: typeof AuthenticatedResourcesWindRouteImport
+      parentRoute: typeof AuthenticatedResourcesRoute
+    }
+    '/_authenticated/simulations/': {
+      id: '/_authenticated/simulations/'
+      path: '/'
+      fullPath: '/simulations/'
+      preLoaderRoute: typeof AuthenticatedSimulationsRouteImport
+      parentRoute: typeof AuthenticatedSimulationsRoute
+    }
+    '/_authenticated/simulations/new': {
+      id: '/_authenticated/simulations/new'
+      path: '/new'
+      fullPath: '/simulations/new'
+      preLoaderRoute: typeof AuthenticatedSimulationsNewRouteImport
+      parentRoute: typeof AuthenticatedSimulationsRoute
+    }
+    '/_authenticated/simulations/results': {
+      id: '/_authenticated/simulations/results'
+      path: '/results'
+      fullPath: '/simulations/results'
+      preLoaderRoute: typeof AuthenticatedSimulationsResultsRouteImport
+      parentRoute: typeof AuthenticatedSimulationsRoute
+    }
   }
 }
 
+interface AuthenticatedGeographyRouteChildren {
+  AuthenticatedGeographyCountriesRoute: typeof AuthenticatedGeographyCountriesRoute
+  AuthenticatedGeographyDepartmentsRoute: typeof AuthenticatedGeographyDepartmentsRoute
+  AuthenticatedGeographyLocalitiesRoute: typeof AuthenticatedGeographyLocalitiesRoute
+  AuthenticatedGeographyRegionsRoute: typeof AuthenticatedGeographyRegionsRoute
+}
+
+const AuthenticatedGeographyRouteChildren: AuthenticatedGeographyRouteChildren =
+  {
+    AuthenticatedGeographyCountriesRoute: AuthenticatedGeographyCountriesRoute,
+    AuthenticatedGeographyDepartmentsRoute:
+      AuthenticatedGeographyDepartmentsRoute,
+    AuthenticatedGeographyLocalitiesRoute:
+      AuthenticatedGeographyLocalitiesRoute,
+    AuthenticatedGeographyRegionsRoute: AuthenticatedGeographyRegionsRoute,
+  }
+
+const AuthenticatedGeographyRouteWithChildren =
+  AuthenticatedGeographyRoute._addFileChildren(
+    AuthenticatedGeographyRouteChildren,
+  )
+
+interface AuthenticatedResourcesRouteChildren {
+  AuthenticatedResourcesBiomassRoute: typeof AuthenticatedResourcesBiomassRoute
+  AuthenticatedResourcesSolarRoute: typeof AuthenticatedResourcesSolarRoute
+  AuthenticatedResourcesWasteRoute: typeof AuthenticatedResourcesWasteRoute
+  AuthenticatedResourcesWindRoute: typeof AuthenticatedResourcesWindRoute
+}
+
+const AuthenticatedResourcesRouteChildren: AuthenticatedResourcesRouteChildren =
+  {
+    AuthenticatedResourcesBiomassRoute: AuthenticatedResourcesBiomassRoute,
+    AuthenticatedResourcesSolarRoute: AuthenticatedResourcesSolarRoute,
+    AuthenticatedResourcesWasteRoute: AuthenticatedResourcesWasteRoute,
+    AuthenticatedResourcesWindRoute: AuthenticatedResourcesWindRoute,
+  }
+
+const AuthenticatedResourcesRouteWithChildren =
+  AuthenticatedResourcesRoute._addFileChildren(
+    AuthenticatedResourcesRouteChildren,
+  )
+
+interface AuthenticatedSimulationsRouteChildren {
+  AuthenticatedSimulationsRoute: typeof AuthenticatedSimulationsRoute
+  AuthenticatedSimulationsNewRoute: typeof AuthenticatedSimulationsNewRoute
+  AuthenticatedSimulationsResultsRoute: typeof AuthenticatedSimulationsResultsRoute
+}
+
+const AuthenticatedSimulationsRouteChildren: AuthenticatedSimulationsRouteChildren =
+  {
+    AuthenticatedSimulationsRoute: AuthenticatedSimulationsRoute,
+    AuthenticatedSimulationsNewRoute: AuthenticatedSimulationsNewRoute,
+    AuthenticatedSimulationsResultsRoute: AuthenticatedSimulationsResultsRoute,
+  }
+
+const AuthenticatedSimulationsRouteWithChildren =
+  AuthenticatedSimulationsRoute._addFileChildren(
+    AuthenticatedSimulationsRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDemandRoute: typeof AuthenticatedDemandRoute
+  AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRoute
+  AuthenticatedGeographyRoute: typeof AuthenticatedGeographyRouteWithChildren
+  AuthenticatedImportsRoute: typeof AuthenticatedImportsRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedResourcesRoute: typeof AuthenticatedResourcesRouteWithChildren
+  AuthenticatedScenariosRoute: typeof AuthenticatedScenariosRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSimulationsRoute: typeof AuthenticatedSimulationsRouteWithChildren
+  AuthenticatedTechnologiesRoute: typeof AuthenticatedTechnologiesRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDemandRoute: AuthenticatedDemandRoute,
+  AuthenticatedFinanceRoute: AuthenticatedFinanceRoute,
+  AuthenticatedGeographyRoute: AuthenticatedGeographyRouteWithChildren,
+  AuthenticatedImportsRoute: AuthenticatedImportsRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedResourcesRoute: AuthenticatedResourcesRouteWithChildren,
+  AuthenticatedScenariosRoute: AuthenticatedScenariosRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSimulationsRoute: AuthenticatedSimulationsRouteWithChildren,
+  AuthenticatedTechnologiesRoute: AuthenticatedTechnologiesRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
