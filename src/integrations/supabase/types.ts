@@ -541,6 +541,174 @@ export type Database = {
         }
         Relationships: []
       }
+      project_change_history: {
+        Row: {
+          action: string
+          actor_id: string
+          changes: Json
+          created_at: string
+          id: string
+          owner_id: string
+          project_id: string
+          summary: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string
+          changes?: Json
+          created_at?: string
+          id?: string
+          owner_id?: string
+          project_id: string
+          summary: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          changes?: Json
+          created_at?: string
+          id?: string
+          owner_id?: string
+          project_id?: string
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_change_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_data_fields: {
+        Row: {
+          created_at: string
+          data_period: string | null
+          field_key: string
+          field_kind: Database["public"]["Enums"]["project_field_kind"]
+          id: string
+          label: string
+          notes: string | null
+          owner_id: string
+          project_id: string
+          quality: string | null
+          section: string
+          sort_order: number
+          source: string | null
+          unit: string | null
+          updated_at: string
+          value_text: string
+        }
+        Insert: {
+          created_at?: string
+          data_period?: string | null
+          field_key: string
+          field_kind?: Database["public"]["Enums"]["project_field_kind"]
+          id?: string
+          label: string
+          notes?: string | null
+          owner_id?: string
+          project_id: string
+          quality?: string | null
+          section: string
+          sort_order?: number
+          source?: string | null
+          unit?: string | null
+          updated_at?: string
+          value_text: string
+        }
+        Update: {
+          created_at?: string
+          data_period?: string | null
+          field_key?: string
+          field_kind?: Database["public"]["Enums"]["project_field_kind"]
+          id?: string
+          label?: string
+          notes?: string | null
+          owner_id?: string
+          project_id?: string
+          quality?: string | null
+          section?: string
+          sort_order?: number
+          source?: string | null
+          unit?: string | null
+          updated_at?: string
+          value_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_data_fields_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_pre_analyses: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          declared_assumptions: Json
+          error_message: string | null
+          gateway_run_id: string | null
+          id: string
+          input_snapshot: Json
+          missing_information: Json
+          model: string
+          owner_id: string
+          project_id: string
+          requested_by: string
+          scope_note: string
+          status: Database["public"]["Enums"]["pre_analysis_status"]
+          verification_points: Json
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          declared_assumptions?: Json
+          error_message?: string | null
+          gateway_run_id?: string | null
+          id?: string
+          input_snapshot: Json
+          missing_information?: Json
+          model: string
+          owner_id?: string
+          project_id: string
+          requested_by?: string
+          scope_note: string
+          status?: Database["public"]["Enums"]["pre_analysis_status"]
+          verification_points?: Json
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          declared_assumptions?: Json
+          error_message?: string | null
+          gateway_run_id?: string | null
+          id?: string
+          input_snapshot?: Json
+          missing_information?: Json
+          model?: string
+          owner_id?: string
+          project_id?: string
+          requested_by?: string
+          scope_note?: string
+          status?: Database["public"]["Enums"]["pre_analysis_status"]
+          verification_points?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_pre_analyses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           created_at: string
@@ -1193,6 +1361,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "engineer" | "analyst" | "viewer"
+      pre_analysis_status: "running" | "completed" | "failed"
+      project_field_kind: "provided" | "assumption"
       project_status:
         | "draft"
         | "preliminary_study"
@@ -1333,6 +1503,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "engineer", "analyst", "viewer"],
+      pre_analysis_status: ["running", "completed", "failed"],
+      project_field_kind: ["provided", "assumption"],
       project_status: [
         "draft",
         "preliminary_study",
