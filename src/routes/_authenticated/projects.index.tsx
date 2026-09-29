@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 
 const STATUS_LABELS = { draft: "Brouillon", preliminary_study: "Étude préliminaire", feasibility: "Faisabilité", design: "Conception", financing: "Financement", procurement: "Approvisionnement", implementation: "Mise en œuvre", completed: "Terminé" } as const;
 
-export const Route=createFileRoute("/_authenticated/projects")({head:()=>({meta:[{title:"Fiches projets — Énergie Renouvelable"},{name:"description",content:"Dossiers énergétiques structurés, sourcés et vérifiables."},{property:"og:title",content:"Fiches projets — Énergie Renouvelable"},{property:"og:description",content:"Dossiers énergétiques structurés, sourcés et vérifiables."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:ProjectsPage});
+export const Route=createFileRoute("/_authenticated/projects/")({head:()=>({meta:[{title:"Fiches projets — Énergie Renouvelable"},{name:"description",content:"Dossiers énergétiques structurés, sourcés et vérifiables."},{property:"og:title",content:"Fiches projets — Énergie Renouvelable"},{property:"og:description",content:"Dossiers énergétiques structurés, sourcés et vérifiables."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:ProjectsPage});
 
 function ProjectsPage(){
   const {data,isLoading,error}=useQuery({queryKey:["projects"],queryFn:()=>listProjects()});

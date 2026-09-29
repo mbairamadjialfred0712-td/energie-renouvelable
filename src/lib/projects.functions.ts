@@ -2,6 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { AnalysisItem, ProjectAnalysisResult, ProjectDataField } from "@/features/projects/project-record";
+import type { Json } from "@/integrations/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 const projectStatusSchema = z.enum(["draft", "preliminary_study", "feasibility", "design", "financing", "procurement", "implementation", "completed"]);
 const fieldSchema = z.object({
@@ -46,7 +49,7 @@ export type ProjectHistoryEvent = {
   id: string;
   action: string;
   summary: string;
-  changes: unknown;
+  changes: Json;
   createdAt: string;
 };
 
@@ -80,14 +83,32 @@ const asItems = (value: unknown): AnalysisItem[] => {
   return value.flatMap((item) => {
     if (!item || typeof item !== "object") return [];
     const candidate = item as Record<string, unknown>;
-    if (typeof candidate.title !== "string" || typeof candidate.explanation !== "string") return [];
+    if (typeof candidate["title"] !== "string" || typeof candidate["explanation"] !== "string") return [];
     return [{
-      title: candidate.title,
-      explanation: candidate.explanation,
-      fieldReferences: Array.isArray(candidate.fieldReferences) ? candidate.fieldReferences.filter((reference): reference is string => typeof reference === "string") : [],
+      title: candidate["title"],
+      explanation: candidate["explanation"],
+      fieldReferences: Array.isArray(candidate["fieldReferences"]) ? candidate["fieldReferences"].filter((reference): reference is string => typeof reference === "string") : [],
     }];
   });
 };
+
+async function loadProjectRecord(client: SupabaseClient<Database>, projectId: string): Promise<ProjectRecord> {
+  const [projectResult, fieldsResult, historyResult, analysesResult] = await Promise.all([
+    client.from("projects").select("id,name,description,status,start_date,target_date,created_at,updated_at").eq("id", projectId).single(),
+    client.from("project_data_fields").select("*").eq("project_id", projectId).order("sort_order"),
+    client.from("project_change_history").select("id,action,summary,changes,created_at").eq("project_id", projectId).order("created_at", { ascending: false }),
+    client.from("project_pre_analyses").select("id,status,model,missing_information,declared_assumptions,verification_points,scope_note,error_message,created_at,completed_at").eq("project_id", projectId).order("created_at", { ascending: false }),
+  ]);
+  if (projectResult.error || !projectResult.data) throw new Error("Ce projet est introuvable ou inaccessible.");
+  if (fieldsResult.error || historyResult.error || analysesResult.error) throw new Error("Le dossier complet n’a pas pu être chargé.");
+  const project = projectResult.data;
+  return {
+    project: { id: project.id, name: project.name, description: project.description ?? "", status: project.status, startDate: project.start_date, targetDate: project.target_date, createdAt: project.created_at, updatedAt: project.updated_at },
+    fields: (fieldsResult.data ?? []).map((field) => ({ id: field.id, section: field.section, fieldKey: field.field_key, label: field.label, value: field.value_text, unit: field.unit ?? "", fieldKind: field.field_kind, source: field.source ?? "", dataPeriod: field.data_period ?? "", quality: field.quality ?? "", notes: field.notes ?? "", sortOrder: field.sort_order })),
+    history: (historyResult.data ?? []).map((event) => ({ id: event.id, action: event.action, summary: event.summary, changes: event.changes, createdAt: event.created_at })),
+    analyses: (analysesResult.data ?? []).map((analysis) => ({ id: analysis.id, status: analysis.status, model: analysis.model, missingInformation: asItems(analysis.missing_information), declaredAssumptions: asItems(analysis.declared_assumptions), verificationPoints: asItems(analysis.verification_points), scopeNote: analysis.scope_note, errorMessage: analysis.error_message, createdAt: analysis.created_at, completedAt: analysis.completed_at })),
+  };
+}
 
 export const listProjects = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -141,23 +162,7 @@ export const createProject = createServerFn({ method: "POST" })
 export const getProjectRecord = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => projectIdSchema.parse(input))
-  .handler(async ({ data, context }): Promise<ProjectRecord> => {
-    const [projectResult, fieldsResult, historyResult, analysesResult] = await Promise.all([
-      context.supabase.from("projects").select("id,name,description,status,start_date,target_date,created_at,updated_at").eq("id", data.projectId).single(),
-      context.supabase.from("project_data_fields").select("*").eq("project_id", data.projectId).order("sort_order"),
-      context.supabase.from("project_change_history").select("id,action,summary,changes,created_at").eq("project_id", data.projectId).order("created_at", { ascending: false }),
-      context.supabase.from("project_pre_analyses").select("id,status,model,missing_information,declared_assumptions,verification_points,scope_note,error_message,created_at,completed_at").eq("project_id", data.projectId).order("created_at", { ascending: false }),
-    ]);
-    if (projectResult.error || !projectResult.data) throw new Error("Ce projet est introuvable ou inaccessible.");
-    if (fieldsResult.error || historyResult.error || analysesResult.error) throw new Error("Le dossier complet n’a pas pu être chargé.");
-    const project = projectResult.data;
-    return {
-      project: { id: project.id, name: project.name, description: project.description ?? "", status: project.status, startDate: project.start_date, targetDate: project.target_date, createdAt: project.created_at, updatedAt: project.updated_at },
-      fields: (fieldsResult.data ?? []).map((field) => ({ id: field.id, section: field.section, fieldKey: field.field_key, label: field.label, value: field.value_text, unit: field.unit ?? "", fieldKind: field.field_kind, source: field.source ?? "", dataPeriod: field.data_period ?? "", quality: field.quality ?? "", notes: field.notes ?? "", sortOrder: field.sort_order })),
-      history: (historyResult.data ?? []).map((event) => ({ id: event.id, action: event.action, summary: event.summary, changes: event.changes, createdAt: event.created_at })),
-      analyses: (analysesResult.data ?? []).map((analysis) => ({ id: analysis.id, status: analysis.status, model: analysis.model, missingInformation: asItems(analysis.missing_information), declaredAssumptions: asItems(analysis.declared_assumptions), verificationPoints: asItems(analysis.verification_points), scopeNote: analysis.scope_note, errorMessage: analysis.error_message, createdAt: analysis.created_at, completedAt: analysis.completed_at })),
-    };
-  });
+  .handler(async ({ data, context }): Promise<ProjectRecord> => loadProjectRecord(context.supabase, data.projectId));
 
 export const updateProject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -204,7 +209,7 @@ export const analyzeProject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => projectIdSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const record = await getProjectRecord({ data: { projectId: data.projectId } });
+    const record = await loadProjectRecord(context.supabase, data.projectId);
     const snapshot = { project: record.project, fields: record.fields };
     const { data: analysis, error: createError } = await context.supabase.from("project_pre_analyses").insert({ project_id: data.projectId, owner_id: context.userId, requested_by: context.userId, status: "running", model: "openai/gpt-6-astra", input_snapshot: snapshot, scope_note: "Pré-analyse de complétude et de vérification uniquement. Aucun résultat énergétique ou financier n’est calculé." }).select("id").single();
     if (createError || !analysis) throw new Error("La pré-analyse n’a pas pu être initialisée.");

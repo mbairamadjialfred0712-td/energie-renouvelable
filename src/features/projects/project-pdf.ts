@@ -35,7 +35,7 @@ export async function exportProjectPdf(record: ProjectRecord) {
   });
 
   const latest = record.analyses[0];
-  let y = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 60;
+  let y = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 60;
   const ensureSpace = (needed = 35) => { if (y + needed > 280) { doc.addPage(); addHeader(); y = 34; } };
   ensureSpace(45);
   doc.setFontSize(13); doc.text("Dernière pré-analyse", 14, y + 10); y += 15;
