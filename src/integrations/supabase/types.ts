@@ -68,7 +68,13 @@ export type Database = {
         Row: {
           code: string
           created_at: string
+          currency: string | null
+          description: string | null
           id: string
+          iso2: string | null
+          iso3: string | null
+          latitude: number | null
+          longitude: number | null
           name: string
           owner_id: string
           status: Database["public"]["Enums"]["record_status"]
@@ -77,7 +83,13 @@ export type Database = {
         Insert: {
           code: string
           created_at?: string
+          currency?: string | null
+          description?: string | null
           id?: string
+          iso2?: string | null
+          iso3?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name: string
           owner_id?: string
           status?: Database["public"]["Enums"]["record_status"]
@@ -86,7 +98,13 @@ export type Database = {
         Update: {
           code?: string
           created_at?: string
+          currency?: string | null
+          description?: string | null
           id?: string
+          iso2?: string | null
+          iso3?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           owner_id?: string
           status?: Database["public"]["Enums"]["record_status"]
@@ -98,6 +116,7 @@ export type Database = {
         Row: {
           code: string | null
           created_at: string
+          description: string | null
           id: string
           name: string
           owner_id: string
@@ -108,6 +127,7 @@ export type Database = {
         Insert: {
           code?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           name: string
           owner_id?: string
@@ -118,6 +138,7 @@ export type Database = {
         Update: {
           code?: string | null
           created_at?: string
+          description?: string | null
           id?: string
           name?: string
           owner_id?: string
@@ -444,9 +465,11 @@ export type Database = {
           data_quality: string | null
           data_source: string | null
           department_id: string | null
+          description: string | null
           grid_access: boolean | null
           id: string
           latitude: number | null
+          locality_type: Database["public"]["Enums"]["locality_type"] | null
           longitude: number | null
           name: string
           owner_id: string
@@ -463,9 +486,11 @@ export type Database = {
           data_quality?: string | null
           data_source?: string | null
           department_id?: string | null
+          description?: string | null
           grid_access?: boolean | null
           id?: string
           latitude?: number | null
+          locality_type?: Database["public"]["Enums"]["locality_type"] | null
           longitude?: number | null
           name: string
           owner_id?: string
@@ -482,9 +507,11 @@ export type Database = {
           data_quality?: string | null
           data_source?: string | null
           department_id?: string | null
+          description?: string | null
           grid_access?: boolean | null
           id?: string
           latitude?: number | null
+          locality_type?: Database["public"]["Enums"]["locality_type"] | null
           longitude?: number | null
           name?: string
           owner_id?: string
@@ -764,6 +791,7 @@ export type Database = {
           code: string | null
           country_id: string
           created_at: string
+          description: string | null
           id: string
           name: string
           owner_id: string
@@ -774,6 +802,7 @@ export type Database = {
           code?: string | null
           country_id: string
           created_at?: string
+          description?: string | null
           id?: string
           name: string
           owner_id?: string
@@ -784,6 +813,7 @@ export type Database = {
           code?: string | null
           country_id?: string
           created_at?: string
+          description?: string | null
           id?: string
           name?: string
           owner_id?: string
@@ -1195,6 +1225,83 @@ export type Database = {
           },
         ]
       }
+      study_sites: {
+        Row: {
+          altitude_m: number | null
+          area_m2: number | null
+          code: string | null
+          created_at: string
+          data_period: string | null
+          data_quality: string | null
+          data_source: string | null
+          grid_access: boolean | null
+          grid_distance_km: number | null
+          id: string
+          latitude: number | null
+          locality_id: string | null
+          longitude: number | null
+          name: string
+          notes: string | null
+          owner_id: string
+          planned_power_kw: number | null
+          site_type: Database["public"]["Enums"]["study_site_type"]
+          status: Database["public"]["Enums"]["record_status"]
+          updated_at: string
+        }
+        Insert: {
+          altitude_m?: number | null
+          area_m2?: number | null
+          code?: string | null
+          created_at?: string
+          data_period?: string | null
+          data_quality?: string | null
+          data_source?: string | null
+          grid_access?: boolean | null
+          grid_distance_km?: number | null
+          id?: string
+          latitude?: number | null
+          locality_id?: string | null
+          longitude?: number | null
+          name: string
+          notes?: string | null
+          owner_id?: string
+          planned_power_kw?: number | null
+          site_type?: Database["public"]["Enums"]["study_site_type"]
+          status?: Database["public"]["Enums"]["record_status"]
+          updated_at?: string
+        }
+        Update: {
+          altitude_m?: number | null
+          area_m2?: number | null
+          code?: string | null
+          created_at?: string
+          data_period?: string | null
+          data_quality?: string | null
+          data_source?: string | null
+          grid_access?: boolean | null
+          grid_distance_km?: number | null
+          id?: string
+          latitude?: number | null
+          locality_id?: string | null
+          longitude?: number | null
+          name?: string
+          notes?: string | null
+          owner_id?: string
+          planned_power_kw?: number | null
+          site_type?: Database["public"]["Enums"]["study_site_type"]
+          status?: Database["public"]["Enums"]["record_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_sites_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       technologies: {
         Row: {
           active: boolean
@@ -1361,6 +1468,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "engineer" | "analyst" | "viewer"
+      locality_type:
+        | "urbain"
+        | "periurbain"
+        | "rural"
+        | "village"
+        | "zone_industrielle"
+        | "autre"
       pre_analysis_status: "running" | "completed" | "failed"
       project_field_kind: "provided" | "assumption"
       project_status:
@@ -1374,6 +1488,13 @@ export type Database = {
         | "completed"
       record_status: "draft" | "active" | "archived"
       simulation_status: "draft" | "queued" | "running" | "completed" | "failed"
+      study_site_type:
+        | "centrale"
+        | "micro_reseau"
+        | "site_isole"
+        | "site_agricole"
+        | "site_industriel"
+        | "autre"
       validation_status: "pending" | "validated" | "rejected"
     }
     CompositeTypes: {
@@ -1503,6 +1624,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "engineer", "analyst", "viewer"],
+      locality_type: [
+        "urbain",
+        "periurbain",
+        "rural",
+        "village",
+        "zone_industrielle",
+        "autre",
+      ],
       pre_analysis_status: ["running", "completed", "failed"],
       project_field_kind: ["provided", "assumption"],
       project_status: [
@@ -1517,6 +1646,14 @@ export const Constants = {
       ],
       record_status: ["draft", "active", "archived"],
       simulation_status: ["draft", "queued", "running", "completed", "failed"],
+      study_site_type: [
+        "centrale",
+        "micro_reseau",
+        "site_isole",
+        "site_agricole",
+        "site_industriel",
+        "autre",
+      ],
       validation_status: ["pending", "validated", "rejected"],
     },
   },
