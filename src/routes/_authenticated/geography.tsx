@@ -1,3 +1,36 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/app/module-page";
-export const Route=createFileRoute("/_authenticated/geography")({head:()=>({meta:[{title:"Territoires — Énergie Renouvelable"},{name:"description",content:"Gérez la hiérarchie Pays → Région → Département → Localité et préparez la future cartographie."},{property:"og:title",content:"Territoires — Énergie Renouvelable"},{property:"og:description",content:"Gérez la hiérarchie Pays → Région → Département → Localité et préparez la future cartographie."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:()=> <ModulePage eyebrow="Référentiel territorial" title="Territoires" description="Gérez la hiérarchie Pays → Région → Département → Localité et préparez la future cartographie." fields={[{ label: 'Nom', required: true }, { label: 'Code', required: true }, { label: 'Latitude', unit: '°' }, { label: 'Longitude', unit: '°' }, { label: 'Population', unit: 'habitants' }, { label: 'Accès au réseau' }]} />});
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+
+const tabs = [
+  { to: "/geography", label: "Vue d’ensemble", exact: true },
+  { to: "/geography/countries", label: "Pays" },
+  { to: "/geography/regions", label: "Régions" },
+  { to: "/geography/departments", label: "Départements" },
+  { to: "/geography/localities", label: "Localités" },
+  { to: "/geography/sites", label: "Sites d’étude" },
+  { to: "/geography/import", label: "Import CSV" },
+] as const;
+
+export const Route = createFileRoute("/_authenticated/geography")({
+  component: GeographyLayout,
+});
+
+function GeographyLayout() {
+  return (
+    <div>
+      <nav className="sticky top-0 z-20 flex gap-1 overflow-x-auto border-b border-border bg-background px-5 sm:px-8 lg:px-10">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.to}
+            to={tab.to}
+            activeOptions={{ exact: "exact" in tab }}
+            className="whitespace-nowrap border-b-2 border-transparent px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
+            activeProps={{ className: "border-primary text-foreground" }}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
+      <Outlet />
+    </div>
+  );
+}
