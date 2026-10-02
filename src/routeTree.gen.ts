@@ -32,6 +32,7 @@ import { Route as AuthenticatedGeographyCountriesRouteImport } from './routes/_a
 import { Route as AuthenticatedGeographyDepartmentsRouteImport } from './routes/_authenticated/geography.departments'
 import { Route as AuthenticatedGeographyLocalitiesRouteImport } from './routes/_authenticated/geography.localities'
 import { Route as AuthenticatedGeographyRegionsRouteImport } from './routes/_authenticated/geography.regions'
+import { Route as AuthenticatedGeographySitesRouteImport } from './routes/_authenticated/geography.sites'
 import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
 import { Route as AuthenticatedProjectsIdRouteImport } from './routes/_authenticated/projects.$id'
 import { Route as AuthenticatedProjectsNewRouteImport } from './routes/_authenticated/projects.new'
@@ -164,6 +165,12 @@ const AuthenticatedGeographyRegionsRoute =
     path: '/regions',
     getParentRoute: () => AuthenticatedGeographyRoute,
   } as any)
+const AuthenticatedGeographySitesRoute =
+  AuthenticatedGeographySitesRouteImport.update({
+    id: '/sites',
+    path: '/sites',
+    getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
 const AuthenticatedProjectsIndexRoute =
   AuthenticatedProjectsIndexRouteImport.update({
     id: '/',
@@ -246,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
   '/geography/regions': typeof AuthenticatedGeographyRegionsRoute
+  '/geography/sites': typeof AuthenticatedGeographySitesRoute
   '/projects/$id': typeof AuthenticatedProjectsIdRoute
   '/projects/new': typeof AuthenticatedProjectsNewRoute
   '/resources/biomass': typeof AuthenticatedResourcesBiomassRoute
@@ -278,6 +286,7 @@ export interface FileRoutesByTo {
   '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
   '/geography/regions': typeof AuthenticatedGeographyRegionsRoute
+  '/geography/sites': typeof AuthenticatedGeographySitesRoute
   '/projects/$id': typeof AuthenticatedProjectsIdRoute
   '/projects/new': typeof AuthenticatedProjectsNewRoute
   '/resources/biomass': typeof AuthenticatedResourcesBiomassRoute
@@ -314,6 +323,7 @@ export interface FileRoutesById {
   '/_authenticated/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/_authenticated/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
   '/_authenticated/geography/regions': typeof AuthenticatedGeographyRegionsRoute
+  '/_authenticated/geography/sites': typeof AuthenticatedGeographySitesRoute
   '/_authenticated/projects/$id': typeof AuthenticatedProjectsIdRoute
   '/_authenticated/projects/new': typeof AuthenticatedProjectsNewRoute
   '/_authenticated/resources/biomass': typeof AuthenticatedResourcesBiomassRoute
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/geography/departments'
     | '/geography/localities'
     | '/geography/regions'
+    | '/geography/sites'
     | '/projects/$id'
     | '/projects/new'
     | '/resources/biomass'
@@ -382,6 +393,7 @@ export interface FileRouteTypes {
     | '/geography/departments'
     | '/geography/localities'
     | '/geography/regions'
+    | '/geography/sites'
     | '/projects/$id'
     | '/projects/new'
     | '/resources/biomass'
@@ -417,6 +429,7 @@ export interface FileRouteTypes {
     | '/_authenticated/geography/departments'
     | '/_authenticated/geography/localities'
     | '/_authenticated/geography/regions'
+    | '/_authenticated/geography/sites'
     | '/_authenticated/projects/$id'
     | '/_authenticated/projects/new'
     | '/_authenticated/resources/biomass'
@@ -602,6 +615,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGeographyRegionsRouteImport
       parentRoute: typeof AuthenticatedGeographyRoute
     }
+    '/_authenticated/geography/sites': {
+      id: '/_authenticated/geography/sites'
+      path: '/sites'
+      fullPath: '/geography/sites'
+      preLoaderRoute: typeof AuthenticatedGeographySitesRouteImport
+      parentRoute: typeof AuthenticatedGeographyRoute
+    }
     '/_authenticated/projects/': {
       id: '/_authenticated/projects/'
       path: '/'
@@ -680,6 +700,7 @@ interface AuthenticatedGeographyRouteChildren {
   AuthenticatedGeographyDepartmentsRoute: typeof AuthenticatedGeographyDepartmentsRoute
   AuthenticatedGeographyLocalitiesRoute: typeof AuthenticatedGeographyLocalitiesRoute
   AuthenticatedGeographyRegionsRoute: typeof AuthenticatedGeographyRegionsRoute
+  AuthenticatedGeographySitesRoute: typeof AuthenticatedGeographySitesRoute
   AuthenticatedGeographyIndexRoute: typeof AuthenticatedGeographyIndexRoute
 }
 
@@ -691,6 +712,7 @@ const AuthenticatedGeographyRouteChildren: AuthenticatedGeographyRouteChildren =
     AuthenticatedGeographyLocalitiesRoute:
       AuthenticatedGeographyLocalitiesRoute,
     AuthenticatedGeographyRegionsRoute: AuthenticatedGeographyRegionsRoute,
+    AuthenticatedGeographySitesRoute: AuthenticatedGeographySitesRoute,
     AuthenticatedGeographyIndexRoute: AuthenticatedGeographyIndexRoute,
   }
 
