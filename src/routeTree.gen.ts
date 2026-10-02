@@ -30,6 +30,7 @@ import { Route as AuthenticatedTechnologiesRouteImport } from './routes/_authent
 import { Route as AuthenticatedGeographyIndexRouteImport } from './routes/_authenticated/geography.index'
 import { Route as AuthenticatedGeographyCountriesRouteImport } from './routes/_authenticated/geography.countries'
 import { Route as AuthenticatedGeographyDepartmentsRouteImport } from './routes/_authenticated/geography.departments'
+import { Route as AuthenticatedGeographyImportRouteImport } from './routes/_authenticated/geography.import'
 import { Route as AuthenticatedGeographyLocalitiesRouteImport } from './routes/_authenticated/geography.localities'
 import { Route as AuthenticatedGeographyRegionsRouteImport } from './routes/_authenticated/geography.regions'
 import { Route as AuthenticatedGeographySitesRouteImport } from './routes/_authenticated/geography.sites'
@@ -153,6 +154,12 @@ const AuthenticatedGeographyDepartmentsRoute =
     path: '/departments',
     getParentRoute: () => AuthenticatedGeographyRoute,
   } as any)
+const AuthenticatedGeographyImportRoute =
+  AuthenticatedGeographyImportRouteImport.update({
+    id: '/import',
+    path: '/import',
+    getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
 const AuthenticatedGeographyLocalitiesRoute =
   AuthenticatedGeographyLocalitiesRouteImport.update({
     id: '/localities',
@@ -251,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/technologies': typeof AuthenticatedTechnologiesRoute
   '/geography/countries': typeof AuthenticatedGeographyCountriesRoute
   '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
+  '/geography/import': typeof AuthenticatedGeographyImportRoute
   '/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
   '/geography/regions': typeof AuthenticatedGeographyRegionsRoute
   '/geography/sites': typeof AuthenticatedGeographySitesRoute
@@ -284,6 +292,7 @@ export interface FileRoutesByTo {
   '/technologies': typeof AuthenticatedTechnologiesRoute
   '/geography/countries': typeof AuthenticatedGeographyCountriesRoute
   '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
+  '/geography/import': typeof AuthenticatedGeographyImportRoute
   '/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
   '/geography/regions': typeof AuthenticatedGeographyRegionsRoute
   '/geography/sites': typeof AuthenticatedGeographySitesRoute
@@ -321,6 +330,7 @@ export interface FileRoutesById {
   '/_authenticated/technologies': typeof AuthenticatedTechnologiesRoute
   '/_authenticated/geography/countries': typeof AuthenticatedGeographyCountriesRoute
   '/_authenticated/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
+  '/_authenticated/geography/import': typeof AuthenticatedGeographyImportRoute
   '/_authenticated/geography/localities': typeof AuthenticatedGeographyLocalitiesRoute
   '/_authenticated/geography/regions': typeof AuthenticatedGeographyRegionsRoute
   '/_authenticated/geography/sites': typeof AuthenticatedGeographySitesRoute
@@ -358,6 +368,7 @@ export interface FileRouteTypes {
     | '/technologies'
     | '/geography/countries'
     | '/geography/departments'
+    | '/geography/import'
     | '/geography/localities'
     | '/geography/regions'
     | '/geography/sites'
@@ -391,6 +402,7 @@ export interface FileRouteTypes {
     | '/technologies'
     | '/geography/countries'
     | '/geography/departments'
+    | '/geography/import'
     | '/geography/localities'
     | '/geography/regions'
     | '/geography/sites'
@@ -427,6 +439,7 @@ export interface FileRouteTypes {
     | '/_authenticated/technologies'
     | '/_authenticated/geography/countries'
     | '/_authenticated/geography/departments'
+    | '/_authenticated/geography/import'
     | '/_authenticated/geography/localities'
     | '/_authenticated/geography/regions'
     | '/_authenticated/geography/sites'
@@ -601,6 +614,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGeographyDepartmentsRouteImport
       parentRoute: typeof AuthenticatedGeographyRoute
     }
+    '/_authenticated/geography/import': {
+      id: '/_authenticated/geography/import'
+      path: '/import'
+      fullPath: '/geography/import'
+      preLoaderRoute: typeof AuthenticatedGeographyImportRouteImport
+      parentRoute: typeof AuthenticatedGeographyRoute
+    }
     '/_authenticated/geography/localities': {
       id: '/_authenticated/geography/localities'
       path: '/localities'
@@ -698,6 +718,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedGeographyRouteChildren {
   AuthenticatedGeographyCountriesRoute: typeof AuthenticatedGeographyCountriesRoute
   AuthenticatedGeographyDepartmentsRoute: typeof AuthenticatedGeographyDepartmentsRoute
+  AuthenticatedGeographyImportRoute: typeof AuthenticatedGeographyImportRoute
   AuthenticatedGeographyLocalitiesRoute: typeof AuthenticatedGeographyLocalitiesRoute
   AuthenticatedGeographyRegionsRoute: typeof AuthenticatedGeographyRegionsRoute
   AuthenticatedGeographySitesRoute: typeof AuthenticatedGeographySitesRoute
@@ -709,6 +730,7 @@ const AuthenticatedGeographyRouteChildren: AuthenticatedGeographyRouteChildren =
     AuthenticatedGeographyCountriesRoute: AuthenticatedGeographyCountriesRoute,
     AuthenticatedGeographyDepartmentsRoute:
       AuthenticatedGeographyDepartmentsRoute,
+    AuthenticatedGeographyImportRoute: AuthenticatedGeographyImportRoute,
     AuthenticatedGeographyLocalitiesRoute:
       AuthenticatedGeographyLocalitiesRoute,
     AuthenticatedGeographyRegionsRoute: AuthenticatedGeographyRegionsRoute,
