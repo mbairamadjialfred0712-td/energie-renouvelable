@@ -357,10 +357,17 @@ export const deleteStudySite = createServerFn({ method: "POST" })
 
 /* ------------------------------ Import contrôlé ----------------------------- */
 
+export type ImportLevel = "countries" | "regions" | "departments" | "localities";
+
 const importRowSchema = z.object({
   name: z.string().trim().min(2).max(160),
   code: optionalText(20),
-  localityType: z.string().trim().optional().nullable(),
+  parent: optionalText(160),
+  description: optionalText(2000),
+  iso2: optionalText(2),
+  iso3: optionalText(3),
+  currency: optionalText(10),
+  localityType: optionalText(40),
   latitude: optionalNumber(-90, 90),
   longitude: optionalNumber(-180, 180),
   altitudeM: optionalNumber(-500, 9000),
@@ -372,59 +379,105 @@ const importRowSchema = z.object({
   dataQuality: optionalText(240),
 });
 
-export const importLocalities = createServerFn({ method: "POST" })
+const PARENT: Record<ImportLevel, { table: "countries" | "regions" | "departments"; label: string; required: boolean } | null> = {
+  countries: null,
+  regions: { table: "countries", label: "pays", required: true },
+  departments: { table: "regions", label: "région", required: true },
+  localities: { table: "departments", label: "département", required: false },
+};
+const PARENT_COLUMN: Record<ImportLevel, string | null> = { countries: null, regions: "country_id", departments: "region_id", localities: "department_id" };
+
+/**
+ * Import contrôlé d’un niveau territorial. Les parents sont résolus par nom ou code parmi
+ * les enregistrements existants ; aucun parent n’est créé automatiquement.
+ */
+export const importTerritories = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
-        departmentId: z.string().uuid().nullable().optional(),
-        rows: z.array(importRowSchema).min(1).max(2000),
+        level: z.enum(["countries", "regions", "departments", "localities"]),
+        rows: z.array(importRowSchema).min(1).max(5000),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: existing, error: existingError } = await context.supabase.from("localities").select("name");
-    if (existingError) throw new Error("La vérification des doublons a échoué.");
-    const known = new Set((existing ?? []).map((row) => row.name.trim().toLowerCase()));
+    const db = context.supabase as unknown as { from: (t: string) => any };
+    const parentInfo = PARENT[data.level];
+    const parentColumn = PARENT_COLUMN[data.level];
 
-    const accepted: Array<Record<string, unknown>> = [];
-    const skipped: Array<{ name: string; reason: string }> = [];
-    const allowedTypes = LOCALITY_TYPES.map((item) => item.value) as readonly string[];
-
-    for (const row of data.rows) {
-      const key = row.name.trim().toLowerCase();
-      if (known.has(key)) {
-        skipped.push({ name: row.name, reason: "Doublon : une localité portant ce nom existe déjà." });
-        continue;
+    // Parents disponibles (nom et code, insensibles à la casse)
+    const parentIndex = new Map<string, string[]>();
+    if (parentInfo) {
+      const { data: parents, error } = await db.from(parentInfo.table).select("id, name, code");
+      if (error) throw new Error("La lecture des niveaux parents a échoué.");
+      for (const p of (parents ?? []) as Array<{ id: string; name: string; code: string | null }>) {
+        for (const key of [p.name, p.code].filter(Boolean) as string[]) {
+          const k = key.trim().toLowerCase();
+          parentIndex.set(k, [...new Set([...(parentIndex.get(k) ?? []), p.id])]);
+        }
       }
-      const type = row.localityType?.trim().toLowerCase();
-      if (type && !allowedTypes.includes(type)) {
-        skipped.push({ name: row.name, reason: `Type de zone inconnu : « ${row.localityType} ».` });
-        continue;
-      }
-      known.add(key);
-      accepted.push({
-        owner_id: context.userId,
-        department_id: data.departmentId ?? null,
-        name: row.name,
-        code: row.code,
-        locality_type: type ?? null,
-        latitude: row.latitude,
-        longitude: row.longitude,
-        altitude_m: row.altitudeM,
-        population: row.population,
-        annual_demand_kwh: row.annualDemandKwh,
-        grid_access: row.gridAccess ?? null,
-        data_source: row.dataSource,
-        data_period: row.dataPeriod,
-        data_quality: row.dataQuality,
-        status: "draft",
-      });
     }
 
-    if (accepted.length > 0) {
-      const { error } = await context.supabase.from("localities").insert(accepted as never);
-      if (error) throw new Error("L’insertion des localités a échoué.");
+    // Doublons existants
+    const selectCols = parentColumn ? `name, code, ${parentColumn}` : "name, code";
+    const { data: existing, error: existingError } = await db.from(data.level).select(selectCols);
+    if (existingError) throw new Error("La vérification des doublons a échoué.");
+    const known = new Set<string>();
+    for (const row of (existing ?? []) as Array<Record<string, string | null>>) {
+      const scope = parentColumn ? row[parentColumn] ?? "" : "";
+      known.add(`${scope}|n:${row["name"]!.trim().toLowerCase()}`);
+      if (data.level === "countries" && row["code"]) known.add(`|c:${row["code"].trim().toLowerCase()}`);
+    }
+
+    const allowedTypes = LOCALITY_TYPES.map((t) => t.value) as readonly string[];
+    const accepted: Array<Record<string, unknown>> = [];
+    const skipped: Array<{ line: number; name: string; reason: string }> = [];
+
+    data.rows.forEach((row, index) => {
+      const line = index + 2;
+      let parentId: string | null = null;
+      if (parentInfo) {
+        if (!row.parent) {
+          if (parentInfo.required) return skipped.push({ line, name: row.name, reason: `Colonne ${parentInfo.label} vide.` });
+        } else {
+          const matches = parentIndex.get(row.parent.trim().toLowerCase()) ?? [];
+          if (matches.length === 0) return skipped.push({ line, name: row.name, reason: `${parentInfo.label} « ${row.parent} » introuvable. Importez d’abord le niveau parent.` });
+          if (matches.length > 1) return skipped.push({ line, name: row.name, reason: `${parentInfo.label} « ${row.parent} » ambigu : utilisez son code.` });
+          parentId = matches[0]!;
+        }
+      }
+      const nameKey = `${parentId ?? ""}|n:${row.name.trim().toLowerCase()}`;
+      if (known.has(nameKey)) return skipped.push({ line, name: row.name, reason: "Doublon : déjà présent à ce niveau." });
+
+      if (data.level === "countries") {
+        if (!row.code) return skipped.push({ line, name: row.name, reason: "Code pays obligatoire." });
+        const codeKey = `|c:${row.code.toLowerCase()}`;
+        if (known.has(codeKey)) return skipped.push({ line, name: row.name, reason: `Doublon : le code ${row.code} existe déjà.` });
+        known.add(codeKey);
+        known.add(nameKey);
+        return accepted.push({
+          owner_id: context.userId, name: row.name, code: row.code.toUpperCase(), iso2: row.iso2?.toUpperCase() ?? null, iso3: row.iso3?.toUpperCase() ?? null,
+          currency: row.currency?.toUpperCase() ?? null, latitude: row.latitude, longitude: row.longitude, description: row.description, status: "draft",
+        });
+      }
+      if (data.level === "regions" || data.level === "departments") {
+        known.add(nameKey);
+        return accepted.push({ owner_id: context.userId, [parentColumn!]: parentId, name: row.name, code: row.code, description: row.description, status: "draft" });
+      }
+      const type = row.localityType?.toLowerCase() ?? null;
+      if (type && !allowedTypes.includes(type)) return skipped.push({ line, name: row.name, reason: `Type de zone inconnu : « ${row.localityType} ».` });
+      known.add(nameKey);
+      return accepted.push({
+        owner_id: context.userId, department_id: parentId, name: row.name, code: row.code, locality_type: type, latitude: row.latitude, longitude: row.longitude,
+        altitude_m: row.altitudeM, population: row.population, annual_demand_kwh: row.annualDemandKwh, grid_access: row.gridAccess ?? null,
+        data_source: row.dataSource, data_period: row.dataPeriod, data_quality: row.dataQuality, description: row.description, status: "draft",
+      });
+    });
+
+    for (let i = 0; i < accepted.length; i += 500) {
+      const { error } = await db.from(data.level).insert(accepted.slice(i, i + 500));
+      if (error) throw new Error(`L’insertion a échoué après ${i} ligne(s) : ${error.message}`);
     }
     return { inserted: accepted.length, skipped };
   });
