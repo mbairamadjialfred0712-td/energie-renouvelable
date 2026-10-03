@@ -169,7 +169,7 @@ export function EntityManager<Row>({
                 title={`Aucune donnée — ${title}`}
                 description="Aucune valeur n’est préremplie. Saisissez uniquement des données vérifiables, avec leur source et leur période."
                 actionLabel="Ajouter un enregistrement"
-                onAction={disabled ? undefined : startCreate}
+                {...(disabled ? {} : { onAction: startCreate })}
               />
             )}
             {!isLoading && rows.length > 0 && (
