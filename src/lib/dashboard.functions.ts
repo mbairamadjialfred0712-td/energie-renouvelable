@@ -10,12 +10,14 @@ const countTable = async (client: any, table: string) => {
 export const getDashboardSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [localities, simulations, projects, scenarios, resources] = await Promise.all([
+    const [localities, simulations, projects, scenarios, resources, countries, sites] = await Promise.all([
       countTable(context.supabase, "localities"),
       countTable(context.supabase, "simulations"),
       countTable(context.supabase, "projects"),
       countTable(context.supabase, "scenarios"),
       countTable(context.supabase, "energy_resources"),
+      countTable(context.supabase, "countries"),
+      countTable(context.supabase, "study_sites"),
     ]);
-    return { localities, simulations, projects, scenarios, resources };
+    return { localities, simulations, projects, scenarios, resources, countries, sites };
   });
