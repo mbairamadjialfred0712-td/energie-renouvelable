@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Download, FileUp, TriangleAlert } from "lucide-react";
 import { importTerritories, LOCALITY_TYPES, type ImportLevel } from "@/lib/geography.functions";
@@ -139,6 +139,7 @@ function ImportPage() {
   const [batchSource, setBatchSource] = useState("");
   const [batchPeriod, setBatchPeriod] = useState("");
 
+  const inFlight = useRef(false);
   const columns = LEVELS[level].columns;
 
   // Analyse des colonnes
@@ -307,7 +308,7 @@ function ImportPage() {
             <input type="checkbox" className="mt-1" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
             <span>J’ai vérifié les valeurs, leurs unités et leur provenance. Les lignes seront enregistrées en statut « Brouillon ».</span>
           </label>
-          <Button className="w-full" disabled={!confirmed || valid.length === 0 || importMutation.isPending || importMutation.isSuccess} onClick={() => importMutation.mutate()}>
+          <Button className="w-full" disabled={!confirmed || valid.length === 0 || importMutation.isPending || importMutation.isSuccess} onClick={() => { if (inFlight.current) return; inFlight.current = true; importMutation.mutate(undefined, { onSettled: () => { inFlight.current = false; } }); }}>
             {importMutation.isPending ? "Import en cours…" : `Importer ${valid.length} ligne(s)`}
           </Button>
           {importMutation.isError && <p className="text-sm text-destructive">{(importMutation.error as Error).message}</p>}
