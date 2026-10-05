@@ -71,6 +71,7 @@ export type Database = {
           currency: string | null
           description: string | null
           id: string
+          is_reference: boolean
           iso2: string | null
           iso3: string | null
           latitude: number | null
@@ -86,6 +87,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           id?: string
+          is_reference?: boolean
           iso2?: string | null
           iso3?: string | null
           latitude?: number | null
@@ -101,6 +103,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           id?: string
+          is_reference?: boolean
           iso2?: string | null
           iso3?: string | null
           latitude?: number | null
@@ -118,6 +121,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_reference: boolean
           name: string
           owner_id: string
           region_id: string
@@ -129,6 +133,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_reference?: boolean
           name: string
           owner_id?: string
           region_id: string
@@ -140,6 +145,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_reference?: boolean
           name?: string
           owner_id?: string
           region_id?: string
@@ -468,6 +474,7 @@ export type Database = {
           description: string | null
           grid_access: boolean | null
           id: string
+          is_reference: boolean
           latitude: number | null
           locality_type: Database["public"]["Enums"]["locality_type"] | null
           longitude: number | null
@@ -489,6 +496,7 @@ export type Database = {
           description?: string | null
           grid_access?: boolean | null
           id?: string
+          is_reference?: boolean
           latitude?: number | null
           locality_type?: Database["public"]["Enums"]["locality_type"] | null
           longitude?: number | null
@@ -510,6 +518,7 @@ export type Database = {
           description?: string | null
           grid_access?: boolean | null
           id?: string
+          is_reference?: boolean
           latitude?: number | null
           locality_type?: Database["public"]["Enums"]["locality_type"] | null
           longitude?: number | null
@@ -793,6 +802,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_reference: boolean
           name: string
           owner_id: string
           status: Database["public"]["Enums"]["record_status"]
@@ -804,6 +814,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_reference?: boolean
           name: string
           owner_id?: string
           status?: Database["public"]["Enums"]["record_status"]
@@ -815,6 +826,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_reference?: boolean
           name?: string
           owner_id?: string
           status?: Database["public"]["Enums"]["record_status"]
@@ -876,6 +888,68 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_pre_analyses: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          declared_assumptions: Json
+          error_message: string | null
+          gateway_run_id: string | null
+          id: string
+          input_snapshot: Json
+          missing_information: Json
+          model: string
+          owner_id: string
+          requested_by: string
+          resource_id: string
+          scope_note: string
+          status: Database["public"]["Enums"]["pre_analysis_status"]
+          verification_points: Json
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          declared_assumptions?: Json
+          error_message?: string | null
+          gateway_run_id?: string | null
+          id?: string
+          input_snapshot?: Json
+          missing_information?: Json
+          model: string
+          owner_id: string
+          requested_by: string
+          resource_id: string
+          scope_note?: string
+          status?: Database["public"]["Enums"]["pre_analysis_status"]
+          verification_points?: Json
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          declared_assumptions?: Json
+          error_message?: string | null
+          gateway_run_id?: string | null
+          id?: string
+          input_snapshot?: Json
+          missing_information?: Json
+          model?: string
+          owner_id?: string
+          requested_by?: string
+          resource_id?: string
+          scope_note?: string
+          status?: Database["public"]["Enums"]["pre_analysis_status"]
+          verification_points?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_pre_analyses_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "energy_resources"
             referencedColumns: ["id"]
           },
         ]
