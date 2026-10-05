@@ -27,7 +27,7 @@ function recoverStructuredOutput(text: string | undefined): ProjectAnalysisResul
   }
 }
 
-export async function runProjectPreAnalysis(snapshot: unknown) {
+export async function runProjectPreAnalysis(snapshot: unknown, subject: "project" | "resource" = "project") {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("Le service de pré-analyse n’est pas configuré.");
 
@@ -52,7 +52,7 @@ export async function runProjectPreAnalysis(snapshot: unknown) {
       },
     },
     system: "Vous assistez des professionnels de l’énergie. Vous examinez exclusivement les données sauvegardées. N’inventez aucune valeur, mesure, formule, production, coût, rendement ou conclusion scientifique. Ne calculez aucun résultat énergétique ou financier. Distinguez strictement données fournies et hypothèses déclarées. Signalez les informations absentes et les vérifications nécessaires. Les références de champs doivent reprendre les clés présentes dans l’instantané.",
-    prompt: `Produisez une pré-analyse de complétude et de vérification en trois listes. Restez factuel, concis et prudent. Instantané sauvegardé :\n${JSON.stringify(snapshot)}`,
+    prompt: `${subject === "resource" ? "Objet : fiche de ressource énergétique (solaire, éolienne, biomasse ou déchets) d’une localité. Vérifiez la cohérence des unités, la présence de la source, de la période, de la hauteur de mesure le cas échéant, et la distinction entre potentiel théorique, technique et exploitable. " : ""}Produisez une pré-analyse de complétude et de vérification en trois listes. Restez factuel, concis et prudent. Instantané sauvegardé :\n${JSON.stringify(snapshot)}`,
   });
 
   try {
