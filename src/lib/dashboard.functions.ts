@@ -43,7 +43,7 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
       demands: (dem ?? []).length, demandBySector,
       projectsByStatus, recentProjects: (proj ?? []).slice(0, 5),
       populationGeolocated: population,
-      localityPoints: (locs ?? []).map((l: any) => ({ id: l.id, name: l.name, latitude: Number(l.latitude), longitude: Number(l.longitude) })),
-      sitePoints: (sitePts ?? []).map((s: any) => ({ id: s.id, name: s.name, latitude: Number(s.latitude), longitude: Number(s.longitude), site_type: s.site_type })),
+      localityPoints: ((locs ?? []) as any[]).map((l): { id: string; name: string; latitude: number; longitude: number } => ({ id: l.id, name: l.name, latitude: Number(l.latitude), longitude: Number(l.longitude) })),
+      sitePoints: ((sitePts ?? []) as any[]).map((s): { id: string; name: string; latitude: number; longitude: number; site_type: string } => ({ id: s.id, name: s.name, latitude: Number(s.latitude), longitude: Number(s.longitude), site_type: s.site_type })),
     };
   });
