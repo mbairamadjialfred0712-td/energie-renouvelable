@@ -27,6 +27,9 @@ import { Route as AuthenticatedScenariosRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSimulationsRouteImport } from './routes/_authenticated/simulations'
 import { Route as AuthenticatedTechnologiesRouteImport } from './routes/_authenticated/technologies'
+import { Route as DecouvrirProjetsRouteImport } from './routes/decouvrir.projets'
+import { Route as DecouvrirTableauDeBordRouteImport } from './routes/decouvrir.tableau-de-bord'
+import { Route as DecouvrirTerritoiresRouteImport } from './routes/decouvrir.territoires'
 import { Route as AuthenticatedGeographyIndexRouteImport } from './routes/_authenticated/geography.index'
 import { Route as AuthenticatedGeographyCountriesRouteImport } from './routes/_authenticated/geography.countries'
 import { Route as AuthenticatedGeographyDepartmentsRouteImport } from './routes/_authenticated/geography.departments'
@@ -137,6 +140,21 @@ const AuthenticatedTechnologiesRoute =
     path: '/technologies',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const DecouvrirProjetsRoute = DecouvrirProjetsRouteImport.update({
+  id: '/decouvrir/projets',
+  path: '/decouvrir/projets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DecouvrirTableauDeBordRoute = DecouvrirTableauDeBordRouteImport.update({
+  id: '/decouvrir/tableau-de-bord',
+  path: '/decouvrir/tableau-de-bord',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DecouvrirTerritoiresRoute = DecouvrirTerritoiresRouteImport.update({
+  id: '/decouvrir/territoires',
+  path: '/decouvrir/territoires',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedGeographyIndexRoute =
   AuthenticatedGeographyIndexRouteImport.update({
     id: '/',
@@ -263,6 +281,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/simulations': typeof AuthenticatedSimulationsRouteWithChildren
   '/technologies': typeof AuthenticatedTechnologiesRoute
+  '/decouvrir/projets': typeof DecouvrirProjetsRoute
+  '/decouvrir/tableau-de-bord': typeof DecouvrirTableauDeBordRoute
+  '/decouvrir/territoires': typeof DecouvrirTerritoiresRoute
   '/geography/countries': typeof AuthenticatedGeographyCountriesRoute
   '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/geography/import': typeof AuthenticatedGeographyImportRoute
@@ -297,6 +318,9 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/simulations': typeof AuthenticatedSimulationsRouteWithChildren
   '/technologies': typeof AuthenticatedTechnologiesRoute
+  '/decouvrir/projets': typeof DecouvrirProjetsRoute
+  '/decouvrir/tableau-de-bord': typeof DecouvrirTableauDeBordRoute
+  '/decouvrir/territoires': typeof DecouvrirTerritoiresRoute
   '/geography/countries': typeof AuthenticatedGeographyCountriesRoute
   '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/geography/import': typeof AuthenticatedGeographyImportRoute
@@ -336,6 +360,9 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/simulations': typeof AuthenticatedSimulationsRouteWithChildren
   '/_authenticated/technologies': typeof AuthenticatedTechnologiesRoute
+  '/decouvrir/projets': typeof DecouvrirProjetsRoute
+  '/decouvrir/tableau-de-bord': typeof DecouvrirTableauDeBordRoute
+  '/decouvrir/territoires': typeof DecouvrirTerritoiresRoute
   '/_authenticated/geography/countries': typeof AuthenticatedGeographyCountriesRoute
   '/_authenticated/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/_authenticated/geography/import': typeof AuthenticatedGeographyImportRoute
@@ -375,6 +402,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/simulations'
     | '/technologies'
+    | '/decouvrir/projets'
+    | '/decouvrir/tableau-de-bord'
+    | '/decouvrir/territoires'
     | '/geography/countries'
     | '/geography/departments'
     | '/geography/import'
@@ -409,6 +439,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/simulations'
     | '/technologies'
+    | '/decouvrir/projets'
+    | '/decouvrir/tableau-de-bord'
+    | '/decouvrir/territoires'
     | '/geography/countries'
     | '/geography/departments'
     | '/geography/import'
@@ -447,6 +480,9 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/simulations'
     | '/_authenticated/technologies'
+    | '/decouvrir/projets'
+    | '/decouvrir/tableau-de-bord'
+    | '/decouvrir/territoires'
     | '/_authenticated/geography/countries'
     | '/_authenticated/geography/departments'
     | '/_authenticated/geography/import'
@@ -474,6 +510,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  DecouvrirProjetsRoute: typeof DecouvrirProjetsRoute
+  DecouvrirTableauDeBordRoute: typeof DecouvrirTableauDeBordRoute
+  DecouvrirTerritoiresRoute: typeof DecouvrirTerritoiresRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -603,6 +642,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/technologies'
       preLoaderRoute: typeof AuthenticatedTechnologiesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/decouvrir/projets': {
+      id: '/decouvrir/projets'
+      path: '/decouvrir/projets'
+      fullPath: '/decouvrir/projets'
+      preLoaderRoute: typeof DecouvrirProjetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/decouvrir/tableau-de-bord': {
+      id: '/decouvrir/tableau-de-bord'
+      path: '/decouvrir/tableau-de-bord'
+      fullPath: '/decouvrir/tableau-de-bord'
+      preLoaderRoute: typeof DecouvrirTableauDeBordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/decouvrir/territoires': {
+      id: '/decouvrir/territoires'
+      path: '/decouvrir/territoires'
+      fullPath: '/decouvrir/territoires'
+      preLoaderRoute: typeof DecouvrirTerritoiresRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/geography/': {
       id: '/_authenticated/geography/'
@@ -872,6 +932,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  DecouvrirProjetsRoute: DecouvrirProjetsRoute,
+  DecouvrirTableauDeBordRoute: DecouvrirTableauDeBordRoute,
+  DecouvrirTerritoiresRoute: DecouvrirTerritoiresRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

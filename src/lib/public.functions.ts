@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 
 /** Lecture publique du référentiel territorial (lignes marquées is_reference uniquement). */
-export const getPublicTerritories = createServerFn({ method: "GET" }).handler(async () => {
+export const getPublicTerritories = createServerFn({ method: "GET" }).handler(async (): Promise<{ countries: number; regions: number; departments: number; localities: number; source: string; localityRows: { id: string; name: string; latitude: number; longitude: number; population: number | null; altitude_m: number | null; department: string | null }[]; regionRows: { id: string; name: string; country: string; departments: number }[] }> => {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
   const sb = createClient(process.env["SUPABASE_URL"]!, key, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -17,7 +17,7 @@ export const getPublicTerritories = createServerFn({ method: "GET" }).handler(as
   return {
     countries, regions, departments, localities,
     source: "GeoNames (geonames.org) — licence CC BY 4.0",
-    localityRows: (locs ?? []).map((l: any) => ({ id: l.id as string, name: l.name as string, latitude: Number(l.latitude), longitude: Number(l.longitude), population: l.population as number | null, altitude_m: l.altitude_m as number | null, department: (l.departments?.name ?? null) as string | null })),
-    regionRows: (regs ?? []).map((r: any) => ({ id: r.id as string, name: r.name as string, country: (r.countries?.name ?? "") as string, departments: (r.departments?.[0]?.count ?? 0) as number })),
+    localityRows: ((locs ?? []) as any[]).map((l: any) => ({ id: l.id as string, name: l.name as string, latitude: Number(l.latitude), longitude: Number(l.longitude), population: l.population as number | null, altitude_m: l.altitude_m as number | null, department: (l.departments?.name ?? null) as string | null })),
+    regionRows: ((regs ?? []) as any[]).map((r: any) => ({ id: r.id as string, name: r.name as string, country: (r.countries?.name ?? "") as string, departments: (r.departments?.[0]?.count ?? 0) as number })),
   };
 });

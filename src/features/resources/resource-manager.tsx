@@ -46,8 +46,8 @@ export function ResourceManager({ type, title, description }: { type: ResourceTy
   const save = (values: FormValues, id: string | null) =>
     saveResource({
       data: {
-        id, type, locality_id: values.locality_id ?? "", source: values.source ?? "", period: nullable(values.period), reference: nullable(values.reference),
-        quality: nullable(values.quality), notes: nullable(values.notes), validation_status: (values.validation_status as "pending") || "pending",
+        id, type, locality_id: values["locality_id"] ?? "", source: values["source"] ?? "", period: nullable(values["period"]), reference: nullable(values["reference"]),
+        quality: nullable(values["quality"]), notes: nullable(values["notes"]), validation_status: (values["validation_status"] as "pending") || "pending",
         detail: Object.fromEntries(config.fields.map((f) => [f.key, values[`d_${f.key}`] ?? ""])),
       },
     });

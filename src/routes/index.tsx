@@ -50,6 +50,18 @@ function Index() {
           <Button asChild size="lg"><Link to="/login">Accéder à la plateforme <ArrowRight /></Link></Button>
           <Button asChild size="lg" variant="outline"><Link to="/register"><ShieldCheck />Créer un espace sécurisé</Link></Button>
         </div>
+        <p className="mt-10 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Explorer sans compte</p>
+        <div className="mt-4 grid w-full max-w-3xl gap-3 sm:grid-cols-3">
+          {([
+            { to: "/decouvrir/territoires", title: "Territoires", text: "Référentiel et carte Côte d’Ivoire · Togo" },
+            { to: "/decouvrir/projets", title: "Projets", text: "Fiches traçables et pré-analyse IA" },
+            { to: "/decouvrir/tableau-de-bord", title: "Tableau de bord", text: "Indicateurs territoriaux réels" },
+          ] as const).map((c) => (
+            <Link key={c.to} to={c.to} className="border border-border bg-background p-5 text-left transition-colors hover:border-primary">
+              <p className="font-semibold">{c.title}</p><p className="mt-1 text-sm text-muted-foreground">{c.text}</p>
+            </Link>
+          ))}
+        </div>
       </div>
     </main>
   );
