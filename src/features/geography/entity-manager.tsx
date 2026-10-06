@@ -64,6 +64,8 @@ type Props<Row> = {
   rowLabel: (row: Row) => string;
   disabled?: { reason: string } | null;
   invalidate?: string[][];
+  rowActions?: (row: Row) => ReactNode;
+  children?: ReactNode;
 };
 
 export function EntityManager<Row>({
@@ -84,6 +86,8 @@ export function EntityManager<Row>({
   rowLabel,
   disabled,
   invalidate = [],
+  rowActions,
+  children,
 }: Props<Row>) {
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useQuery({ queryKey, queryFn: fetcher });
@@ -191,6 +195,7 @@ export function EntityManager<Row>({
                         ))}
                         <td className="px-4 py-3">
                           <div className="flex justify-end gap-1">
+                            {rowActions?.(row)}
                             <Button size="icon" variant="ghost" title="Modifier" onClick={() => startEdit(row)}><Pencil className="h-4 w-4" /></Button>
                             <Button size="icon" variant="ghost" title="Supprimer" onClick={() => { setFormError(null); setConfirming(row); }}><Trash2 className="h-4 w-4" /></Button>
                           </div>
@@ -211,6 +216,8 @@ export function EntityManager<Row>({
           </p>
         </aside>
       </div>
+
+      {children}
 
       {open && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-overlay p-4" onMouseDown={() => setOpen(false)}>
