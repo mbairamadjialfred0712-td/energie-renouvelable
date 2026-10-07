@@ -1245,48 +1245,81 @@ export type Database = {
       }
       solar_resources: {
         Row: {
+          acquisition_method: string | null
           annual_irradiation_kwh_m2: number | null
           avg_temperature_c: number | null
+          collected_on: string | null
           created_at: string
+          data_nature: Database["public"]["Enums"]["solar_data_nature"]
           dhi_kwh_m2_day: number | null
+          dhi_unit: string
           dni_kwh_m2_day: number | null
+          dni_unit: string
           ghi_kwh_m2_day: number | null
+          ghi_unit: string
           id: string
           max_temperature_c: number | null
           min_temperature_c: number | null
           owner_id: string
+          period_end: string | null
+          period_start: string | null
           resource_id: string
+          site_id: string | null
+          solar_status: Database["public"]["Enums"]["solar_status"]
           sunshine_hours: number | null
+          sunshine_unit: string
           updated_at: string
         }
         Insert: {
+          acquisition_method?: string | null
           annual_irradiation_kwh_m2?: number | null
           avg_temperature_c?: number | null
+          collected_on?: string | null
           created_at?: string
+          data_nature?: Database["public"]["Enums"]["solar_data_nature"]
           dhi_kwh_m2_day?: number | null
+          dhi_unit?: string
           dni_kwh_m2_day?: number | null
+          dni_unit?: string
           ghi_kwh_m2_day?: number | null
+          ghi_unit?: string
           id?: string
           max_temperature_c?: number | null
           min_temperature_c?: number | null
           owner_id?: string
+          period_end?: string | null
+          period_start?: string | null
           resource_id: string
+          site_id?: string | null
+          solar_status?: Database["public"]["Enums"]["solar_status"]
           sunshine_hours?: number | null
+          sunshine_unit?: string
           updated_at?: string
         }
         Update: {
+          acquisition_method?: string | null
           annual_irradiation_kwh_m2?: number | null
           avg_temperature_c?: number | null
+          collected_on?: string | null
           created_at?: string
+          data_nature?: Database["public"]["Enums"]["solar_data_nature"]
           dhi_kwh_m2_day?: number | null
+          dhi_unit?: string
           dni_kwh_m2_day?: number | null
+          dni_unit?: string
           ghi_kwh_m2_day?: number | null
+          ghi_unit?: string
           id?: string
           max_temperature_c?: number | null
           min_temperature_c?: number | null
           owner_id?: string
+          period_end?: string | null
+          period_start?: string | null
           resource_id?: string
+          site_id?: string | null
+          solar_status?: Database["public"]["Enums"]["solar_status"]
           sunshine_hours?: number | null
+          sunshine_unit?: string
           updated_at?: string
         }
         Relationships: [
@@ -1295,6 +1328,13 @@ export type Database = {
             columns: ["resource_id"]
             isOneToOne: true
             referencedRelation: "energy_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solar_resources_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "study_sites"
             referencedColumns: ["id"]
           },
         ]
@@ -1562,6 +1602,18 @@ export type Database = {
         | "completed"
       record_status: "draft" | "active" | "archived"
       simulation_status: "draft" | "queued" | "running" | "completed" | "failed"
+      solar_data_nature:
+        | "measured"
+        | "imported"
+        | "api"
+        | "estimate"
+        | "assumption"
+      solar_status:
+        | "unverified"
+        | "in_review"
+        | "validated"
+        | "rejected"
+        | "archived"
       study_site_type:
         | "centrale"
         | "micro_reseau"
@@ -1720,6 +1772,20 @@ export const Constants = {
       ],
       record_status: ["draft", "active", "archived"],
       simulation_status: ["draft", "queued", "running", "completed", "failed"],
+      solar_data_nature: [
+        "measured",
+        "imported",
+        "api",
+        "estimate",
+        "assumption",
+      ],
+      solar_status: [
+        "unverified",
+        "in_review",
+        "validated",
+        "rejected",
+        "archived",
+      ],
       study_site_type: [
         "centrale",
         "micro_reseau",
