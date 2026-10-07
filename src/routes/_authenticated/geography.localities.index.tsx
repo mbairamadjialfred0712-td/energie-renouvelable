@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { LOCALITY_TYPES, deleteLocality, listDepartments, listLocalities, saveLocality } from "@/lib/geography.functions";
 import { EntityManager, STATUS_FIELD, STATUS_LABELS, numberText, text } from "@/features/geography/entity-manager";
@@ -6,7 +6,7 @@ import { bool, metaFor, nullable, str } from "@/features/geography/form-helpers"
 
 type Row = Awaited<ReturnType<typeof listLocalities>>[number];
 
-export const Route = createFileRoute("/_authenticated/geography/localities")({
+export const Route = createFileRoute("/_authenticated/geography/localities/")({
   head: () => metaFor("Localités", "Fiches techniques des localités : type de zone, coordonnées, population, accès réseau et demande."),
   component: LocalitiesPage,
 });
@@ -90,7 +90,7 @@ function LocalitiesPage() {
         { key: "description", label: "Description", type: "textarea", colSpan: 2 },
       ]}
       columns={[
-        { label: "Nom", render: (r) => <span className="font-medium">{r.name}</span> },
+        { label: "Nom", render: (r) => <Link to="/geography/localities/$id" params={{ id: r.id }} className="font-medium text-primary hover:underline">{r.name}</Link> },
         { label: "Type", render: (r) => typeLabel(r.locality_type) },
         { label: "Département", render: (r) => text(r.departments?.name) },
         { label: "Coordonnées", render: (r) => (r.latitude !== null && r.longitude !== null ? `${numberText(r.latitude)}°, ${numberText(r.longitude)}°` : "—") },
