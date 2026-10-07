@@ -6,7 +6,7 @@ import { bool, metaFor, nullable, str } from "@/features/geography/form-helpers"
 
 type Row = Awaited<ReturnType<typeof listLocalities>>[number];
 
-export const Route = createFileRoute("/_authenticated/geography/localities")({
+export const Route = createFileRoute("/_authenticated/geography/localities/")({
   head: () => metaFor("Localités", "Fiches techniques des localités : type de zone, coordonnées, population, accès réseau et demande."),
   component: LocalitiesPage,
 });
