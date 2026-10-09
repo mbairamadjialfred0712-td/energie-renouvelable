@@ -21,7 +21,7 @@ function fromRow(r: SolarRow | null): F {
 
 const inputCls = "h-9 w-full border border-input bg-background px-2 text-sm";
 
-export function SolarForm({ row, defaultLocalityId, onSaved, onCancel }: { row: SolarRow | null; defaultLocalityId?: string; onSaved: (id: string) => void; onCancel: () => void }) {
+export function SolarForm({ row, defaultLocalityId, onSaved, onCancel }: { row: SolarRow | null; defaultLocalityId?: string | undefined; onSaved: (id: string) => void; onCancel: () => void }) {
   const { data: opts } = useQuery({ queryKey: ["solar-location-options"], queryFn: () => listSolarLocationOptions() });
   const [f, setF] = useState<F>(() => ({ ...fromRow(row), ...(defaultLocalityId && !row ? { locality_id: defaultLocalityId } : {}) }));
   const [country, setCountry] = useState(""); const [region, setRegion] = useState(""); const [dept, setDept] = useState("");
