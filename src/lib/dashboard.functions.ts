@@ -16,7 +16,7 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
       countTable(sb, "energy_resources"), countTable(sb, "countries"), countTable(sb, "study_sites"), countTable(sb, "regions"), countTable(sb, "departments"),
     ]);
     const [{ data: res }, { data: dem }, { data: proj }, { data: locs }, { data: sitePts }] = await Promise.all([
-      sb.from("energy_resources").select("resource_type, validation_status, locality_id"),
+      sb.from("energy_resources").select("resource_type, validation_status, locality_id, source, solar_resources(solar_status)"),
       sb.from("energy_demands").select("sector, annual_demand_kwh, peak_power_kw, validation_status"),
       sb.from("projects").select("id, name, status, updated_at").order("updated_at", { ascending: false }),
       sb.from("localities").select("id, name, latitude, longitude, population").not("latitude", "is", null).not("longitude", "is", null).limit(2000),
@@ -25,6 +25,15 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
     const resourcesByType: Record<string, number> = { solar: 0, wind: 0, biomass: 0, waste: 0 };
     const resourcesValidated = (res ?? []).filter((r: any) => r.validation_status === "validated").length;
     for (const r of res ?? []) resourcesByType[r.resource_type] = (resourcesByType[r.resource_type] ?? 0) + 1;
+    const solarRows = (res ?? []).filter((r: any) => r.resource_type === "solar");
+    const solarStatus = (r: any) => (Array.isArray(r.solar_resources) ? r.solar_resources[0] : r.solar_resources)?.solar_status ?? "unverified";
+    const solar = {
+      datasets: solarRows.length,
+      localities: new Set(solarRows.map((r: any) => r.locality_id)).size,
+      validated: solarRows.filter((r: any) => solarStatus(r) === "validated").length,
+      pending: solarRows.filter((r: any) => ["unverified", "in_review"].includes(solarStatus(r))).length,
+      sources: new Set(solarRows.map((r: any) => String(r.source).trim().toLowerCase())).size,
+    };
     const localitiesWithResources = new Set((res ?? []).map((r: any) => r.locality_id)).size;
 
     const demandBySector: Record<string, { count: number; annualKwh: number; withValue: number }> = {};
@@ -39,7 +48,7 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
 
     return {
       localities, simulations, projects, scenarios, resources, countries, sites, regions, departments,
-      resourcesByType, resourcesValidated, localitiesWithResources,
+      resourcesByType, resourcesValidated, solar, localitiesWithResources,
       demands: (dem ?? []).length, demandBySector,
       projectsByStatus, recentProjects: (proj ?? []).slice(0, 5),
       populationGeolocated: population,
