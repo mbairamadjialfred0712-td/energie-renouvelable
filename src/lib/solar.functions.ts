@@ -47,7 +47,7 @@ export const getSolarAccess = createServerFn({ method: "GET" }).middleware([requ
 export const listSolar = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { data, error } = await (context.supabase as any).from("energy_resources").select(SELECT).eq("resource_type", "solar").order("updated_at", { ascending: false });
   if (error) throw new Error("Les données solaires n’ont pas pu être chargées.");
-  return (data ?? []).map(flatten);
+  return ((data ?? []) as any[]).map(flatten);
 });
 
 export const getSolar = createServerFn({ method: "GET" })
@@ -60,7 +60,7 @@ export const getSolar = createServerFn({ method: "GET" })
     if (!row) return null;
     const item = flatten(row);
     const { data: sib } = await sb.from("energy_resources").select(SELECT).eq("resource_type", "solar").eq("locality_id", item.locality_id).order("created_at");
-    return { item, siblings: (sib ?? []).map(flatten) };
+    return { item, siblings: ((sib ?? []) as any[]).map(flatten) };
   });
 
 export const getLocalitySolar = createServerFn({ method: "GET" })
@@ -71,7 +71,7 @@ export const getLocalitySolar = createServerFn({ method: "GET" })
     const { data: loc } = await sb.from("localities").select("id, name, code, latitude, longitude, altitude_m, population, data_source, departments(name, regions(name, countries(name)))").eq("id", data.localityId).maybeSingle();
     const { data: rows } = await sb.from("energy_resources").select(SELECT).eq("resource_type", "solar").eq("locality_id", data.localityId).order("created_at", { ascending: false });
     const { data: sites } = await sb.from("study_sites").select("id, name, site_type").eq("locality_id", data.localityId);
-    return { locality: loc, datasets: (rows ?? []).map(flatten), sites: sites ?? [] };
+    return { locality: loc, datasets: ((rows ?? []) as any[]).map(flatten), sites: sites ?? [] };
   });
 
 export const listSolarLocationOptions = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
@@ -179,7 +179,7 @@ export const getSolarEngineInputs = createServerFn({ method: "GET" })
   .inputValidator((i: unknown) => z.object({ localityId: z.string().uuid(), includeProvisional: z.boolean().default(false) }).parse(i))
   .handler(async ({ data, context }): Promise<SolarResourceInput[]> => {
     const { data: rows } = await (context.supabase as any).from("energy_resources").select(SELECT).eq("resource_type", "solar").eq("locality_id", data.localityId);
-    return (rows ?? []).map(flatten).filter((r: SolarRow) => data.includeProvisional ? r.status !== "rejected" && r.status !== "archived" : r.status === "validated").map((r: SolarRow) => ({
+    return ((rows ?? []) as any[]).map(flatten).filter((r: SolarRow) => data.includeProvisional ? r.status !== "rejected" && r.status !== "archived" : r.status === "validated").map((r: SolarRow) => ({
       datasetId: r.id, localityId: r.locality_id, siteId: r.site_id,
       latitude: r.site_latitude ?? r.latitude, longitude: r.site_longitude ?? r.longitude,
       ghi: { value: r.ghi, unit: r.ghiUnit }, dni: { value: r.dni, unit: r.dniUnit }, dhi: { value: r.dhi, unit: r.dhiUnit },

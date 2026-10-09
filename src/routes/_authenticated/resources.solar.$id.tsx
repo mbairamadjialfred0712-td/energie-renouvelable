@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/resources/solar/$id")({
   component: SolarDetail,
 });
 
-function Row({ label, value, help }: { label: string; value: React.ReactNode; help?: string }) {
+function Row({ label, value, help }: { label: string; value: React.ReactNode; help?: string | undefined }) {
   return <div className="flex justify-between gap-4 border-b border-border py-2 text-sm last:border-0"><dt className="text-muted-foreground" title={help}>{label}</dt><dd className="text-right font-medium tabular-nums">{value}</dd></div>;
 }
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
