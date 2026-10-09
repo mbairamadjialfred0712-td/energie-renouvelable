@@ -84,37 +84,37 @@ export function SolarForm({ row, defaultLocalityId, onSaved, onCancel }: { row: 
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <Section title="Localisation">
-        <Sel label="Pays" value={country} onChange={(v) => { setCountry(v); setRegion(""); setDept(""); }} items={countries} empty="Tous" />
-        <Sel label="Région" value={region} onChange={(v) => { setRegion(v); setDept(""); }} items={regions} empty="Toutes" />
-        <Sel label="Département" value={dept} onChange={setDept} items={depts} empty="Tous" />
-        <Sel label="Localité *" value={f["locality_id"] ?? ""} onChange={(v) => setF((p) => ({ ...p, locality_id: v, site_id: "" }))} items={locList.map((l) => [l.id, l.name])} empty="— Choisir —" />
-        <Sel label="Site d’étude" value={f["site_id"] ?? ""} onChange={(v) => setF((p) => ({ ...p, site_id: v }))} items={sites.map((s) => [s.id, s.name])} empty={sites.length ? "Aucun" : "Aucun site pour cette localité"} />
-      </Section>
-      <Section title="Ressource solaire">
-        <Num k="ghi" label="GHI" help={HELP["ghi"]} unitKey="ghiUnit" units={IRRADIANCE_UNITS} />
-        <Num k="dni" label="DNI" help={HELP["dni"]} unitKey="dniUnit" units={IRRADIANCE_UNITS} />
-        <Num k="dhi" label="DHI" help={HELP["dhi"]} unitKey="dhiUnit" units={IRRADIANCE_UNITS} />
-        <Num k="annual" label="Irradiation annuelle" unit="kWh/m²/an" help={HELP["annual"]} />
-        <Num k="tavg" label="Température moyenne" unit="°C" help={HELP["temp"]} />
-        <Num k="tmin" label="Température minimale" unit="°C" />
-        <Num k="tmax" label="Température maximale" unit="°C" />
-        <Num k="sunshine" label="Heures d’ensoleillement" help={HELP["sunshine"]} unitKey="sunshineUnit" units={SUNSHINE_UNITS} />
-      </Section>
-      <Section title="Source">
-        <Txt k="source" label="Source * (organisme, base, station…)" />
-        <Txt k="reference" label="Référence (lien, document)" />
+      {Section({ title: "Localisation", children: <>
+        {Sel({ label: "Pays", value: country, onChange: (v) => { setCountry(v); setRegion(""); setDept(""); }, items: countries, empty: "Tous" })}
+        {Sel({ label: "Région", value: region, onChange: (v) => { setRegion(v); setDept(""); }, items: regions, empty: "Toutes" })}
+        {Sel({ label: "Département", value: dept, onChange: setDept, items: depts, empty: "Tous" })}
+        {Sel({ label: "Localité *", value: f["locality_id"] ?? "", onChange: (v) => setF((p) => ({ ...p, locality_id: v, site_id: "" })), items: locList.map((l) => [l.id, l.name]), empty: "— Choisir —" })}
+        {Sel({ label: "Site d’étude", value: f["site_id"] ?? "", onChange: (v) => setF((p) => ({ ...p, site_id: v })), items: sites.map((s) => [s.id, s.name]), empty: sites.length ? "Aucun" : "Aucun site pour cette localité" })}
+      </> })}
+      {Section({ title: "Ressource solaire", children: <>
+        {Num({ k: "ghi", label: "GHI", help: HELP["ghi"], unitKey: "ghiUnit", units: IRRADIANCE_UNITS })}
+        {Num({ k: "dni", label: "DNI", help: HELP["dni"], unitKey: "dniUnit", units: IRRADIANCE_UNITS })}
+        {Num({ k: "dhi", label: "DHI", help: HELP["dhi"], unitKey: "dhiUnit", units: IRRADIANCE_UNITS })}
+        {Num({ k: "annual", label: "Irradiation annuelle", unit: "kWh/m²/an", help: HELP["annual"] })}
+        {Num({ k: "tavg", label: "Température moyenne", unit: "°C", help: HELP["temp"] })}
+        {Num({ k: "tmin", label: "Température minimale", unit: "°C" })}
+        {Num({ k: "tmax", label: "Température maximale", unit: "°C" })}
+        {Num({ k: "sunshine", label: "Heures d’ensoleillement", help: HELP["sunshine"], unitKey: "sunshineUnit", units: SUNSHINE_UNITS })}
+      </> })}
+      {Section({ title: "Source", children: <>
+        {Txt({ k: "source", label: "Source * (organisme, base, station…)" })}
+        {Txt({ k: "reference", label: "Référence (lien, document)" })}
         <label className="block text-sm"><span className="font-medium">Nature de la donnée</span><select aria-label="Nature de la donnée" className={`mt-1 ${inputCls}`} value={f["data_nature"]} onChange={set("data_nature")}>{Object.entries(DATA_NATURES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-        <Txt k="period_start" label="Début de période" type="date" />
-        <Txt k="period_end" label="Fin de période" type="date" />
-        <Txt k="acquisition_method" label="Méthode d’obtention" />
-        <Txt k="collected_on" label="Date de collecte" type="date" />
-      </Section>
-      <Section title="Qualité">
-        <Txt k="quality" label="Qualité de la donnée" />
+        {Txt({ k: "period_start", label: "Début de période", type: "date" })}
+        {Txt({ k: "period_end", label: "Fin de période", type: "date" })}
+        {Txt({ k: "acquisition_method", label: "Méthode d’obtention" })}
+        {Txt({ k: "collected_on", label: "Date de collecte", type: "date" })}
+      </> })}
+      {Section({ title: "Qualité", children: <>
+        {Txt({ k: "quality", label: "Qualité de la donnée" })}
         <label className="block text-sm"><span className="font-medium">Statut de validation</span><select aria-label="Statut de validation" className={`mt-1 ${inputCls}`} value={f["status"]} onChange={set("status")}>{Object.entries(SOLAR_STATUSES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
         <label className="block text-sm sm:col-span-2 lg:col-span-3"><span className="font-medium">Notes et hypothèses déclarées</span><textarea aria-label="Notes" className="mt-1 min-h-20 w-full border border-input bg-background p-2 text-sm" value={f["notes"] ?? ""} onChange={set("notes")} /></label>
-      </Section>
+      </> })}
       {warnings.length > 0 && <div className="border border-status-ready/40 bg-muted p-3 text-sm"><p className="font-medium">Avertissements (la donnée n’est pas modifiée) :</p><ul className="mt-1 list-disc pl-5">{warnings.map((w) => <li key={w}>{w}</li>)}</ul></div>}
       {(error || errors.length > 0) && <div className="border border-destructive/40 p-3 text-sm text-destructive">{error ?? errors.join(" ")}</div>}
       <div className="flex gap-2"><Button type="submit" disabled={busy}>{busy ? "Enregistrement…" : row ? "Enregistrer les modifications" : "Créer le jeu de données"}</Button><Button type="button" variant="outline" onClick={onCancel}>Annuler</Button></div>
