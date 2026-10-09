@@ -28,7 +28,8 @@ export function SolarForm({ row, defaultLocalityId, onSaved, onCancel }: { row: 
   const [error, setError] = useState<string | null>(null); const [busy, setBusy] = useState(false);
   const set = (k: string) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
 
-  const locs = opts?.localities ?? [];
+  type Loc = { id: string; name: string; departmentId: string | null; departmentName: string | null; regionId: string | null; regionName: string | null; countryId: string | null; countryName: string | null };
+  const locs: Loc[] = opts?.localities ?? [];
   const uniq = (arr: [string | null, string | null][]) => [...new Map(arr.filter((x): x is [string, string] => !!x[0] && !!x[1])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   const countries = uniq(locs.map((l) => [l.countryId, l.countryName]));
   const regions = uniq(locs.filter((l) => !country || l.countryId === country).map((l) => [l.regionId, l.regionName]));
@@ -62,7 +63,7 @@ export function SolarForm({ row, defaultLocalityId, onSaved, onCancel }: { row: 
     } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   }
 
-  const Num = ({ k, label, unit, help, unitKey, units }: { k: string; label: string; unit?: string; help?: string; unitKey?: string; units?: readonly string[] }) => (
+  const Num = ({ k, label, unit, help, unitKey, units }: { k: string; label: string; unit?: string; help?: string | undefined; unitKey?: string; units?: readonly string[] }) => (
     <label className="block text-sm">
       <span className="flex items-center gap-1 font-medium">{label}{help && <span title={help} className="cursor-help text-muted-foreground"><Info className="h-3.5 w-3.5" /></span>}</span>
       <div className="mt-1 flex gap-1">
