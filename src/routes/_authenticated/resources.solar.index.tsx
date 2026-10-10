@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getSolarAccess, listSolar } from "@/lib/solar.functions";
 import { DATA_NATURES, SOLAR_STATUSES } from "@/features/resources/solar/solar-model";
 import { NatureBadge, StatusBadge, fmt, periodText } from "@/features/resources/solar/solar-ui";
+import { SolarEvolution } from "@/features/resources/solar/solar-evolution";
 
 const META = "Jeux de données solaires par localité ou site : GHI, DNI, DHI, températures, ensoleillement — avec unités, sources, périodes et statut de validation.";
 export const Route = createFileRoute("/_authenticated/resources/solar/")({
@@ -39,6 +40,8 @@ function SolarList() {
       {isLoading ? <p className="text-muted-foreground">Chargement…</p> : all.length === 0 ? (
         <EmptyState title="Aucune donnée solaire" description="Aucun jeu de données solaire n’est enregistré. Aucune valeur n’est affichée tant qu’elle n’a pas été saisie avec sa source." />
       ) : (
+        <>
+        <SolarEvolution rows={shown} />
         <div className="overflow-x-auto border border-border bg-background">
           <table className="w-full text-sm">
             <thead className="bg-muted text-left text-xs uppercase text-muted-foreground"><tr>{["Localité / site", "GHI", "DNI", "DHI", "T moy.", "Source", "Période", "Nature", "Statut"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
@@ -60,6 +63,7 @@ function SolarList() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </WorkspacePage>
   );
