@@ -2,7 +2,7 @@
 
 ## Graphiques solaires
 - [x] Ajouter une vue temporelle partagée, filtres de paramètre, unité et période, avec localités et sources.
-- [ ] Vérifier les sélections et l’affichage connecté avec des données enregistrées.
+- [x] Vérifier les sélections et l’affichage connecté avec des données enregistrées (fiches temporaires supprimées après test).
 
 - [ ] Activer Lovable Cloud et l’authentification
 - [ ] Créer le schéma relationnel, les profils, les rôles séparés et les politiques de sécurité
