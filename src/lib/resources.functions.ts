@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { RESOURCE_DETAILS, type ResourceType } from "@/features/resources/resource-types";
+import { recordedDate } from "@/services/simulation/solar-pv-engine";
 
 const typeSchema = z.enum(["solar", "wind", "biomass", "waste"]);
 const MODEL = "openai/gpt-6-astra";
@@ -80,6 +81,8 @@ const saveSchema = z.object({
   locality_id: z.string().uuid({ message: "Sélectionnez une localité." }),
   source: z.string().trim().min(2, "La source est obligatoire.").max(500),
   period: z.string().trim().max(200).nullable(),
+  period_start: z.string().nullable().optional(),
+  period_end: z.string().nullable().optional(),
   reference: z.string().trim().max(500).nullable(),
   quality: z.string().trim().max(200).nullable(),
   validation_status: z.enum(["pending", "validated", "rejected"]),
@@ -93,6 +96,10 @@ export const saveResource = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as any;
     const config = RESOURCE_DETAILS[data.type];
+    const { data: roles, error: roleError } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    if (roleError || !roles?.some((r) => r.role === "admin" || r.role === "engineer")) throw new Error("Votre rôle ne permet pas de modifier les ressources.");
+    const start = recordedDate(data.period_start), end = recordedDate(data.period_end);
+    if ((data.period_start && start === null) || (data.period_end && end === null) || (start !== null && end !== null && end < start)) throw new Error("Les dates de la période sont invalides.");
     const detail: Record<string, string | number | null> = {};
     for (const field of config.fields) {
       const raw = (data.detail[field.key] ?? "").trim();
@@ -106,6 +113,10 @@ export const saveResource = createServerFn({ method: "POST" })
     }
     if (data.type === "biomass" && !detail["biomass_type"]) throw new Error("Le type de biomasse est obligatoire.");
     if (data.type === "waste" && !detail["waste_type"]) throw new Error("Le type de déchet est obligatoire.");
+    if (data.type !== "solar") {
+      detail["period_start"] = data.period_start ?? null;
+      detail["period_end"] = data.period_end ?? null;
+    }
 
     const base = { locality_id: data.locality_id, resource_type: data.type, source: data.source, period: data.period, reference: data.reference, quality: data.quality, validation_status: data.validation_status, notes: data.notes };
     let resourceId = data.id;
@@ -117,7 +128,9 @@ export const saveResource = createServerFn({ method: "POST" })
       if (error || !created) throw new Error("La ressource n’a pas pu être créée.");
       resourceId = created.id as string;
     }
-    const { error: detailError } = await sb.from(config.table).upsert({ ...detail, resource_id: resourceId, owner_id: context.userId }, { onConflict: "resource_id" });
+    const { data: resourceOwner } = await sb.from("energy_resources").select("owner_id").eq("id", resourceId).single();
+    if (!resourceOwner) throw new Error("La ressource est inaccessible.");
+    const { error: detailError } = await sb.from(config.table).upsert({ ...detail, resource_id: resourceId, owner_id: resourceOwner.owner_id }, { onConflict: "resource_id" });
     if (detailError) throw new Error("Les paramètres techniques n’ont pas pu être enregistrés.");
     return { id: resourceId };
   });

@@ -1650,7 +1650,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      estimate_project_solar: {
+        Args: {
+          _assumptions: string
+          _performance_ratio: number
+          _power_kwp: number
+          _project_id: string
+          _resource_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "engineer" | "analyst" | "viewer"
