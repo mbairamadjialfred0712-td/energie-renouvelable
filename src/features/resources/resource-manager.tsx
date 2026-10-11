@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { EntityManager, numberText, text, type FieldDef, type FormValues } from "@/features/geography/entity-manager";
 import { deleteResource, listLocalityOptions, listResources, runResourcePreAnalysis, saveResource, type AnalysisItem, type ResourceRow } from "@/lib/resources.functions";
 import { RESOURCE_DETAILS, type ResourceType } from "./resource-types";
+import { ResourceEvolution } from "./resource-evolution";
 
 const VALIDATION_LABELS: Record<string, string> = { pending: "À vérifier", validated: "Validée", rejected: "Rejetée" };
 const nullable = (v: string | undefined) => (v && v.trim() ? v.trim() : null);
@@ -31,6 +32,8 @@ export function ResourceManager({ type, title, description }: { type: ResourceTy
     ...config.fields.map<FieldDef>((f) => ({ key: `d_${f.key}`, label: f.label, ...(f.unit ? { unit: f.unit } : {}), type: f.kind })),
     { key: "source", label: "Source", type: "text", required: true, help: "Ex. station de mesure, base satellitaire, rapport — avec organisme." },
     { key: "period", label: "Période des données", type: "text" },
+    { key: "period_start", label: "Début de période", type: "date" },
+    { key: "period_end", label: "Fin de période", type: "date" },
     { key: "reference", label: "Référence (lien, document)", type: "text" },
     { key: "quality", label: "Qualité (mesure, estimation, modèle…)", type: "text" },
     { key: "notes", label: "Notes et hypothèses déclarées", type: "textarea", colSpan: 2 },
@@ -40,6 +43,7 @@ export function ResourceManager({ type, title, description }: { type: ResourceTy
   const toForm = (row: ResourceRow): FormValues => ({
     locality_id: row.locality_id, validation_status: row.validation_status, source: row.source, period: row.period ?? "", reference: row.reference ?? "",
     quality: row.quality ?? "", notes: row.notes ?? "",
+    period_start: String(row.detail["period_start"] ?? ""), period_end: String(row.detail["period_end"] ?? ""),
     ...Object.fromEntries(config.fields.map((f) => [`d_${f.key}`, row.detail[f.key] == null ? "" : String(row.detail[f.key])])),
   });
 
@@ -49,6 +53,7 @@ export function ResourceManager({ type, title, description }: { type: ResourceTy
         id, type, locality_id: values["locality_id"] ?? "", source: values["source"] ?? "", period: nullable(values["period"]), reference: nullable(values["reference"]),
         quality: nullable(values["quality"]), notes: nullable(values["notes"]), validation_status: (values["validation_status"] as "pending") || "pending",
         detail: Object.fromEntries(config.fields.map((f) => [f.key, values[`d_${f.key}`] ?? ""])),
+        period_start: nullable(values["period_start"]), period_end: nullable(values["period_end"]),
       },
     });
 
@@ -84,6 +89,7 @@ export function ResourceManager({ type, title, description }: { type: ResourceTy
       rowLabel={(r) => `${config.label} — ${r.locality_name ?? ""}`}
       disabled={localities && localities.length === 0 ? { reason: "Enregistrez d’abord une localité dans Territoires." } : null}
     >
+      <ResourceEvolution type={type} rows={rowsQuery.data ?? []} />
       {viewing && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-overlay p-4" onMouseDown={() => setViewing(null)}>
           <div className="max-h-[85vh] w-full max-w-3xl overflow-y-auto border border-border bg-background shadow-panel" onMouseDown={(e) => e.stopPropagation()}>
