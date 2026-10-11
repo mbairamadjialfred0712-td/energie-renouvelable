@@ -15,6 +15,13 @@
       "when": 1791677372442,
       "tag": "0001_authorize_project_solar_estimates",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791677402361,
+      "tag": "0002_trusted_solar_production_rpc",
+      "breakpoints": true
     }
   ]
 }
