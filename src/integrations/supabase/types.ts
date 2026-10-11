@@ -25,6 +25,8 @@ export type Database = {
           id: string
           moisture_pct: number | null
           owner_id: string
+          period_end: string | null
+          period_start: string | null
           resource_id: string
           updated_at: string
         }
@@ -38,6 +40,8 @@ export type Database = {
           id?: string
           moisture_pct?: number | null
           owner_id?: string
+          period_end?: string | null
+          period_start?: string | null
           resource_id: string
           updated_at?: string
         }
@@ -51,6 +55,8 @@ export type Database = {
           id?: string
           moisture_pct?: number | null
           owner_id?: string
+          period_end?: string | null
+          period_start?: string | null
           resource_id?: string
           updated_at?: string
         }
@@ -741,6 +747,60 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_solar_production: {
+        Row: {
+          created_at: string
+          engine_version: string
+          id: string
+          input_snapshot: Json
+          method: string
+          owner_id: string
+          production_kwh: number
+          project_id: string
+          requested_by: string
+          resource_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          engine_version: string
+          id?: string
+          input_snapshot: Json
+          method: string
+          owner_id: string
+          production_kwh: number
+          project_id: string
+          requested_by: string
+          resource_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          engine_version?: string
+          id?: string
+          input_snapshot?: Json
+          method?: string
+          owner_id?: string
+          production_kwh?: number
+          project_id?: string
+          requested_by?: string
+          resource_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_solar_production_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_solar_production_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "energy_resources"
             referencedColumns: ["id"]
           },
         ]
@@ -1482,6 +1542,8 @@ export type Database = {
           id: string
           moisture_pct: number | null
           owner_id: string
+          period_end: string | null
+          period_start: string | null
           recovery_method: string | null
           resource_id: string
           updated_at: string
@@ -1495,6 +1557,8 @@ export type Database = {
           id?: string
           moisture_pct?: number | null
           owner_id?: string
+          period_end?: string | null
+          period_start?: string | null
           recovery_method?: string | null
           resource_id: string
           updated_at?: string
@@ -1508,6 +1572,8 @@ export type Database = {
           id?: string
           moisture_pct?: number | null
           owner_id?: string
+          period_end?: string | null
+          period_start?: string | null
           recovery_method?: string | null
           resource_id?: string
           updated_at?: string
@@ -1534,6 +1600,8 @@ export type Database = {
           maximum_speed_ms: number | null
           measurement_height_m: number | null
           owner_id: string
+          period_end: string | null
+          period_start: string | null
           resource_id: string
           updated_at: string
         }
@@ -1547,6 +1615,8 @@ export type Database = {
           maximum_speed_ms?: number | null
           measurement_height_m?: number | null
           owner_id?: string
+          period_end?: string | null
+          period_start?: string | null
           resource_id: string
           updated_at?: string
         }
@@ -1560,6 +1630,8 @@ export type Database = {
           maximum_speed_ms?: number | null
           measurement_height_m?: number | null
           owner_id?: string
+          period_end?: string | null
+          period_start?: string | null
           resource_id?: string
           updated_at?: string
         }

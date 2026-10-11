@@ -1,5 +1,11 @@
 # Feuille de route — Fondation V1
 
+## Production énergétique et graphiques ressources
+- [ ] Ajouter périodes structurées et graphiques éolien, biomasse et déchets sans conversion ou dates inventées.
+- [ ] Ajouter une estimation PV par projet avec jeu solaire validé, puissance et ratio de performance explicites.
+- [ ] Conserver résultats, méthode, sources et hypothèses ; inclure les paramètres dans la pré-analyse IA existante.
+- [ ] Vérifier les calculs, accès et parcours connecté ; supprimer les données temporaires.
+
 ## Graphiques solaires
 - [x] Ajouter une vue temporelle partagée, filtres de paramètre, unité et période, avec localités et sources.
 - [x] Vérifier les sélections et l’affichage connecté avec des données enregistrées (fiches temporaires supprimées après test).
