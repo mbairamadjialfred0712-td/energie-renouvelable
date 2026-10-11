@@ -8,6 +8,13 @@
       "when": 1791677263764,
       "tag": "0000_resource_periods_and_project_solar_production",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791677372442,
+      "tag": "0001_authorize_project_solar_estimates",
+      "breakpoints": true
     }
   ]
 }
