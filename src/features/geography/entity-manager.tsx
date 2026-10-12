@@ -14,7 +14,7 @@ export type FieldDef = {
   label: string;
   unit?: string;
   required?: boolean;
-  type: "text" | "number" | "textarea" | "select" | "boolean";
+  type: "text" | "number" | "date" | "textarea" | "select" | "boolean";
   options?: ReadonlyArray<{ value: string; label: string }>;
   help?: string;
   colSpan?: 1 | 2;
@@ -257,7 +257,7 @@ export function EntityManager<Row>({
                     </select>
                   ) : (
                     <Input
-                      type={field.type === "number" ? "number" : "text"}
+                      type={field.type}
                       step="any"
                       required={field.required}
                       placeholder="À renseigner"
