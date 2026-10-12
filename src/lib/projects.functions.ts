@@ -72,10 +72,12 @@ export type ProjectRecord = {
     targetDate: string | null;
     createdAt: string;
     updatedAt: string;
+    localityId: string | null;
   };
   fields: ProjectDataField[];
   history: ProjectHistoryEvent[];
   analyses: ProjectAnalysis[];
+  productions: Database["public"]["Tables"]["project_solar_production"]["Row"][];
 };
 
 const asItems = (value: unknown): AnalysisItem[] => {
@@ -93,17 +95,19 @@ const asItems = (value: unknown): AnalysisItem[] => {
 };
 
 async function loadProjectRecord(client: SupabaseClient<Database>, projectId: string): Promise<ProjectRecord> {
-  const [projectResult, fieldsResult, historyResult, analysesResult] = await Promise.all([
-    client.from("projects").select("id,name,description,status,start_date,target_date,created_at,updated_at").eq("id", projectId).single(),
+  const [projectResult, fieldsResult, historyResult, analysesResult, productionsResult] = await Promise.all([
+    client.from("projects").select("id,name,description,status,start_date,target_date,created_at,updated_at,locality_id").eq("id", projectId).single(),
     client.from("project_data_fields").select("*").eq("project_id", projectId).order("sort_order"),
     client.from("project_change_history").select("id,action,summary,changes,created_at").eq("project_id", projectId).order("created_at", { ascending: false }),
     client.from("project_pre_analyses").select("id,status,model,missing_information,declared_assumptions,verification_points,scope_note,error_message,created_at,completed_at").eq("project_id", projectId).order("created_at", { ascending: false }),
+    client.from("project_solar_production").select("*").eq("project_id", projectId).order("created_at", { ascending: false }),
   ]);
   if (projectResult.error || !projectResult.data) throw new Error("Ce projet est introuvable ou inaccessible.");
-  if (fieldsResult.error || historyResult.error || analysesResult.error) throw new Error("Le dossier complet n’a pas pu être chargé.");
+  if (fieldsResult.error || historyResult.error || analysesResult.error || productionsResult.error) throw new Error("Le dossier complet n’a pas pu être chargé.");
   const project = projectResult.data;
   return {
-    project: { id: project.id, name: project.name, description: project.description ?? "", status: project.status, startDate: project.start_date, targetDate: project.target_date, createdAt: project.created_at, updatedAt: project.updated_at },
+    project: { id: project.id, name: project.name, description: project.description ?? "", status: project.status, startDate: project.start_date, targetDate: project.target_date, createdAt: project.created_at, updatedAt: project.updated_at, localityId: project.locality_id },
+    productions: productionsResult.data ?? [],
     fields: (fieldsResult.data ?? []).map((field) => ({ id: field.id, section: field.section, fieldKey: field.field_key, label: field.label, value: field.value_text, unit: field.unit ?? "", fieldKind: field.field_kind, source: field.source ?? "", dataPeriod: field.data_period ?? "", quality: field.quality ?? "", notes: field.notes ?? "", sortOrder: field.sort_order })),
     history: (historyResult.data ?? []).map((event) => ({ id: event.id, action: event.action, summary: event.summary, changes: event.changes, createdAt: event.created_at })),
     analyses: (analysesResult.data ?? []).map((analysis) => ({ id: analysis.id, status: analysis.status, model: analysis.model, missingInformation: asItems(analysis.missing_information), declaredAssumptions: asItems(analysis.declared_assumptions), verificationPoints: asItems(analysis.verification_points), scopeNote: analysis.scope_note, errorMessage: analysis.error_message, createdAt: analysis.created_at, completedAt: analysis.completed_at })),
@@ -210,7 +214,7 @@ export const analyzeProject = createServerFn({ method: "POST" })
   .inputValidator((input) => projectIdSchema.parse(input))
   .handler(async ({ data, context }) => {
     const record = await loadProjectRecord(context.supabase, data.projectId);
-    const snapshot = { project: record.project, fields: record.fields };
+    const snapshot = { project: record.project, fields: record.fields, solar_production_estimates: record.productions };
     const { data: analysis, error: createError } = await context.supabase.from("project_pre_analyses").insert({ project_id: data.projectId, owner_id: context.userId, requested_by: context.userId, status: "running", model: "openai/gpt-6-astra", input_snapshot: snapshot, scope_note: "Pré-analyse de complétude et de vérification uniquement. Aucun résultat énergétique ou financier n’est calculé." }).select("id").single();
     if (createError || !analysis) throw new Error("La pré-analyse n’a pas pu être initialisée.");
     try {
