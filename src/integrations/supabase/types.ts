@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      biomass_reference_observations: {
+        Row: {
+          coordinate_reference: string | null
+          country: string
+          density_mg_ha: number
+          id: string
+          land_use: string | null
+          notes: string
+          period_end: string | null
+          period_start: string | null
+          plot_id: string
+          reference: string
+          region_name: string
+          source: string
+          source_record: string
+          utm_x: number
+          utm_y: number
+        }
+        Insert: {
+          coordinate_reference?: string | null
+          country: string
+          density_mg_ha: number
+          id?: string
+          land_use?: string | null
+          notes: string
+          period_end?: string | null
+          period_start?: string | null
+          plot_id: string
+          reference: string
+          region_name: string
+          source: string
+          source_record: string
+          utm_x: number
+          utm_y: number
+        }
+        Update: {
+          coordinate_reference?: string | null
+          country?: string
+          density_mg_ha?: number
+          id?: string
+          land_use?: string | null
+          notes?: string
+          period_end?: string | null
+          period_start?: string | null
+          plot_id?: string
+          reference?: string
+          region_name?: string
+          source?: string
+          source_record?: string
+          utm_x?: number
+          utm_y?: number
+        }
+        Relationships: []
+      }
       biomass_resources: {
         Row: {
           annual_quantity_t: number | null
