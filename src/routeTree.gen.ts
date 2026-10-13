@@ -27,6 +27,7 @@ import { Route as AuthenticatedScenariosRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSimulationsRouteImport } from './routes/_authenticated/simulations'
 import { Route as AuthenticatedTechnologiesRouteImport } from './routes/_authenticated/technologies'
+import { Route as AuthenticatedTestersRouteImport } from './routes/_authenticated/testers'
 import { Route as DecouvrirProjetsRouteImport } from './routes/decouvrir.projets'
 import { Route as DecouvrirTableauDeBordRouteImport } from './routes/decouvrir.tableau-de-bord'
 import { Route as DecouvrirTerritoiresRouteImport } from './routes/decouvrir.territoires'
@@ -144,6 +145,11 @@ const AuthenticatedTechnologiesRoute =
     path: '/technologies',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTestersRoute = AuthenticatedTestersRouteImport.update({
+  id: '/testers',
+  path: '/testers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const DecouvrirProjetsRoute = DecouvrirProjetsRouteImport.update({
   id: '/decouvrir/projets',
   path: '/decouvrir/projets',
@@ -309,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/simulations': typeof AuthenticatedSimulationsRouteWithChildren
   '/technologies': typeof AuthenticatedTechnologiesRoute
+  '/testers': typeof AuthenticatedTestersRoute
   '/decouvrir/projets': typeof DecouvrirProjetsRoute
   '/decouvrir/tableau-de-bord': typeof DecouvrirTableauDeBordRoute
   '/decouvrir/territoires': typeof DecouvrirTerritoiresRoute
@@ -350,6 +357,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/simulations': typeof AuthenticatedSimulationsRouteWithChildren
   '/technologies': typeof AuthenticatedTechnologiesRoute
+  '/testers': typeof AuthenticatedTestersRoute
   '/decouvrir/projets': typeof DecouvrirProjetsRoute
   '/decouvrir/tableau-de-bord': typeof DecouvrirTableauDeBordRoute
   '/decouvrir/territoires': typeof DecouvrirTerritoiresRoute
@@ -395,6 +403,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/simulations': typeof AuthenticatedSimulationsRouteWithChildren
   '/_authenticated/technologies': typeof AuthenticatedTechnologiesRoute
+  '/_authenticated/testers': typeof AuthenticatedTestersRoute
   '/decouvrir/projets': typeof DecouvrirProjetsRoute
   '/decouvrir/tableau-de-bord': typeof DecouvrirTableauDeBordRoute
   '/decouvrir/territoires': typeof DecouvrirTerritoiresRoute
@@ -441,6 +450,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/simulations'
     | '/technologies'
+    | '/testers'
     | '/decouvrir/projets'
     | '/decouvrir/tableau-de-bord'
     | '/decouvrir/territoires'
@@ -482,6 +492,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/simulations'
     | '/technologies'
+    | '/testers'
     | '/decouvrir/projets'
     | '/decouvrir/tableau-de-bord'
     | '/decouvrir/territoires'
@@ -526,6 +537,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/simulations'
     | '/_authenticated/technologies'
+    | '/_authenticated/testers'
     | '/decouvrir/projets'
     | '/decouvrir/tableau-de-bord'
     | '/decouvrir/territoires'
@@ -691,6 +703,13 @@ declare module '@tanstack/react-router' {
       path: '/technologies'
       fullPath: '/technologies'
       preLoaderRoute: typeof AuthenticatedTechnologiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/testers': {
+      id: '/_authenticated/testers'
+      path: '/testers'
+      fullPath: '/testers'
+      preLoaderRoute: typeof AuthenticatedTestersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/decouvrir/projets': {
@@ -1006,6 +1025,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSimulationsRoute: typeof AuthenticatedSimulationsRouteWithChildren
   AuthenticatedTechnologiesRoute: typeof AuthenticatedTechnologiesRoute
+  AuthenticatedTestersRoute: typeof AuthenticatedTestersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1021,6 +1041,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSimulationsRoute: AuthenticatedSimulationsRouteWithChildren,
   AuthenticatedTechnologiesRoute: AuthenticatedTechnologiesRoute,
+  AuthenticatedTestersRoute: AuthenticatedTestersRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

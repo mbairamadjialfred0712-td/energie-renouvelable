@@ -1787,6 +1787,16 @@ export type Database = {
         }
         Returns: string
       }
+      estimate_project_solar_configured: {
+        Args: {
+          _assumptions: string
+          _power_kwp: number
+          _project_id: string
+          _resource_id: string
+          _settings_id: string
+        }
+        Returns: string
+      }
       set_tester_engineer: {
         Args: { _enabled: boolean; _target_id: string }
         Returns: undefined

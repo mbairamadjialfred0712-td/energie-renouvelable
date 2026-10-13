@@ -29,6 +29,13 @@
       "when": 1791855637051,
       "tag": "0003_shared_technical_settings_and_energy_estimates",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791855698175,
+      "tag": "0004_shared_solar_settings_snapshot",
+      "breakpoints": true
     }
   ]
 }
