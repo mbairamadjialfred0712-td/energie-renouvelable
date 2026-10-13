@@ -1,10 +1,11 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LayoutDashboard, Map, Sun, Activity, FlaskConical, Layers3, LineChart, FolderKanban, Upload, FileText, Settings, LogOut, Menu, X, Database, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoAsset from "@/assets/energie-renouvelable-logo.png.asset.json";
 import { Button } from "@/components/ui/button";
+import { getTechnicalSettings } from "@/lib/technical-settings.functions";
 
 const nav = [
   { label: "Tableau de bord", to: "/dashboard", icon: LayoutDashboard },
@@ -25,6 +26,7 @@ export function AppShell() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const access = useQuery({ queryKey: ["technical-settings"], queryFn: () => getTechnicalSettings() });
   const signOut = async () => { await queryClient.cancelQueries(); queryClient.clear(); await supabase.auth.signOut(); navigate({ to: "/login", replace: true }); };
   return <div className="min-h-screen bg-workspace lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
     <header className="sticky top-0 z-30 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background px-4 lg:hidden">
@@ -41,6 +43,7 @@ export function AppShell() {
       <div className="px-5 pb-2 pt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-sidebar-muted">Espace d’étude</div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-5">
         {nav.map(({ label, to, icon: Icon }) => <Link key={to} to={to} onClick={() => setOpen(false)} className="flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent" activeProps={{ className: "bg-sidebar-accent text-sidebar-primary shadow-sm" }}><Icon className="h-[18px] w-[18px] shrink-0" /><span className="min-w-0 truncate">{label}</span><ChevronRight className="ml-auto h-3.5 w-3.5 opacity-45" /></Link>)}
+        {access.data?.isAdmin && <Link to="/testers" onClick={() => setOpen(false)} className="flex h-10 items-center gap-3 rounded-md px-3 text-sm text-sidebar-foreground hover:bg-sidebar-accent"><Settings className="h-[18px] w-[18px]" />Accès des testeurs</Link>}
       </nav>
       <div className="border-t border-sidebar-border p-3"><Button variant="ghost" className="w-full justify-start" onClick={signOut}><LogOut />Se déconnecter</Button></div>
     </aside>
