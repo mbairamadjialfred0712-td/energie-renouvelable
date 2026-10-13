@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { EntityManager, numberText, text, type FieldDef, type FormValues } from "@/features/geography/entity-manager";
 import { deleteResource, listLocalityOptions, listResources, runResourcePreAnalysis, saveResource, type AnalysisItem, type ResourceRow } from "@/lib/resources.functions";
 import { RESOURCE_DETAILS, type ResourceType } from "./resource-types";
+import { BiomassReferences } from "./biomass-references";
 import { ResourceEvolution } from "./resource-evolution";
 
 const VALIDATION_LABELS: Record<string, string> = { pending: "À vérifier", validated: "Validée", rejected: "Rejetée" };
@@ -90,6 +91,7 @@ export function ResourceManager({ type, title, description }: { type: ResourceTy
       disabled={localities && localities.length === 0 ? { reason: "Enregistrez d’abord une localité dans Territoires." } : null}
     >
       <ResourceEvolution type={type} rows={rowsQuery.data ?? []} />
+      {type === "biomass" && <BiomassReferences />}
       {viewing && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-overlay p-4" onMouseDown={() => setViewing(null)}>
           <div className="max-h-[85vh] w-full max-w-3xl overflow-y-auto border border-border bg-background shadow-panel" onMouseDown={(e) => e.stopPropagation()}>

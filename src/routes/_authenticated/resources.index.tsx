@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Sun, Wind, Leaf, Recycle } from "lucide-react";
 import { WorkspacePage } from "@/components/app/page";
+import { TerritoryMap } from "@/features/geography/territory-map";
 import { getDashboardSummary } from "@/lib/dashboard.functions";
 
 export const Route = createFileRoute("/_authenticated/resources/")({
@@ -29,6 +30,7 @@ function ResourcesOverview() {
           </Link>
         ))}
       </div>
+      <section className="mt-8 space-y-3"><h2 className="text-lg font-semibold">Carte des localités avec ressources</h2><p className="text-sm text-muted-foreground">{data?.resourcePoints.length ?? 0} localités documentées · {data?.biomassReferences ?? 0} observations de stock de biomasse séparées, non géolocalisées.</p>{!isLoading && <TerritoryMap points={(data?.resourcePoints ?? []).map(p => ({ ...p, kind: "locality" as const }))} />}</section>
       <h2 className="mt-8 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">Indicateurs solaires (données enregistrées)</h2>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {([["Localités avec données solaires", data?.solar.localities], ["Jeux solaires validés", data?.solar.validated], ["Jeux en attente de vérification", data?.solar.pending], ["Sources distinctes", data?.solar.sources]] as const).map(([l, v]) => (
