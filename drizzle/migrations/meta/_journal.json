@@ -50,6 +50,13 @@
       "when": 1791869572875,
       "tag": "0006_align_resource_detail_write_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791870113540,
+      "tag": "0007_require_identity_for_shared_catalog_reads",
+      "breakpoints": true
     }
   ]
 }
