@@ -1,0 +1,5 @@
+CREATE TABLE public.biomass_reference_observations (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), source_record text NOT NULL, plot_id text NOT NULL, country text NOT NULL, region_name text NOT NULL, land_use text, utm_x numeric NOT NULL, utm_y numeric NOT NULL, coordinate_reference text, density_mg_ha numeric NOT NULL CHECK (density_mg_ha>=0), period_start date, period_end date, source text NOT NULL, reference text NOT NULL, notes text NOT NULL, UNIQUE(source_record,plot_id));
+GRANT SELECT ON public.biomass_reference_observations TO authenticated;
+GRANT ALL ON public.biomass_reference_observations TO service_role;
+ALTER TABLE public.biomass_reference_observations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY biomass_reference_read ON public.biomass_reference_observations FOR SELECT TO authenticated USING(true);
