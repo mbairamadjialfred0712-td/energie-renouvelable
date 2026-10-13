@@ -53,6 +53,7 @@ import { Route as AuthenticatedResourcesSolarIndexRouteImport } from './routes/_
 import { Route as AuthenticatedResourcesSolarIdRouteImport } from './routes/_authenticated/resources.solar.$id'
 import { Route as AuthenticatedResourcesSolarNewRouteImport } from './routes/_authenticated/resources.solar.new'
 import { Route as AuthenticatedResourcesWindIndexRouteImport } from './routes/_authenticated/resources.wind.index'
+import { Route as AuthenticatedResourcesWindIdRouteImport } from './routes/_authenticated/resources.wind.$id'
 import { Route as AuthenticatedResourcesWindNewRouteImport } from './routes/_authenticated/resources.wind.new'
 import { Route as AuthenticatedSimulationsIdResultsRouteImport } from './routes/_authenticated/simulations.$id.results'
 
@@ -298,6 +299,12 @@ const AuthenticatedResourcesWindIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedResourcesWindRoute,
   } as any)
+const AuthenticatedResourcesWindIdRoute =
+  AuthenticatedResourcesWindIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedResourcesWindRoute,
+  } as any)
 const AuthenticatedResourcesWindNewRoute =
   AuthenticatedResourcesWindNewRouteImport.update({
     id: '/new',
@@ -352,6 +359,7 @@ export interface FileRoutesByFullPath {
   '/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
   '/resources/solar/$id': typeof AuthenticatedResourcesSolarIdRoute
   '/resources/solar/new': typeof AuthenticatedResourcesSolarNewRoute
+  '/resources/wind/$id': typeof AuthenticatedResourcesWindIdRoute
   '/resources/wind/new': typeof AuthenticatedResourcesWindNewRoute
   '/simulations/$id/results': typeof AuthenticatedSimulationsIdResultsRoute
   '/geography/localities/': typeof AuthenticatedGeographyLocalitiesIndexRoute
@@ -394,6 +402,7 @@ export interface FileRoutesByTo {
   '/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
   '/resources/solar/$id': typeof AuthenticatedResourcesSolarIdRoute
   '/resources/solar/new': typeof AuthenticatedResourcesSolarNewRoute
+  '/resources/wind/$id': typeof AuthenticatedResourcesWindIdRoute
   '/resources/wind/new': typeof AuthenticatedResourcesWindNewRoute
   '/simulations/$id/results': typeof AuthenticatedSimulationsIdResultsRoute
   '/geography/localities': typeof AuthenticatedGeographyLocalitiesIndexRoute
@@ -443,6 +452,7 @@ export interface FileRoutesById {
   '/_authenticated/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
   '/_authenticated/resources/solar/$id': typeof AuthenticatedResourcesSolarIdRoute
   '/_authenticated/resources/solar/new': typeof AuthenticatedResourcesSolarNewRoute
+  '/_authenticated/resources/wind/$id': typeof AuthenticatedResourcesWindIdRoute
   '/_authenticated/resources/wind/new': typeof AuthenticatedResourcesWindNewRoute
   '/_authenticated/simulations/$id/results': typeof AuthenticatedSimulationsIdResultsRoute
   '/_authenticated/geography/localities/': typeof AuthenticatedGeographyLocalitiesIndexRoute
@@ -492,6 +502,7 @@ export interface FileRouteTypes {
     | '/geography/localities/$id'
     | '/resources/solar/$id'
     | '/resources/solar/new'
+    | '/resources/wind/$id'
     | '/resources/wind/new'
     | '/simulations/$id/results'
     | '/geography/localities/'
@@ -534,6 +545,7 @@ export interface FileRouteTypes {
     | '/geography/localities/$id'
     | '/resources/solar/$id'
     | '/resources/solar/new'
+    | '/resources/wind/$id'
     | '/resources/wind/new'
     | '/simulations/$id/results'
     | '/geography/localities'
@@ -582,6 +594,7 @@ export interface FileRouteTypes {
     | '/_authenticated/geography/localities/$id'
     | '/_authenticated/resources/solar/$id'
     | '/_authenticated/resources/solar/new'
+    | '/_authenticated/resources/wind/$id'
     | '/_authenticated/resources/wind/new'
     | '/_authenticated/simulations/$id/results'
     | '/_authenticated/geography/localities/'
@@ -911,6 +924,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResourcesWindIndexRouteImport
       parentRoute: typeof AuthenticatedResourcesWindRoute
     }
+    '/_authenticated/resources/wind/$id': {
+      id: '/_authenticated/resources/wind/$id'
+      path: '/$id'
+      fullPath: '/resources/wind/$id'
+      preLoaderRoute: typeof AuthenticatedResourcesWindIdRouteImport
+      parentRoute: typeof AuthenticatedResourcesWindRoute
+    }
     '/_authenticated/resources/wind/new': {
       id: '/_authenticated/resources/wind/new'
       path: '/new'
@@ -996,12 +1016,14 @@ const AuthenticatedResourcesSolarRouteWithChildren =
   )
 
 interface AuthenticatedResourcesWindRouteChildren {
+  AuthenticatedResourcesWindIdRoute: typeof AuthenticatedResourcesWindIdRoute
   AuthenticatedResourcesWindNewRoute: typeof AuthenticatedResourcesWindNewRoute
   AuthenticatedResourcesWindIndexRoute: typeof AuthenticatedResourcesWindIndexRoute
 }
 
 const AuthenticatedResourcesWindRouteChildren: AuthenticatedResourcesWindRouteChildren =
   {
+    AuthenticatedResourcesWindIdRoute: AuthenticatedResourcesWindIdRoute,
     AuthenticatedResourcesWindNewRoute: AuthenticatedResourcesWindNewRoute,
     AuthenticatedResourcesWindIndexRoute: AuthenticatedResourcesWindIndexRoute,
   }

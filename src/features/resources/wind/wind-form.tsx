@@ -27,7 +27,8 @@ export function WindForm({ row, defaultLocalityId, onSaved, onCancel }: { row: W
   const [error, setError] = useState<string | null>(null); const [busy, setBusy] = useState(false);
   const set = (k: string) => (e: { target: { value: string } }) => setF((p) => ({ ...p, [k]: e.target.value }));
 
-  const locs = opts?.localities ?? [];
+  type Loc = { id: string; name: string; departmentId: string | null; departmentName: string | null; regionId: string | null; regionName: string | null; countryId: string | null; countryName: string | null };
+  const locs: Loc[] = opts?.localities ?? [];
   const uniq = (arr: [string | null, string | null][]) => [...new Map(arr.filter((x): x is [string, string] => !!x[0] && !!x[1])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   const countries = uniq(locs.map((l) => [l.countryId, l.countryName]));
   const regions = uniq(locs.filter((l) => !country || l.countryId === country).map((l) => [l.regionId, l.regionName]));
