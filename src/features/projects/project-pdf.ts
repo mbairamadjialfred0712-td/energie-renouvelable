@@ -50,10 +50,10 @@ export async function exportProjectPdf(record: ProjectRecord) {
     }
   }
 
-  for (const production of record.productions) {
-    ensureSpace(40); doc.setFontSize(13); doc.text("Estimation photovoltaïque indicative", 14, y + 7); y += 12;
+  for (const production of [...record.productions, ...record.energyProductions]) {
+    ensureSpace(40); doc.setFontSize(13); doc.text("technology" in production ? `Estimation ${production.technology === "wind" ? "éolienne" : "biomasse"} indicative` : "Estimation photovoltaïque indicative", 14, y + 7); y += 12;
     const snapshot = production.input_snapshot && typeof production.input_snapshot === "object" && !Array.isArray(production.input_snapshot) ? production.input_snapshot : {};
-    autoTable(doc, { startY: y, body: [["Production estimée", `${production.production_kwh} kWh/an`], ["Date / version", `${production.created_at} / ${production.engine_version}`], ["Méthode", production.method], ...Object.entries(snapshot).map(([key, value]) => [key, String(value ?? "—")])], styles: { fontSize: 8, overflow: "linebreak" }, margin: { top: 30, left: 14, right: 14 }, didDrawPage: ({ pageNumber }) => { if (pageNumber > 1) addHeader(); } });
+    autoTable(doc, { startY: y, body: [["Production estimée", `${production.production_kwh} kWh/an`], ["Date / version", `${production.created_at} / ${production.engine_version}`], ["Méthode", production.method], ...Object.entries(snapshot).map(([key, value]) => [key, typeof value === "object" ? JSON.stringify(value) : String(value ?? "—")])], styles: { fontSize: 8, overflow: "linebreak" }, margin: { top: 30, left: 14, right: 14 }, didDrawPage: ({ pageNumber }) => { if (pageNumber > 1) addHeader(); } });
     y = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y;
   }
   ensureSpace(30); doc.setFontSize(13); doc.text("Historique des modifications", 14, y + 7); y += 12;

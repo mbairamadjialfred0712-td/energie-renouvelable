@@ -1,5 +1,12 @@
 # Feuille de route — Fondation V1
 
+## Paramètres, moteurs et données réelles
+- [ ] Configurer les paramètres techniques partagés et conserver leur version dans les estimations.
+- [ ] Ajouter estimations annuelles éoliennes et biomasse avec validation, historique, pré-analyse et PDF.
+- [ ] Ajouter la gestion administrateur des rôles Ingénieur des testeurs.
+- [ ] Importer des observations énergétiques réelles sourcées et afficher leurs localités sur la carte.
+- [ ] Vérifier les nouveaux parcours et les restrictions d’accès.
+
 ## Production énergétique et graphiques ressources
 - [x] Ajouter périodes structurées et graphiques éolien, biomasse et déchets sans conversion ou dates inventées.
 - [x] Ajouter une estimation PV par projet avec jeu solaire validé, puissance et ratio de performance explicites.

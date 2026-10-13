@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -689,6 +689,63 @@ export type Database = {
           },
         ]
       }
+      project_energy_production: {
+        Row: {
+          created_at: string
+          engine_version: string
+          id: string
+          input_snapshot: Json
+          method: string
+          owner_id: string
+          production_kwh: number
+          project_id: string
+          requested_by: string
+          resource_id: string
+          technology: string
+        }
+        Insert: {
+          created_at?: string
+          engine_version: string
+          id?: string
+          input_snapshot: Json
+          method: string
+          owner_id: string
+          production_kwh: number
+          project_id: string
+          requested_by: string
+          resource_id: string
+          technology: string
+        }
+        Update: {
+          created_at?: string
+          engine_version?: string
+          id?: string
+          input_snapshot?: Json
+          method?: string
+          owner_id?: string
+          production_kwh?: number
+          project_id?: string
+          requested_by?: string
+          resource_id?: string
+          technology?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_energy_production_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_energy_production_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "energy_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_pre_analyses: {
         Row: {
           completed_at: string | null
@@ -763,6 +820,7 @@ export type Database = {
           project_id: string
           requested_by: string
           resource_id: string | null
+          settings_snapshot: Json | null
         }
         Insert: {
           created_at?: string
@@ -775,6 +833,7 @@ export type Database = {
           project_id: string
           requested_by: string
           resource_id?: string | null
+          settings_snapshot?: Json | null
         }
         Update: {
           created_at?: string
@@ -787,6 +846,7 @@ export type Database = {
           project_id?: string
           requested_by?: string
           resource_id?: string | null
+          settings_snapshot?: Json | null
         }
         Relationships: [
           {
@@ -1013,6 +1073,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      role_change_history: {
+        Row: {
+          actor_id: string
+          created_at: string
+          engineer_enabled: boolean
+          id: string
+          target_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          engineer_enabled: boolean
+          id?: string
+          target_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          engineer_enabled?: boolean
+          id?: string
+          target_id?: string
+        }
+        Relationships: []
       }
       scenario_results: {
         Row: {
@@ -1476,6 +1560,39 @@ export type Database = {
           },
         ]
       }
+      technical_settings: {
+        Row: {
+          conversion_efficiency: number
+          created_at: string
+          created_by: string
+          efficiency: number
+          id: string
+          justification: string
+          lifetime_years: number
+          technology: string
+        }
+        Insert: {
+          conversion_efficiency: number
+          created_at?: string
+          created_by: string
+          efficiency: number
+          id?: string
+          justification: string
+          lifetime_years: number
+          technology: string
+        }
+        Update: {
+          conversion_efficiency?: number
+          created_at?: string
+          created_by?: string
+          efficiency?: number
+          id?: string
+          justification?: string
+          lifetime_years?: number
+          technology?: string
+        }
+        Relationships: []
+      }
       technologies: {
         Row: {
           active: boolean
@@ -1650,6 +1767,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      estimate_project_energy: {
+        Args: {
+          _assumptions: string
+          _power_kw: number
+          _project_id: string
+          _resource_id: string
+          _settings_id: string
+        }
+        Returns: string
+      }
       estimate_project_solar: {
         Args: {
           _assumptions: string
@@ -1659,6 +1786,20 @@ export type Database = {
           _resource_id: string
         }
         Returns: string
+      }
+      estimate_project_solar_configured: {
+        Args: {
+          _assumptions: string
+          _power_kwp: number
+          _project_id: string
+          _resource_id: string
+          _settings_id: string
+        }
+        Returns: string
+      }
+      set_tester_engineer: {
+        Args: { _enabled: boolean; _target_id: string }
+        Returns: undefined
       }
     }
     Enums: {
