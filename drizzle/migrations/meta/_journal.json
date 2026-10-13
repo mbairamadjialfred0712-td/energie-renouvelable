@@ -57,6 +57,13 @@
       "when": 1791870113540,
       "tag": "0007_require_identity_for_shared_catalog_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791870404448,
+      "tag": "0008_scope_resource_reads_to_owner_or_admin",
+      "breakpoints": true
     }
   ]
 }
