@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { getLocalitySolar, getSolarAccess } from "@/lib/solar.functions";
 import { SolarComparison } from "@/features/resources/solar/solar-compare";
 import { StatusBadge, fmt, periodText } from "@/features/resources/solar/solar-ui";
+import { getLocalityWind } from "@/lib/wind.functions";
+import { WindComparison, WindStatusBadge } from "@/features/resources/wind/wind-ui";
 
 export const Route = createFileRoute("/_authenticated/geography/localities/$id")({
   head: () => ({ meta: [{ title: "Fiche localité — Énergie Renouvelable" }, { name: "description", content: "Fiche d’une localité : situation, coordonnées, sites d’étude et ressources solaires enregistrées." }, { property: "og:title", content: "Fiche localité — Énergie Renouvelable" }, { property: "og:description", content: "Localité, sites d’étude et ressources solaires tracées." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -16,6 +18,7 @@ function LocalityDetail() {
   const { id } = Route.useParams();
   const { data, isLoading } = useQuery({ queryKey: ["locality-solar", id], queryFn: () => getLocalitySolar({ data: { localityId: id } }) });
   const { data: access } = useQuery({ queryKey: ["solar-access"], queryFn: () => getSolarAccess() });
+  const { data: wind } = useQuery({ queryKey: ["locality-wind", id], queryFn: () => getLocalityWind({ data: { localityId: id } }) });
   if (isLoading) return <WorkspacePage eyebrow="Territoires / Localité" title="Chargement…" description=""><span /></WorkspacePage>;
   const l: any = data?.locality;
   if (!l) return <WorkspacePage eyebrow="Territoires / Localité" title="Localité introuvable" description=""><Link to="/geography/localities" className="text-primary">← Retour</Link></WorkspacePage>;
@@ -42,6 +45,18 @@ function LocalityDetail() {
               {ds.map((d) => <li key={d.id} className="flex items-center justify-between gap-3 px-4 py-2"><Link to="/resources/solar/$id" params={{ id: d.id }} className="text-primary hover:underline">{periodText(d)} — {d.source}</Link><StatusBadge status={d.status} /></li>)}
             </ul>
             <SolarComparison rows={[...ds].reverse()} />
+          </>
+        )}
+      </section>
+      <section className="mt-8 space-y-4">
+        <div className="flex items-center justify-between gap-2"><h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">Ressources éoliennes ({wind?.length ?? 0} jeu{(wind?.length ?? 0) > 1 ? "x" : ""})</h2>
+          {access?.canWrite && <Button asChild size="sm" variant="outline"><Link to="/resources/wind/new" search={{ locality: id }}><Plus />Données de vent</Link></Button>}</div>
+        {!wind?.length ? <p className="text-sm text-muted-foreground">Aucune donnée éolienne enregistrée pour cette localité.</p> : (
+          <>
+            <ul className="divide-y divide-border border border-border bg-background text-sm">
+              {wind.map((w) => <li key={w.id} className="flex items-center justify-between gap-3 px-4 py-2"><Link to="/resources/wind/$id" params={{ id: w.id }} className="min-w-0 break-words text-primary hover:underline">{fmt(w.avg, "m/s")} à {fmt(w.height, "m")} · {w.period_start || w.period_end ? `${w.period_start ?? "?"} → ${w.period_end ?? "?"}` : w.period ?? "—"} — {w.source}{w.site_name ? ` · Site : ${w.site_name}` : ""}</Link><WindStatusBadge status={w.status} /></li>)}
+            </ul>
+            <WindComparison rows={[...wind].reverse()} />
           </>
         )}
       </section>
