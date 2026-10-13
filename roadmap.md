@@ -1,11 +1,13 @@
 # Feuille de route — Fondation V1
 
 ## Paramètres, moteurs et données réelles
-- [ ] Configurer les paramètres techniques partagés et conserver leur version dans les estimations.
-- [ ] Ajouter estimations annuelles éoliennes et biomasse avec validation, historique, pré-analyse et PDF.
-- [ ] Ajouter la gestion administrateur des rôles Ingénieur des testeurs.
-- [ ] Importer des observations énergétiques réelles sourcées et afficher leurs localités sur la carte.
-- [ ] Vérifier les nouveaux parcours et les restrictions d’accès.
+- [x] Configurer les paramètres techniques partagés et conserver leur version dans les estimations (valeurs de test supprimées ; configuration réelle à renseigner).
+- [x] Ajouter estimations annuelles éoliennes et biomasse avec validation, historique, pré-analyse et PDF.
+- [x] Ajouter la gestion administrateur des rôles Ingénieur des testeurs.
+- [x] Importer 24 observations solaires et 24 éoliennes NASA POWER et afficher Abidjan et Lomé sur la carte.
+- [x] Importer et présenter 10 stocks de biomasse IFN2 Togo séparément des combustibles annuels.
+- [ ] Géolocaliser les placettes biomasse et importer des flux annuels exploitables : bloqué par l’absence de zone/datum UTM, de dates et de tonnages annuels dans la source.
+- [x] Vérifier les paramètres, attribution/retrait Ingénieur, calculs, IA, PDF, refus des jeux non validés et protection administrateur ; supprimer les données temporaires.
 
 ## Production énergétique et graphiques ressources
 - [x] Ajouter périodes structurées et graphiques éolien, biomasse et déchets sans conversion ou dates inventées.
@@ -17,11 +19,3 @@
 - [x] Ajouter une vue temporelle partagée, filtres de paramètre, unité et période, avec localités et sources.
 - [x] Vérifier les sélections et l’affichage connecté avec des données enregistrées (fiches temporaires supprimées après test).
 
-- [ ] Activer Lovable Cloud et l’authentification
-- [ ] Créer le schéma relationnel, les profils, les rôles séparés et les politiques de sécurité
-- [ ] Construire l’architecture modulaire des services et moteurs scientifiques sans calculs fictifs
-- [ ] Créer l’espace authentification complet
-- [ ] Créer l’application protégée, la navigation et le tableau de bord à états vides réels
-- [ ] Créer les écrans territoires, ressources, demande et technologies
-- [ ] Créer les écrans simulations, scénarios, finance, projets, imports et rapports
-- [ ] Vérifier les accès, les parcours principaux et l’affichage responsive

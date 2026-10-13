@@ -34,6 +34,11 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
       pending: solarRows.filter((r: any) => ["unverified", "in_review"].includes(solarStatus(r))).length,
       sources: new Set(solarRows.map((r: any) => String(r.source).trim().toLowerCase())).size,
     };
+    const { count: biomassReferences, error: biomassError } = await context.supabase.from("biomass_reference_observations").select("id", { count: "exact", head: true });
+    if (biomassError) throw new Error("Référentiel biomasse indisponible.");
+    const resourceLocations = new Map<string, string[]>();
+    for (const r of res ?? []) { const types = resourceLocations.get(r.locality_id) ?? []; if (!types.includes(r.resource_type)) types.push(r.resource_type); resourceLocations.set(r.locality_id, types); }
+    const resourcePoints = (locs ?? []).filter((l: any) => resourceLocations.has(l.id)).map((l: any) => ({ id: l.id, name: l.name, latitude: Number(l.latitude), longitude: Number(l.longitude), detail: resourceLocations.get(l.id)?.map(t => ({ solar: "Solaire", wind: "Éolien", biomass: "Biomasse", waste: "Déchets" }[t] ?? t)).join(" · ") }));
     const localitiesWithResources = new Set((res ?? []).map((r: any) => r.locality_id)).size;
 
     const demandBySector: Record<string, { count: number; annualKwh: number; withValue: number }> = {};
@@ -48,7 +53,7 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
 
     return {
       localities, simulations, projects, scenarios, resources, countries, sites, regions, departments,
-      resourcesByType, resourcesValidated, solar, localitiesWithResources,
+      resourcesByType, resourcesValidated, solar, localitiesWithResources, biomassReferences: biomassReferences ?? 0, resourcePoints,
       demands: (dem ?? []).length, demandBySector,
       projectsByStatus, recentProjects: (proj ?? []).slice(0, 5),
       populationGeolocated: population,

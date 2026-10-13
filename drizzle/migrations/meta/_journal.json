@@ -43,6 +43,13 @@
       "when": 1791869464786,
       "tag": "0005_biomass_reference_observations",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791869572875,
+      "tag": "0006_align_resource_detail_write_permissions",
+      "breakpoints": true
     }
   ]
 }
