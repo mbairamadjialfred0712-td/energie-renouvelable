@@ -1762,10 +1762,14 @@ export type Database = {
       }
       wind_resources: {
         Row: {
+          acquisition_method: string | null
           air_density_kg_m3: number | null
           average_speed_ms: number | null
+          capacity_factor_method: string | null
           capacity_factor_pct: number | null
+          collected_on: string | null
           created_at: string
+          data_nature: Database["public"]["Enums"]["wind_data_nature"]
           direction_deg: number | null
           id: string
           maximum_speed_ms: number | null
@@ -1774,13 +1778,21 @@ export type Database = {
           period_end: string | null
           period_start: string | null
           resource_id: string
+          site_id: string | null
+          speed_distribution: Json | null
+          timeseries: Json | null
           updated_at: string
+          wind_status: Database["public"]["Enums"]["solar_status"]
         }
         Insert: {
+          acquisition_method?: string | null
           air_density_kg_m3?: number | null
           average_speed_ms?: number | null
+          capacity_factor_method?: string | null
           capacity_factor_pct?: number | null
+          collected_on?: string | null
           created_at?: string
+          data_nature?: Database["public"]["Enums"]["wind_data_nature"]
           direction_deg?: number | null
           id?: string
           maximum_speed_ms?: number | null
@@ -1789,13 +1801,21 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           resource_id: string
+          site_id?: string | null
+          speed_distribution?: Json | null
+          timeseries?: Json | null
           updated_at?: string
+          wind_status?: Database["public"]["Enums"]["solar_status"]
         }
         Update: {
+          acquisition_method?: string | null
           air_density_kg_m3?: number | null
           average_speed_ms?: number | null
+          capacity_factor_method?: string | null
           capacity_factor_pct?: number | null
+          collected_on?: string | null
           created_at?: string
+          data_nature?: Database["public"]["Enums"]["wind_data_nature"]
           direction_deg?: number | null
           id?: string
           maximum_speed_ms?: number | null
@@ -1804,7 +1824,11 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           resource_id?: string
+          site_id?: string | null
+          speed_distribution?: Json | null
+          timeseries?: Json | null
           updated_at?: string
+          wind_status?: Database["public"]["Enums"]["solar_status"]
         }
         Relationships: [
           {
@@ -1812,6 +1836,13 @@ export type Database = {
             columns: ["resource_id"]
             isOneToOne: true
             referencedRelation: "energy_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wind_resources_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "study_sites"
             referencedColumns: ["id"]
           },
         ]
@@ -1898,6 +1929,13 @@ export type Database = {
         | "site_industriel"
         | "autre"
       validation_status: "pending" | "validated" | "rejected"
+      wind_data_nature:
+        | "measured"
+        | "technical_study"
+        | "imported"
+        | "api"
+        | "estimate"
+        | "assumption"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2071,6 +2109,14 @@ export const Constants = {
         "autre",
       ],
       validation_status: ["pending", "validated", "rejected"],
+      wind_data_nature: [
+        "measured",
+        "technical_study",
+        "imported",
+        "api",
+        "estimate",
+        "assumption",
+      ],
     },
   },
 } as const
