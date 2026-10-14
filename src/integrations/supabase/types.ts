@@ -70,48 +70,90 @@ export type Database = {
       }
       biomass_resources: {
         Row: {
+          acquisition_method: string | null
           annual_quantity_t: number | null
+          availability_levels: Json
+          availability_period: string | null
+          biomass_status: Database["public"]["Enums"]["solar_status"]
           biomass_type: string
+          biomass_type_detail: string | null
           calorific_value_mj_kg: number | null
+          collected_on: string | null
+          constraints: string | null
           created_at: string
+          data_nature: Database["public"]["Enums"]["biomass_data_nature"]
           energy_potential_mwh: number | null
+          energy_potential_source: string | null
           exploitable_fraction_pct: number | null
           id: string
+          lhv_basis: string | null
+          lhv_method: string | null
           moisture_pct: number | null
           owner_id: string
           period_end: string | null
           period_start: string | null
+          quantity_unit: string
           resource_id: string
+          seasonal_availability: Json | null
+          site_id: string | null
           updated_at: string
         }
         Insert: {
+          acquisition_method?: string | null
           annual_quantity_t?: number | null
+          availability_levels?: Json
+          availability_period?: string | null
+          biomass_status?: Database["public"]["Enums"]["solar_status"]
           biomass_type: string
+          biomass_type_detail?: string | null
           calorific_value_mj_kg?: number | null
+          collected_on?: string | null
+          constraints?: string | null
           created_at?: string
+          data_nature?: Database["public"]["Enums"]["biomass_data_nature"]
           energy_potential_mwh?: number | null
+          energy_potential_source?: string | null
           exploitable_fraction_pct?: number | null
           id?: string
+          lhv_basis?: string | null
+          lhv_method?: string | null
           moisture_pct?: number | null
           owner_id?: string
           period_end?: string | null
           period_start?: string | null
+          quantity_unit?: string
           resource_id: string
+          seasonal_availability?: Json | null
+          site_id?: string | null
           updated_at?: string
         }
         Update: {
+          acquisition_method?: string | null
           annual_quantity_t?: number | null
+          availability_levels?: Json
+          availability_period?: string | null
+          biomass_status?: Database["public"]["Enums"]["solar_status"]
           biomass_type?: string
+          biomass_type_detail?: string | null
           calorific_value_mj_kg?: number | null
+          collected_on?: string | null
+          constraints?: string | null
           created_at?: string
+          data_nature?: Database["public"]["Enums"]["biomass_data_nature"]
           energy_potential_mwh?: number | null
+          energy_potential_source?: string | null
           exploitable_fraction_pct?: number | null
           id?: string
+          lhv_basis?: string | null
+          lhv_method?: string | null
           moisture_pct?: number | null
           owner_id?: string
           period_end?: string | null
           period_start?: string | null
+          quantity_unit?: string
           resource_id?: string
+          seasonal_availability?: Json | null
+          site_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -120,6 +162,13 @@ export type Database = {
             columns: ["resource_id"]
             isOneToOne: true
             referencedRelation: "energy_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biomass_resources_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "study_sites"
             referencedColumns: ["id"]
           },
         ]
@@ -1889,6 +1938,15 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "engineer" | "analyst" | "viewer"
+      biomass_data_nature:
+        | "measured"
+        | "technical_study"
+        | "inventory"
+        | "pdf"
+        | "spreadsheet"
+        | "api"
+        | "estimate"
+        | "assumption"
       locality_type:
         | "urbain"
         | "periurbain"
@@ -2064,6 +2122,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "engineer", "analyst", "viewer"],
+      biomass_data_nature: [
+        "measured",
+        "technical_study",
+        "inventory",
+        "pdf",
+        "spreadsheet",
+        "api",
+        "estimate",
+        "assumption",
+      ],
       locality_type: [
         "urbain",
         "periurbain",

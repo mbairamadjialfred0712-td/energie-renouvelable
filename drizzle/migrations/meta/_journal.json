@@ -71,6 +71,13 @@
       "when": 1791870704603,
       "tag": "0009_wind_dataset_traceability",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791948416988,
+      "tag": "0010_biomass_resources_module",
+      "breakpoints": true
     }
   ]
 }
