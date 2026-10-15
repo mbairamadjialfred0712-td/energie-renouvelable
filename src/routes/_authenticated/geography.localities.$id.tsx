@@ -8,6 +8,8 @@ import { SolarComparison } from "@/features/resources/solar/solar-compare";
 import { StatusBadge, fmt, periodText } from "@/features/resources/solar/solar-ui";
 import { getLocalityWind } from "@/lib/wind.functions";
 import { WindComparison, WindStatusBadge } from "@/features/resources/wind/wind-ui";
+import { getLocalityBiomass } from "@/lib/biomass.functions";
+import { BiomassComparison, BiomassStatusBadge, fmt as bfmt, periodText as bperiod, typeText } from "@/features/resources/biomass/biomass-ui";
 
 export const Route = createFileRoute("/_authenticated/geography/localities/$id")({
   head: () => ({ meta: [{ title: "Fiche localité — Énergie Renouvelable" }, { name: "description", content: "Fiche d’une localité : situation, coordonnées, sites d’étude et ressources solaires enregistrées." }, { property: "og:title", content: "Fiche localité — Énergie Renouvelable" }, { property: "og:description", content: "Localité, sites d’étude et ressources solaires tracées." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -57,6 +59,31 @@ function LocalityDetail() {
               {wind.map((w) => <li key={w.id} className="flex items-center justify-between gap-3 px-4 py-2"><Link to="/resources/wind/$id" params={{ id: w.id }} className="min-w-0 break-words text-primary hover:underline">{fmt(w.avg, "m/s")} à {fmt(w.height, "m")} · {w.period_start || w.period_end ? `${w.period_start ?? "?"} → ${w.period_end ?? "?"}` : w.period ?? "—"} — {w.source}{w.site_name ? ` · Site : ${w.site_name}` : ""}</Link><WindStatusBadge status={w.status} /></li>)}
             </ul>
             <WindComparison rows={[...wind].reverse()} />
+          </>
+        )}
+      </section>
+      <LocalityBiomass id={id} canWrite={!!access?.canWrite} />
+    </WorkspacePage>
+  );
+}
+
+function LocalityBiomass({ id, canWrite }: { id: string; canWrite: boolean }) {
+  const { data: bio } = useQuery({ queryKey: ["locality-biomass", id], queryFn: () => getLocalityBiomass({ data: { localityId: id } }) });
+  const rows = bio ?? [];
+  const last = rows.find((b) => b.status === "validated");
+  return (
+    <>
+      <section className="mt-8 space-y-4">
+        <div className="flex items-center justify-between gap-2"><h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">Ressources biomasse ({rows.length} jeu{rows.length > 1 ? "x" : ""})</h2>
+          {canWrite && <Button asChild size="sm" variant="outline"><Link to="/resources/biomass/new" search={{ locality: id }}><Plus />Données biomasse</Link></Button>}</div>
+        {!rows.length ? <p className="text-sm text-muted-foreground">Aucune donnée de biomasse enregistrée pour cette localité.</p> : (
+          <>
+            <div className="border border-border bg-background p-4 text-sm"><p className="font-medium">Dernier jeu validé</p>
+              {last ? <p className="mt-1">{typeText(last)} · {bfmt(last.quantity, last.unit)} · Source : {last.source} — <Link to="/resources/biomass/$id" params={{ id: last.id }} className="text-primary hover:underline">détails</Link></p> : <p className="mt-1 text-muted-foreground">Aucun jeu validé pour l’instant.</p>}</div>
+            <ul className="divide-y divide-border border border-border bg-background text-sm">
+              {rows.map((b) => <li key={b.id} className="flex items-center justify-between gap-3 px-4 py-2"><Link to="/resources/biomass/$id" params={{ id: b.id }} className="min-w-0 break-words text-primary hover:underline">{typeText(b)} · {bfmt(b.quantity, b.unit)} · {bperiod(b)} — {b.source}{b.site_name ? ` · Site : ${b.site_name}` : ""}</Link><BiomassStatusBadge status={b.status} /></li>)}
+            </ul>
+            <BiomassComparison rows={[...rows].reverse()} />
           </>
         )}
       </section>
