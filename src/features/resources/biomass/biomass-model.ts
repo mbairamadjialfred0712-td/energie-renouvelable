@@ -19,7 +19,7 @@ export const MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû
 export type BiomassValues = {
   quantity: number | null; unit: string | null; moisture: number | null; lhv: number | null; lhvBasis: string | null; fraction: number | null;
   potential: number | null; potentialSource: string | null; periodStart: string | null; periodEnd: string | null;
-  levels: Partial<Record<AvailabilityKey, number | null>>; seasonal: number[];
+  levels: Partial<Record<AvailabilityKey, number | null | undefined>>; seasonal: number[];
 };
 
 /** Blocking errors: impossible or untraceable values only. */
