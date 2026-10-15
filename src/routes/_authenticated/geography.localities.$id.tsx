@@ -87,6 +87,6 @@ function LocalityBiomass({ id, canWrite }: { id: string; canWrite: boolean }) {
           </>
         )}
       </section>
-    </WorkspacePage>
+    </>
   );
 }
