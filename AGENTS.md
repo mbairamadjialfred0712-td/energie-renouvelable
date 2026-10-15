@@ -22,3 +22,4 @@
 - Assign or revoke only the engineer role through the admin-checked set_tester_engineer RPC with atomic audit history; this protects administrators and prevents privilege escalation.
 - Keep undated biomass forest-stock references separate from annual fuel resources, retaining native coordinates when the source omits its coordinate reference system; this prevents invented dates, map positions and energy availability.
 - Require a non-null authenticated subject for shared catalogue SELECT policies; catalogue sharing must not allow subjectless authenticated-role requests.
+- Gate biomass project estimates on biomass_status validated, t/an quantity and as-received PCI in the RPC; dry-basis or non-annual data must never be converted silently.
