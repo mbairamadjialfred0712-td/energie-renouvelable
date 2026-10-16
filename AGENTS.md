@@ -24,3 +24,4 @@
 - Require a non-null authenticated subject for shared catalogue SELECT policies; catalogue sharing must not allow subjectless authenticated-role requests.
 - Gate biomass project estimates on biomass_status validated, t/an quantity and as-received PCI in the RPC; dry-basis or non-annual data must never be converted silently.
 - Compute demand estimates only in the pure demand-engine contract (weekly-days convention, explicit 30-day month) and keep measured consumption in its own field; inventory estimates must never replace or be shown as measurements.
+- Keep battery manufacturer datasheets immutable from project work: project storage configs store retained values separately with justification, and battery-model only computes indicative checks (V×Ah, single DoD reduction, module totals), never simulations.

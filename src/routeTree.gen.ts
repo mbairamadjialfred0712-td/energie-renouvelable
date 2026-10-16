@@ -50,9 +50,12 @@ import { Route as AuthenticatedResourcesWasteRouteImport } from './routes/_authe
 import { Route as AuthenticatedResourcesWindRouteImport } from './routes/_authenticated/resources.wind'
 import { Route as AuthenticatedSimulationsIdRouteImport } from './routes/_authenticated/simulations.$id'
 import { Route as AuthenticatedSimulationsNewRouteImport } from './routes/_authenticated/simulations.new'
+import { Route as AuthenticatedTechnologiesIndexRouteImport } from './routes/_authenticated/technologies.index'
+import { Route as AuthenticatedTechnologiesStorageRouteImport } from './routes/_authenticated/technologies.storage'
 import { Route as AuthenticatedDemandIdEditRouteImport } from './routes/_authenticated/demand_.$id.edit'
 import { Route as AuthenticatedGeographyLocalitiesIndexRouteImport } from './routes/_authenticated/geography.localities.index'
 import { Route as AuthenticatedGeographyLocalitiesIdRouteImport } from './routes/_authenticated/geography.localities.$id'
+import { Route as AuthenticatedProjectsIdStorageRouteImport } from './routes/_authenticated/projects_.$id.storage'
 import { Route as AuthenticatedResourcesBiomassIndexRouteImport } from './routes/_authenticated/resources.biomass.index'
 import { Route as AuthenticatedResourcesBiomassIdRouteImport } from './routes/_authenticated/resources.biomass.$id'
 import { Route as AuthenticatedResourcesBiomassNewRouteImport } from './routes/_authenticated/resources.biomass.new'
@@ -63,6 +66,10 @@ import { Route as AuthenticatedResourcesWindIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedResourcesWindIdRouteImport } from './routes/_authenticated/resources.wind.$id'
 import { Route as AuthenticatedResourcesWindNewRouteImport } from './routes/_authenticated/resources.wind.new'
 import { Route as AuthenticatedSimulationsIdResultsRouteImport } from './routes/_authenticated/simulations.$id.results'
+import { Route as AuthenticatedTechnologiesStorageIndexRouteImport } from './routes/_authenticated/technologies.storage.index'
+import { Route as AuthenticatedTechnologiesStorageIdRouteImport } from './routes/_authenticated/technologies.storage.$id'
+import { Route as AuthenticatedTechnologiesStorageCompareRouteImport } from './routes/_authenticated/technologies.storage.compare'
+import { Route as AuthenticatedTechnologiesStorageNewRouteImport } from './routes/_authenticated/technologies.storage.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -286,6 +293,18 @@ const AuthenticatedSimulationsNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedSimulationsRoute,
   } as any)
+const AuthenticatedTechnologiesIndexRoute =
+  AuthenticatedTechnologiesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedTechnologiesRoute,
+  } as any)
+const AuthenticatedTechnologiesStorageRoute =
+  AuthenticatedTechnologiesStorageRouteImport.update({
+    id: '/storage',
+    path: '/storage',
+    getParentRoute: () => AuthenticatedTechnologiesRoute,
+  } as any)
 const AuthenticatedDemandIdEditRoute =
   AuthenticatedDemandIdEditRouteImport.update({
     id: '/demand_/$id/edit',
@@ -303,6 +322,12 @@ const AuthenticatedGeographyLocalitiesIdRoute =
     id: '/localities/$id',
     path: '/localities/$id',
     getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
+const AuthenticatedProjectsIdStorageRoute =
+  AuthenticatedProjectsIdStorageRouteImport.update({
+    id: '/projects_/$id/storage',
+    path: '/projects/$id/storage',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedResourcesBiomassIndexRoute =
   AuthenticatedResourcesBiomassIndexRouteImport.update({
@@ -364,6 +389,30 @@ const AuthenticatedSimulationsIdResultsRoute =
     path: '/results',
     getParentRoute: () => AuthenticatedSimulationsIdRoute,
   } as any)
+const AuthenticatedTechnologiesStorageIndexRoute =
+  AuthenticatedTechnologiesStorageIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedTechnologiesStorageRoute,
+  } as any)
+const AuthenticatedTechnologiesStorageIdRoute =
+  AuthenticatedTechnologiesStorageIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedTechnologiesStorageRoute,
+  } as any)
+const AuthenticatedTechnologiesStorageCompareRoute =
+  AuthenticatedTechnologiesStorageCompareRouteImport.update({
+    id: '/compare',
+    path: '/compare',
+    getParentRoute: () => AuthenticatedTechnologiesStorageRoute,
+  } as any)
+const AuthenticatedTechnologiesStorageNewRoute =
+  AuthenticatedTechnologiesStorageNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedTechnologiesStorageRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -382,7 +431,7 @@ export interface FileRoutesByFullPath {
   '/scenarios': typeof AuthenticatedScenariosRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/simulations': typeof AuthenticatedSimulationsRouteWithChildren
-  '/technologies': typeof AuthenticatedTechnologiesRoute
+  '/technologies': typeof AuthenticatedTechnologiesRouteWithChildren
   '/testers': typeof AuthenticatedTestersRoute
   '/decouvrir/projets': typeof DecouvrirProjetsRoute
   '/decouvrir/tableau-de-bord': typeof DecouvrirTableauDeBordRoute
@@ -402,12 +451,15 @@ export interface FileRoutesByFullPath {
   '/resources/wind': typeof AuthenticatedResourcesWindRouteWithChildren
   '/simulations/$id': typeof AuthenticatedSimulationsIdRouteWithChildren
   '/simulations/new': typeof AuthenticatedSimulationsNewRoute
+  '/technologies/storage': typeof AuthenticatedTechnologiesStorageRouteWithChildren
   '/demand/': typeof AuthenticatedDemandIndexRoute
   '/geography/': typeof AuthenticatedGeographyIndexRoute
   '/projects/': typeof AuthenticatedProjectsIndexRoute
   '/resources/': typeof AuthenticatedResourcesIndexRoute
+  '/technologies/': typeof AuthenticatedTechnologiesIndexRoute
   '/demand/$id/edit': typeof AuthenticatedDemandIdEditRoute
   '/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
+  '/projects/$id/storage': typeof AuthenticatedProjectsIdStorageRoute
   '/resources/biomass/$id': typeof AuthenticatedResourcesBiomassIdRoute
   '/resources/biomass/new': typeof AuthenticatedResourcesBiomassNewRoute
   '/resources/solar/$id': typeof AuthenticatedResourcesSolarIdRoute
@@ -415,10 +467,14 @@ export interface FileRoutesByFullPath {
   '/resources/wind/$id': typeof AuthenticatedResourcesWindIdRoute
   '/resources/wind/new': typeof AuthenticatedResourcesWindNewRoute
   '/simulations/$id/results': typeof AuthenticatedSimulationsIdResultsRoute
+  '/technologies/storage/$id': typeof AuthenticatedTechnologiesStorageIdRoute
+  '/technologies/storage/compare': typeof AuthenticatedTechnologiesStorageCompareRoute
+  '/technologies/storage/new': typeof AuthenticatedTechnologiesStorageNewRoute
   '/geography/localities/': typeof AuthenticatedGeographyLocalitiesIndexRoute
   '/resources/biomass/': typeof AuthenticatedResourcesBiomassIndexRoute
   '/resources/solar/': typeof AuthenticatedResourcesSolarIndexRoute
   '/resources/wind/': typeof AuthenticatedResourcesWindIndexRoute
+  '/technologies/storage/': typeof AuthenticatedTechnologiesStorageIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -433,7 +489,6 @@ export interface FileRoutesByTo {
   '/scenarios': typeof AuthenticatedScenariosRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/simulations': typeof AuthenticatedSimulationsRouteWithChildren
-  '/technologies': typeof AuthenticatedTechnologiesRoute
   '/testers': typeof AuthenticatedTestersRoute
   '/decouvrir/projets': typeof DecouvrirProjetsRoute
   '/decouvrir/tableau-de-bord': typeof DecouvrirTableauDeBordRoute
@@ -454,8 +509,10 @@ export interface FileRoutesByTo {
   '/geography': typeof AuthenticatedGeographyIndexRoute
   '/projects': typeof AuthenticatedProjectsIndexRoute
   '/resources': typeof AuthenticatedResourcesIndexRoute
+  '/technologies': typeof AuthenticatedTechnologiesIndexRoute
   '/demand/$id/edit': typeof AuthenticatedDemandIdEditRoute
   '/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
+  '/projects/$id/storage': typeof AuthenticatedProjectsIdStorageRoute
   '/resources/biomass/$id': typeof AuthenticatedResourcesBiomassIdRoute
   '/resources/biomass/new': typeof AuthenticatedResourcesBiomassNewRoute
   '/resources/solar/$id': typeof AuthenticatedResourcesSolarIdRoute
@@ -463,10 +520,14 @@ export interface FileRoutesByTo {
   '/resources/wind/$id': typeof AuthenticatedResourcesWindIdRoute
   '/resources/wind/new': typeof AuthenticatedResourcesWindNewRoute
   '/simulations/$id/results': typeof AuthenticatedSimulationsIdResultsRoute
+  '/technologies/storage/$id': typeof AuthenticatedTechnologiesStorageIdRoute
+  '/technologies/storage/compare': typeof AuthenticatedTechnologiesStorageCompareRoute
+  '/technologies/storage/new': typeof AuthenticatedTechnologiesStorageNewRoute
   '/geography/localities': typeof AuthenticatedGeographyLocalitiesIndexRoute
   '/resources/biomass': typeof AuthenticatedResourcesBiomassIndexRoute
   '/resources/solar': typeof AuthenticatedResourcesSolarIndexRoute
   '/resources/wind': typeof AuthenticatedResourcesWindIndexRoute
+  '/technologies/storage': typeof AuthenticatedTechnologiesStorageIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -487,7 +548,7 @@ export interface FileRoutesById {
   '/_authenticated/scenarios': typeof AuthenticatedScenariosRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/simulations': typeof AuthenticatedSimulationsRouteWithChildren
-  '/_authenticated/technologies': typeof AuthenticatedTechnologiesRoute
+  '/_authenticated/technologies': typeof AuthenticatedTechnologiesRouteWithChildren
   '/_authenticated/testers': typeof AuthenticatedTestersRoute
   '/decouvrir/projets': typeof DecouvrirProjetsRoute
   '/decouvrir/tableau-de-bord': typeof DecouvrirTableauDeBordRoute
@@ -507,12 +568,15 @@ export interface FileRoutesById {
   '/_authenticated/resources/wind': typeof AuthenticatedResourcesWindRouteWithChildren
   '/_authenticated/simulations/$id': typeof AuthenticatedSimulationsIdRouteWithChildren
   '/_authenticated/simulations/new': typeof AuthenticatedSimulationsNewRoute
+  '/_authenticated/technologies/storage': typeof AuthenticatedTechnologiesStorageRouteWithChildren
   '/_authenticated/demand/': typeof AuthenticatedDemandIndexRoute
   '/_authenticated/geography/': typeof AuthenticatedGeographyIndexRoute
   '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
   '/_authenticated/resources/': typeof AuthenticatedResourcesIndexRoute
+  '/_authenticated/technologies/': typeof AuthenticatedTechnologiesIndexRoute
   '/_authenticated/demand_/$id/edit': typeof AuthenticatedDemandIdEditRoute
   '/_authenticated/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
+  '/_authenticated/projects_/$id/storage': typeof AuthenticatedProjectsIdStorageRoute
   '/_authenticated/resources/biomass/$id': typeof AuthenticatedResourcesBiomassIdRoute
   '/_authenticated/resources/biomass/new': typeof AuthenticatedResourcesBiomassNewRoute
   '/_authenticated/resources/solar/$id': typeof AuthenticatedResourcesSolarIdRoute
@@ -520,10 +584,14 @@ export interface FileRoutesById {
   '/_authenticated/resources/wind/$id': typeof AuthenticatedResourcesWindIdRoute
   '/_authenticated/resources/wind/new': typeof AuthenticatedResourcesWindNewRoute
   '/_authenticated/simulations/$id/results': typeof AuthenticatedSimulationsIdResultsRoute
+  '/_authenticated/technologies/storage/$id': typeof AuthenticatedTechnologiesStorageIdRoute
+  '/_authenticated/technologies/storage/compare': typeof AuthenticatedTechnologiesStorageCompareRoute
+  '/_authenticated/technologies/storage/new': typeof AuthenticatedTechnologiesStorageNewRoute
   '/_authenticated/geography/localities/': typeof AuthenticatedGeographyLocalitiesIndexRoute
   '/_authenticated/resources/biomass/': typeof AuthenticatedResourcesBiomassIndexRoute
   '/_authenticated/resources/solar/': typeof AuthenticatedResourcesSolarIndexRoute
   '/_authenticated/resources/wind/': typeof AuthenticatedResourcesWindIndexRoute
+  '/_authenticated/technologies/storage/': typeof AuthenticatedTechnologiesStorageIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -564,12 +632,15 @@ export interface FileRouteTypes {
     | '/resources/wind'
     | '/simulations/$id'
     | '/simulations/new'
+    | '/technologies/storage'
     | '/demand/'
     | '/geography/'
     | '/projects/'
     | '/resources/'
+    | '/technologies/'
     | '/demand/$id/edit'
     | '/geography/localities/$id'
+    | '/projects/$id/storage'
     | '/resources/biomass/$id'
     | '/resources/biomass/new'
     | '/resources/solar/$id'
@@ -577,10 +648,14 @@ export interface FileRouteTypes {
     | '/resources/wind/$id'
     | '/resources/wind/new'
     | '/simulations/$id/results'
+    | '/technologies/storage/$id'
+    | '/technologies/storage/compare'
+    | '/technologies/storage/new'
     | '/geography/localities/'
     | '/resources/biomass/'
     | '/resources/solar/'
     | '/resources/wind/'
+    | '/technologies/storage/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -595,7 +670,6 @@ export interface FileRouteTypes {
     | '/scenarios'
     | '/settings'
     | '/simulations'
-    | '/technologies'
     | '/testers'
     | '/decouvrir/projets'
     | '/decouvrir/tableau-de-bord'
@@ -616,8 +690,10 @@ export interface FileRouteTypes {
     | '/geography'
     | '/projects'
     | '/resources'
+    | '/technologies'
     | '/demand/$id/edit'
     | '/geography/localities/$id'
+    | '/projects/$id/storage'
     | '/resources/biomass/$id'
     | '/resources/biomass/new'
     | '/resources/solar/$id'
@@ -625,10 +701,14 @@ export interface FileRouteTypes {
     | '/resources/wind/$id'
     | '/resources/wind/new'
     | '/simulations/$id/results'
+    | '/technologies/storage/$id'
+    | '/technologies/storage/compare'
+    | '/technologies/storage/new'
     | '/geography/localities'
     | '/resources/biomass'
     | '/resources/solar'
     | '/resources/wind'
+    | '/technologies/storage'
   id:
     | '__root__'
     | '/'
@@ -668,12 +748,15 @@ export interface FileRouteTypes {
     | '/_authenticated/resources/wind'
     | '/_authenticated/simulations/$id'
     | '/_authenticated/simulations/new'
+    | '/_authenticated/technologies/storage'
     | '/_authenticated/demand/'
     | '/_authenticated/geography/'
     | '/_authenticated/projects/'
     | '/_authenticated/resources/'
+    | '/_authenticated/technologies/'
     | '/_authenticated/demand_/$id/edit'
     | '/_authenticated/geography/localities/$id'
+    | '/_authenticated/projects_/$id/storage'
     | '/_authenticated/resources/biomass/$id'
     | '/_authenticated/resources/biomass/new'
     | '/_authenticated/resources/solar/$id'
@@ -681,10 +764,14 @@ export interface FileRouteTypes {
     | '/_authenticated/resources/wind/$id'
     | '/_authenticated/resources/wind/new'
     | '/_authenticated/simulations/$id/results'
+    | '/_authenticated/technologies/storage/$id'
+    | '/_authenticated/technologies/storage/compare'
+    | '/_authenticated/technologies/storage/new'
     | '/_authenticated/geography/localities/'
     | '/_authenticated/resources/biomass/'
     | '/_authenticated/resources/solar/'
     | '/_authenticated/resources/wind/'
+    | '/_authenticated/technologies/storage/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -988,6 +1075,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSimulationsNewRouteImport
       parentRoute: typeof AuthenticatedSimulationsRoute
     }
+    '/_authenticated/technologies/': {
+      id: '/_authenticated/technologies/'
+      path: '/'
+      fullPath: '/technologies/'
+      preLoaderRoute: typeof AuthenticatedTechnologiesIndexRouteImport
+      parentRoute: typeof AuthenticatedTechnologiesRoute
+    }
+    '/_authenticated/technologies/storage': {
+      id: '/_authenticated/technologies/storage'
+      path: '/storage'
+      fullPath: '/technologies/storage'
+      preLoaderRoute: typeof AuthenticatedTechnologiesStorageRouteImport
+      parentRoute: typeof AuthenticatedTechnologiesRoute
+    }
     '/_authenticated/demand_/$id/edit': {
       id: '/_authenticated/demand_/$id/edit'
       path: '/demand/$id/edit'
@@ -1008,6 +1109,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/geography/localities/$id'
       preLoaderRoute: typeof AuthenticatedGeographyLocalitiesIdRouteImport
       parentRoute: typeof AuthenticatedGeographyRoute
+    }
+    '/_authenticated/projects_/$id/storage': {
+      id: '/_authenticated/projects_/$id/storage'
+      path: '/projects/$id/storage'
+      fullPath: '/projects/$id/storage'
+      preLoaderRoute: typeof AuthenticatedProjectsIdStorageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/resources/biomass/': {
       id: '/_authenticated/resources/biomass/'
@@ -1078,6 +1186,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/simulations/$id/results'
       preLoaderRoute: typeof AuthenticatedSimulationsIdResultsRouteImport
       parentRoute: typeof AuthenticatedSimulationsIdRoute
+    }
+    '/_authenticated/technologies/storage/': {
+      id: '/_authenticated/technologies/storage/'
+      path: '/'
+      fullPath: '/technologies/storage/'
+      preLoaderRoute: typeof AuthenticatedTechnologiesStorageIndexRouteImport
+      parentRoute: typeof AuthenticatedTechnologiesStorageRoute
+    }
+    '/_authenticated/technologies/storage/$id': {
+      id: '/_authenticated/technologies/storage/$id'
+      path: '/$id'
+      fullPath: '/technologies/storage/$id'
+      preLoaderRoute: typeof AuthenticatedTechnologiesStorageIdRouteImport
+      parentRoute: typeof AuthenticatedTechnologiesStorageRoute
+    }
+    '/_authenticated/technologies/storage/compare': {
+      id: '/_authenticated/technologies/storage/compare'
+      path: '/compare'
+      fullPath: '/technologies/storage/compare'
+      preLoaderRoute: typeof AuthenticatedTechnologiesStorageCompareRouteImport
+      parentRoute: typeof AuthenticatedTechnologiesStorageRoute
+    }
+    '/_authenticated/technologies/storage/new': {
+      id: '/_authenticated/technologies/storage/new'
+      path: '/new'
+      fullPath: '/technologies/storage/new'
+      preLoaderRoute: typeof AuthenticatedTechnologiesStorageNewRouteImport
+      parentRoute: typeof AuthenticatedTechnologiesStorageRoute
     }
   }
 }
@@ -1259,6 +1395,47 @@ const AuthenticatedSimulationsRouteWithChildren =
     AuthenticatedSimulationsRouteChildren,
   )
 
+interface AuthenticatedTechnologiesStorageRouteChildren {
+  AuthenticatedTechnologiesStorageIdRoute: typeof AuthenticatedTechnologiesStorageIdRoute
+  AuthenticatedTechnologiesStorageCompareRoute: typeof AuthenticatedTechnologiesStorageCompareRoute
+  AuthenticatedTechnologiesStorageNewRoute: typeof AuthenticatedTechnologiesStorageNewRoute
+  AuthenticatedTechnologiesStorageIndexRoute: typeof AuthenticatedTechnologiesStorageIndexRoute
+}
+
+const AuthenticatedTechnologiesStorageRouteChildren: AuthenticatedTechnologiesStorageRouteChildren =
+  {
+    AuthenticatedTechnologiesStorageIdRoute:
+      AuthenticatedTechnologiesStorageIdRoute,
+    AuthenticatedTechnologiesStorageCompareRoute:
+      AuthenticatedTechnologiesStorageCompareRoute,
+    AuthenticatedTechnologiesStorageNewRoute:
+      AuthenticatedTechnologiesStorageNewRoute,
+    AuthenticatedTechnologiesStorageIndexRoute:
+      AuthenticatedTechnologiesStorageIndexRoute,
+  }
+
+const AuthenticatedTechnologiesStorageRouteWithChildren =
+  AuthenticatedTechnologiesStorageRoute._addFileChildren(
+    AuthenticatedTechnologiesStorageRouteChildren,
+  )
+
+interface AuthenticatedTechnologiesRouteChildren {
+  AuthenticatedTechnologiesStorageRoute: typeof AuthenticatedTechnologiesStorageRouteWithChildren
+  AuthenticatedTechnologiesIndexRoute: typeof AuthenticatedTechnologiesIndexRoute
+}
+
+const AuthenticatedTechnologiesRouteChildren: AuthenticatedTechnologiesRouteChildren =
+  {
+    AuthenticatedTechnologiesStorageRoute:
+      AuthenticatedTechnologiesStorageRouteWithChildren,
+    AuthenticatedTechnologiesIndexRoute: AuthenticatedTechnologiesIndexRoute,
+  }
+
+const AuthenticatedTechnologiesRouteWithChildren =
+  AuthenticatedTechnologiesRoute._addFileChildren(
+    AuthenticatedTechnologiesRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDemandRoute: typeof AuthenticatedDemandRouteWithChildren
@@ -1271,9 +1448,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedScenariosRoute: typeof AuthenticatedScenariosRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSimulationsRoute: typeof AuthenticatedSimulationsRouteWithChildren
-  AuthenticatedTechnologiesRoute: typeof AuthenticatedTechnologiesRoute
+  AuthenticatedTechnologiesRoute: typeof AuthenticatedTechnologiesRouteWithChildren
   AuthenticatedTestersRoute: typeof AuthenticatedTestersRoute
   AuthenticatedDemandIdEditRoute: typeof AuthenticatedDemandIdEditRoute
+  AuthenticatedProjectsIdStorageRoute: typeof AuthenticatedProjectsIdStorageRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1288,9 +1466,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedScenariosRoute: AuthenticatedScenariosRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSimulationsRoute: AuthenticatedSimulationsRouteWithChildren,
-  AuthenticatedTechnologiesRoute: AuthenticatedTechnologiesRoute,
+  AuthenticatedTechnologiesRoute: AuthenticatedTechnologiesRouteWithChildren,
   AuthenticatedTestersRoute: AuthenticatedTestersRoute,
   AuthenticatedDemandIdEditRoute: AuthenticatedDemandIdEditRoute,
+  AuthenticatedProjectsIdStorageRoute: AuthenticatedProjectsIdStorageRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
