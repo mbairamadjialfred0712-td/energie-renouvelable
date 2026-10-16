@@ -53,7 +53,7 @@ export function WeatherNew({ locality, site: defaultSite }: { locality?: string;
   const importFile = async (file: File) => { setBusy(true); setError(""); setRows([]); try {
     if (file.size > 10 * 1024 * 1024) throw new Error("Fichier trop volumineux (10 Mo maximum).");
     let cells: unknown[][];
-    if (/\.xlsx$/i.test(file.name)) { const { default: readXlsx } = await import("read-excel-file/browser"); cells = await readXlsx(file); }
+    if (/\.xlsx$/i.test(file.name)) { const { readSheet } = await import("read-excel-file/browser"); cells = await readSheet(file, { sheet: 1 }); }
     else if (/\.csv$/i.test(file.name)) cells = csvCells(await file.text()); else throw new Error("Choisissez un fichier CSV ou Excel .xlsx.");
     setRows(parseWeatherCells(cells)); setProvenance({method:"file",file_name:file.name}); if (!name) setName(file.name.replace(/\.[^.]+$/, ""));
   } catch (e) { setError(e instanceof Error ? e.message : "Import impossible."); } finally { setBusy(false); } };
