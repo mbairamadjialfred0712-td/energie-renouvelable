@@ -24,7 +24,7 @@ function download(text: string, filename: string) { const url = URL.createObject
 const dateText = (s: string) => s.replace("T", " ").replace(/(\.\d+)?\+00:00$/, " UTC").replace("Z", " UTC");
 const valueText = (n: number | null) => n === null ? "—" : n.toLocaleString("fr-FR", { maximumFractionDigits: 3 });
 
-export function WeatherList({ locality, site }: { locality?: string; site?: string }) {
+export function WeatherList({ locality, site }: { locality?: string | undefined; site?: string | undefined }) {
   const { data } = useSuspenseQuery(weatherListOptions); const { data: access } = useSuspenseQuery(weatherAccessOptions);
   const [search, setSearch] = useState(""); const [status, setStatus] = useState("");
   const rows = data.filter((r) => (!locality || r.locality_id === locality) && (!site || r.site_id === site) && (!status || r.status === status) && `${r.name} ${r.study_sites?.name} ${r.localities?.name} ${r.source}`.toLowerCase().includes(search.toLowerCase()));
@@ -41,7 +41,7 @@ export function WeatherSamples({ rows, radiationUnit, limit = 48 }: { rows: Weat
 }
 
 type Provenance = { method: string; file_name?: string; request_url?: string; retrieved_at?: string; limitations?: string };
-export function WeatherNew({ locality, site: defaultSite }: { locality?: string; site?: string }) {
+export function WeatherNew({ locality, site: defaultSite }: { locality?: string | undefined; site?: string | undefined }) {
   const { data: sites } = useSuspenseQuery(weatherSitesOptions); const { data: access } = useSuspenseQuery(weatherAccessOptions);
   const navigate = useNavigate(); const qc = useQueryClient(); const fetchWeather = useServerFn(fetchNasaWeather); const save = useServerFn(saveWeather);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -53,7 +53,7 @@ export function WeatherNew({ locality, site: defaultSite }: { locality?: string;
   const importFile = async (file: File) => { setBusy(true); setError(""); setRows([]); try {
     if (file.size > 10 * 1024 * 1024) throw new Error("Fichier trop volumineux (10 Mo maximum).");
     let cells: unknown[][];
-    if (/\.xlsx$/i.test(file.name)) { const { readSheet } = await import("read-excel-file/browser"); cells = await readSheet(file, { sheet: 1 }); }
+    if (/\.xlsx$/i.test(file.name)) { const { readSheet } = await import("read-excel-file/browser"); cells = await readSheet(file, 1); }
     else if (/\.csv$/i.test(file.name)) cells = csvCells(await file.text()); else throw new Error("Choisissez un fichier CSV ou Excel .xlsx.");
     setRows(parseWeatherCells(cells)); setProvenance({method:"file",file_name:file.name}); if (!name) setName(file.name.replace(/\.[^.]+$/, ""));
   } catch (e) { setError(e instanceof Error ? e.message : "Import impossible."); } finally { setBusy(false); } };
