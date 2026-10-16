@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getDemandOptions, saveDemand, type DemandInput, type DemandRow } from "@/lib/demand.functions";
-import { CATEGORIES, METHODS, PRIORITIES, STATUSES, SUPPLY_SOURCES, equipmentEnergy, equipmentErrors, inventoryTotal, measurementErrors, profileErrors, type Equipment, type Measurement, type ProfileSlot } from "./demand-engine";
+import { CATEGORIES, METHODS, PRIORITIES, STATUSES, SUPPLY_SOURCES, equipmentEnergy, equipmentErrors, inventoryTotal, measurementErrors, profileErrors, type Equipment, type Measurement, type ProfileSlot, type Supply } from "./demand-engine";
 import { fmt } from "./demand-ui";
 
 const inputCls = "h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
@@ -41,7 +41,8 @@ export function DemandForm({ row, defaultLocalityId, canValidate, onSaved, onCan
     comments: row?.comments ?? null, status: row?.status ?? "unverified",
   }));
   const set = <K extends keyof DemandInput>(k: K, v: DemandInput[K]) => setF((p) => ({ ...p, [k]: v }));
-  const sup = (k: string, v: unknown) => set("supply", { ...f.supply, [k]: v });
+  const sp = f.supply as Supply;
+  const sup = (k: keyof Supply, v: unknown) => set("supply", { ...f.supply, [k]: v });
 
   const regions = useMemo(() => (opt?.regions ?? []).filter((r) => !geo.country || r.country_id === geo.country), [opt, geo.country]);
   const depts = useMemo(() => (opt?.departments ?? []).filter((d) => (geo.region ? d.region_id === geo.region : !geo.country || regions.some((r) => r.id === d.region_id))), [opt, geo, regions]);
@@ -126,15 +127,15 @@ export function DemandForm({ row, defaultLocalityId, canValidate, onSaved, onCan
     </div>}
 
     {step === 3 && <div className="grid gap-4 sm:grid-cols-2">
-      <F label="Source d’alimentation actuelle"><S v={f.supply.current_source ?? ""} set={(v) => sup("current_source", v || null)} items={Object.entries(SUPPLY_SOURCES)} empty="Non renseignée" /></F>
-      <F label="Fiabilité de l’alimentation"><T v={f.supply.reliability} set={(v) => sup("reliability", str(v))} /></F>
-      <F label="Heures de coupure moyennes mesurées (h/jour)"><T type="number" v={f.supply.outage_hours} set={(v) => sup("outage_hours", num(v))} /></F>
-      <F label="Groupe électrogène présent"><S v={f.supply.has_genset == null ? "" : String(f.supply.has_genset)} set={(v) => sup("has_genset", v === "" ? null : v === "true")} items={[["true", "Oui"], ["false", "Non"]]} empty="Non renseigné" /></F>
-      <F label="Installation existante (solaire ou autre)"><T v={f.supply.existing_installation} set={(v) => sup("existing_installation", str(v))} /></F>
-      <F label="Autonomie souhaitée (si spécifiée)"><T v={f.supply.autonomy} set={(v) => sup("autonomy", str(v))} /></F>
-      <F label="Délestage possible"><T v={f.supply.load_shedding} set={(v) => sup("load_shedding", str(v))} /></F>
-      <F label="Charges critiques prioritaires"><T v={f.supply.critical_loads} set={(v) => sup("critical_loads", str(v))} /></F>
-      <F label="Contraintes du site" wide><textarea className={`${inputCls} h-16 py-2`} value={f.supply.site_constraints ?? ""} onChange={(e) => sup("site_constraints", str(e.target.value))} /></F>
+      <F label="Source d’alimentation actuelle"><S v={sp.current_source ?? ""} set={(v) => sup("current_source", v || null)} items={Object.entries(SUPPLY_SOURCES)} empty="Non renseignée" /></F>
+      <F label="Fiabilité de l’alimentation"><T v={sp.reliability} set={(v) => sup("reliability", str(v))} /></F>
+      <F label="Heures de coupure moyennes mesurées (h/jour)"><T type="number" v={sp.outage_hours} set={(v) => sup("outage_hours", num(v))} /></F>
+      <F label="Groupe électrogène présent"><S v={sp.has_genset == null ? "" : String(sp.has_genset)} set={(v) => sup("has_genset", v === "" ? null : v === "true")} items={[["true", "Oui"], ["false", "Non"]]} empty="Non renseigné" /></F>
+      <F label="Installation existante (solaire ou autre)"><T v={sp.existing_installation} set={(v) => sup("existing_installation", str(v))} /></F>
+      <F label="Autonomie souhaitée (si spécifiée)"><T v={sp.autonomy} set={(v) => sup("autonomy", str(v))} /></F>
+      <F label="Délestage possible"><T v={sp.load_shedding} set={(v) => sup("load_shedding", str(v))} /></F>
+      <F label="Charges critiques prioritaires"><T v={sp.critical_loads} set={(v) => sup("critical_loads", str(v))} /></F>
+      <F label="Contraintes du site" wide><textarea className={`${inputCls} h-16 py-2`} value={sp.site_constraints ?? ""} onChange={(e) => sup("site_constraints", str(e.target.value))} /></F>
       <p className="text-xs text-muted-foreground sm:col-span-2">Ces contraintes sont enregistrées telles quelles ; aucune recommandation de dimensionnement n’en est déduite.</p>
     </div>}
 

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { CATEGORIES, METHODS, PRIORITIES, STATUSES, equipmentErrors, measurementErrors, profileErrors } from "@/features/demand/demand-engine";
-import type { Equipment, Measurement, ProfileSlot } from "@/features/demand/demand-engine";
+import type { Equipment, Measurement, ProfileSlot, Supply } from "@/features/demand/demand-engine";
 
 const SELECT = `*, localities(id, name, departments(id, name, regions(id, name, countries(id, name)))), study_sites(id, name), energy_demand_equipment(*)`;
 
@@ -25,7 +25,7 @@ function flatten(r: any) {
     measurements: (r.measurements ?? []) as Measurement[], measured_peak_kw: num(r.measured_peak_kw), daily_profile: (r.daily_profile ?? []) as ProfileSlot[],
     weekday_variation: r.weekday_variation as string | null, seasonal_variation: r.seasonal_variation as string | null, has_history: r.has_history as boolean | null,
     criticality: r.criticality as string | null, growth_rate_pct: num(r.growth_rate_pct), assumptions: r.assumptions as string | null,
-    supply: (r.supply ?? {}) as Record<string, any>, source: (r.source ?? "") as string, reference: r.reference as string | null,
+    supply: (r.supply ?? {}) as Supply, source: (r.source ?? "") as string, reference: r.reference as string | null,
     acquisition_method: r.acquisition_method as string | null, data_time_basis: r.data_time_basis as string | null, collected_by: r.collected_by as string | null,
     comments: r.comments as string | null, status: r.demand_status as keyof typeof STATUSES, created_at: r.created_at as string, updated_at: r.updated_at as string,
     equipment: eq,
@@ -56,7 +56,7 @@ export const getDemand = createServerFn({ method: "GET" }).middleware([requireSu
     if (error) throw new Error("La demande n’a pas pu être chargée.");
     if (!row) return null;
     const { data: hist } = await sb.from("energy_demand_history").select("id, action, changes, actor_id, created_at").eq("demand_id", data.id).order("created_at", { ascending: false }).limit(50);
-    return { item: flatten(row), history: (hist ?? []) as { id: string; action: string; changes: Record<string, { before: unknown; after: unknown }>; actor_id: string | null; created_at: string }[] };
+    return { item: flatten(row), history: ((hist ?? []) as any[]).map((h) => ({ id: h.id as string, action: h.action as string, fields: Object.keys(h.changes ?? {}) as string[], created_at: h.created_at as string })) };
   });
 
 export const getLocalityDemands = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
