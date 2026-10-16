@@ -13,8 +13,8 @@ class EngineCallError extends Error {
 }
 
 async function callEngine<T>(path: string, schema: z.ZodType<T>, init?: { method: "POST"; body: unknown; auth: boolean }): Promise<T> {
-  const base = process.env.SCIENTIFIC_ENGINE_URL?.replace(/\/+$/, "");
-  const key = process.env.SCIENTIFIC_ENGINE_KEY;
+  const base = process.env["SCIENTIFIC_ENGINE_URL"]?.replace(/\/+$/, "");
+  const key = process.env["SCIENTIFIC_ENGINE_KEY"];
   if (!base) throw new EngineCallError("not_configured", "Moteur de calcul non configuré.");
   if (!/^https:\/\//.test(base) && !/^http:\/\/(localhost|127\.0\.0\.1)/.test(base)) throw new EngineCallError("not_configured", "L’URL du moteur doit utiliser HTTPS.");
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -27,7 +27,7 @@ async function callEngine<T>(path: string, schema: z.ZodType<T>, init?: { method
   }
   let res: Response;
   try {
-    res = await fetch(`${base}/api/v1${path}`, { method: init?.method ?? "GET", headers, body: init ? JSON.stringify(init.body) : undefined, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    res = await fetch(`${base}/api/v1${path}`, { method: init?.method ?? "GET", headers, body: init ? JSON.stringify(init.body) : null, signal: AbortSignal.timeout(TIMEOUT_MS) });
   } catch (e) {
     const timeout = e instanceof Error && e.name === "TimeoutError";
     throw new EngineCallError("unreachable", timeout ? "Délai d’attente dépassé du moteur de calcul." : "Moteur de calcul injoignable.");
