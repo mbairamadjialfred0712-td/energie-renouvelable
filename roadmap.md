@@ -1,5 +1,10 @@
 # Feuille de route — Fondation V1
 
+## Fiches météo par site
+- [ ] Ajouter fiches privées rattachées aux sites et localités, avec source, unités, période et statut.
+- [ ] Ajouter import CSV/Excel et récupération météo en ligne avec aperçu contrôlable.
+- [ ] Vérifier import, enregistrement et lecture connectée.
+
 ## Paramètres, moteurs et données réelles
 - [x] Configurer les paramètres techniques partagés et conserver leur version dans les estimations (valeurs de test supprimées ; configuration réelle à renseigner).
 - [x] Ajouter estimations annuelles éoliennes et biomasse avec validation, historique, pré-analyse et PDF.
