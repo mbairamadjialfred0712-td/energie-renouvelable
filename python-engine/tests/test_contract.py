@@ -5,7 +5,7 @@ from app.core.config import get_settings
 from app.main import app
 
 KEY = "k" * 40
-VALID = {"schema_version": "1.0", "engine": "photovoltaic",
+VALID = {"schema_version": "1.0", "engine": "wind",
          "input_data": {"power": {"value": 10, "unit": "kWc", "nature": "assumption"}},
          "source_references": [{"label": "Saisie utilisateur"}]}
 
@@ -29,10 +29,10 @@ def client(monkeypatch):
 H = {"X-Engine-Key": KEY, "Authorization": "Bearer good"}
 
 
-def test_health_and_capabilities_declare_nothing_available(client):
+def test_health_and_capabilities_declare_only_implemented(client):
     assert client.get("/api/v1/health").json()["auth_configured"] is True
     engines = client.get("/api/v1/capabilities").json()["engines"]
-    assert engines and all(e["status"] == "not_implemented" and e["version"] is None for e in engines)
+    assert engines and all(e["status"] == "not_implemented" and e["version"] is None for e in engines if e["engine"] != "photovoltaic")
 
 
 def test_auth_required(client):

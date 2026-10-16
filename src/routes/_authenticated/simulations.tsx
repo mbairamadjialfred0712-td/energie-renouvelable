@@ -1,4 +1,2 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/app/module-page";
-import { EngineStatusCard } from "@/features/engine/engine-status-card";
-export const Route=createFileRoute("/_authenticated/simulations")({head:()=>({meta:[{title:"Simulations — Énergie Renouvelable"},{name:"description",content:"Créez et suivez les simulations énergétiques traçables."},{property:"og:title",content:"Simulations — Énergie Renouvelable"},{property:"og:description",content:"Structure professionnelle des simulations énergétiques."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:()=> <div className="space-y-6"><div className="px-6 pt-6"><EngineStatusCard/></div><ModulePage eyebrow="Études / Simulations" title="Simulations" description="Configurez les entrées, paramètres et hypothèses. Les simulations seront exécutées uniquement par le moteur scientifique Python lorsqu’il sera déployé." fields={[{label:"Nom",required:true},{label:"Localité"},{label:"Période de début"},{label:"Période de fin"},{label:"Objectif"},{label:"Demande"},{label:"Technologies sélectionnées"},{label:"Hypothèses"}]} /></div>});
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+export const Route = createFileRoute("/_authenticated/simulations")({ component: () => <Outlet /> });

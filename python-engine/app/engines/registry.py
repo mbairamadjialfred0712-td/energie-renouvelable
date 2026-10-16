@@ -4,7 +4,16 @@ Aucun moteur scientifique n'est implémenté à cette étape (Prompt 8 : archite
 Pour ajouter un moteur : créer app/engines/<nom>.py exposant ENGINE (classe Engine) et l'enregistrer ici.
 """
 from typing import Protocol
-from app.api.schemas.contract import EngineCapability, Issue, SimulationRequest, ResultValue
+from dataclasses import dataclass, field
+from app.api.schemas.contract import EngineCapability, Issue, SimulationRequest, ResultValue, SeriesOut
+
+
+@dataclass
+class EngineOutput:
+    results: dict[str, ResultValue]
+    timeseries: dict[str, SeriesOut]
+    warnings: list[Issue] = field(default_factory=list)
+    metadata: dict = field(default_factory=dict)
 
 
 class Engine(Protocol):
@@ -13,7 +22,9 @@ class Engine(Protocol):
     description: str
     required_inputs: dict[str, set[str]]  # nom -> unités acceptées (aucune conversion implicite)
 
-    def run(self, request: SimulationRequest) -> tuple[dict[str, ResultValue], list[Issue]]: ...
+    def validate(self, request: SimulationRequest) -> tuple[list[Issue], list[Issue]]: ...
+
+    def run(self, request: SimulationRequest) -> "EngineOutput": ...
 
 
 PLANNED: dict[str, str] = {
@@ -27,7 +38,17 @@ PLANNED: dict[str, str] = {
     "finance": "Analyse économique",
 }
 
-IMPLEMENTED: dict[str, Engine] = {}
+def _load() -> dict[str, Engine]:
+    engines: dict[str, Engine] = {}
+    try:  # le moteur PV n'est déclaré que si PySAM (implémentation officielle PVWatts v8) est importable
+        from app.engines.pv.engine import PVWattsV8Engine
+        engines["photovoltaic"] = PVWattsV8Engine()
+    except ImportError:
+        pass
+    return engines
+
+
+IMPLEMENTED: dict[str, Engine] = _load()
 
 
 def capabilities() -> list[EngineCapability]:
@@ -37,7 +58,7 @@ def capabilities() -> list[EngineCapability]:
         out.append(EngineCapability(
             engine=name, status="available" if eng else "not_implemented",
             version=eng.version if eng else None, description=desc,
-            required_inputs=sorted(eng.required_inputs) if eng else []))
+            required_inputs=sorted(eng.required_inputs) + sorted(getattr(eng, "required_series", {})) if eng else []))
     return out
 
 

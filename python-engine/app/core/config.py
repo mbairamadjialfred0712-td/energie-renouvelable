@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_publishable_key: str = ""
     cors_origins: str = ""
-    max_body_bytes: int = 1_000_000
+    max_body_bytes: int = 3_000_000
 
     @property
     def origins(self) -> list[str]:

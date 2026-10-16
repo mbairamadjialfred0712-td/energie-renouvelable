@@ -1,0 +1,3 @@
+-r requirements.txt
+pvlib==0.11.2
+pytest>=8,<9
