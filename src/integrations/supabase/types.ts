@@ -2015,6 +2015,87 @@ export type Database = {
           },
         ]
       }
+      site_weather_datasets: {
+        Row: {
+          created_at: string
+          data_nature: string
+          id: string
+          locality_id: string
+          name: string
+          notes: string
+          owner_id: string
+          period_end: string
+          period_start: string
+          provenance: Json
+          radiation_unit: string
+          reference: string
+          samples: Json
+          site_id: string
+          source: string
+          status: Database["public"]["Enums"]["solar_status"]
+          time_standard: string
+          updated_at: string
+          wind_height_m: number
+        }
+        Insert: {
+          created_at?: string
+          data_nature?: string
+          id?: string
+          locality_id: string
+          name: string
+          notes?: string
+          owner_id: string
+          period_end: string
+          period_start: string
+          provenance?: Json
+          radiation_unit: string
+          reference?: string
+          samples: Json
+          site_id: string
+          source: string
+          status?: Database["public"]["Enums"]["solar_status"]
+          time_standard?: string
+          updated_at?: string
+          wind_height_m: number
+        }
+        Update: {
+          created_at?: string
+          data_nature?: string
+          id?: string
+          locality_id?: string
+          name?: string
+          notes?: string
+          owner_id?: string
+          period_end?: string
+          period_start?: string
+          provenance?: Json
+          radiation_unit?: string
+          reference?: string
+          samples?: Json
+          site_id?: string
+          source?: string
+          status?: Database["public"]["Enums"]["solar_status"]
+          time_standard?: string
+          updated_at?: string
+          wind_height_m?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_weather_datasets_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_weather_datasets_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "study_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       solar_resources: {
         Row: {
           acquisition_method: string | null

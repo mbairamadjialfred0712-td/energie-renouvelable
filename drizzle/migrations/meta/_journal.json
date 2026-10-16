@@ -99,6 +99,13 @@
       "when": 1792152248247,
       "tag": "0013_restrict_battery_datasheet_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792190150301,
+      "tag": "0014_site_weather_datasets",
+      "breakpoints": true
     }
   ]
 }

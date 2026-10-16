@@ -11,6 +11,8 @@
 
 ## Project architecture
 
+- Keep site weather datasets immutable except status and notes, with hourly UTC samples, explicit native radiation units and source provenance; separate them from energy resources and reject incomplete series for validation so imports never silently change scientific inputs.
+
 - Use Lovable Assets pointers for uploaded application imagery; this keeps source media out of the repository while preserving stable imports.
 - Keep project pre-analysis prompts and model calls in server-only modules; this protects the AI instructions and prevents client-side secret exposure.
 - Render solar temporal charts through the shared SolarEvolution view and browser-safe solar-evolution-data selector, using only dated recorded observations grouped by locality and unit; this prevents inferred trends, unit conversions and divergent detail/list behavior.

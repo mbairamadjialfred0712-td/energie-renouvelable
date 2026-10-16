@@ -7,6 +7,7 @@ const tabs = [
   { to: "/geography/departments", label: "Départements" },
   { to: "/geography/localities", label: "Localités" },
   { to: "/geography/sites", label: "Sites d’étude" },
+  { to: "/geography/weather", label: "Météo" },
   { to: "/geography/import", label: "Import CSV" },
 ] as const;
 
