@@ -31,6 +31,23 @@ class SourceReference(BaseModel):
     record_id: str | None = Field(default=None, max_length=80)
 
 
+class SeriesIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    values: list[float | None] = Field(max_length=8784)
+    unit: str = Field(min_length=1, max_length=40)
+    nature: DataNature
+    source: str | None = Field(default=None, max_length=500)
+
+
+class TimeSeriesIn(BaseModel):
+    """Série horaire : horodatages ISO 8601 locaux (heure standard, sans heure d'été) au DÉBUT de chaque heure."""
+    model_config = ConfigDict(extra="forbid")
+    timestamps: list[str] = Field(max_length=8784)
+    utc_offset_hours: float = Field(ge=-12, le=14)
+    timestamp_convention: Literal["period_start"] = "period_start"
+    series: dict[str, SeriesIn] = Field(max_length=20)
+
+
 class SimulationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: Literal["1.0"] = SCHEMA_VERSION
@@ -41,6 +58,7 @@ class SimulationRequest(BaseModel):
     input_data: dict[str, InputValue] = Field(max_length=500)
     assumptions: dict[str, InputValue] = Field(default_factory=dict, max_length=200)
     source_references: list[SourceReference] = Field(default_factory=list, max_length=200)
+    timeseries: TimeSeriesIn | None = None
 
 
 class SimulationStatus(str, Enum):
@@ -63,6 +81,12 @@ class ResultValue(BaseModel):
     method: str
 
 
+class SeriesOut(BaseModel):
+    values: list[float]
+    unit: str
+    method: str
+
+
 class SimulationResponse(BaseModel):
     simulation_id: str | None
     status: SimulationStatus
@@ -72,6 +96,7 @@ class SimulationResponse(BaseModel):
     created_at: datetime
     completed_at: datetime | None = None
     results: dict[str, ResultValue] = {}
+    timeseries: dict[str, "SeriesOut"] = {}
     input_summary: dict[str, Any] = {}
     assumptions: dict[str, InputValue] = {}
     source_references: list[SourceReference] = []

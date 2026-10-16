@@ -42,14 +42,17 @@ async def run(req: SimulationRequest, caller: Caller = Depends(require_caller)) 
     if engine is None:
         raise EngineError(ErrorCode.engine_unavailable, f"Le moteur « {req.engine} » n'est pas implémenté.")
     created = datetime.now(timezone.utc)
-    results, engine_warnings = engine.run(req)
+    try:
+        out = engine.run(req)
+    except ValueError as exc:  # erreur scientifique explicite : jamais de résultat partiel
+        raise EngineError(ErrorCode.invalid_input, str(exc))
     return SimulationResponse(
         simulation_id=req.simulation_id, status=SimulationStatus.completed, engine=engine.name,
         engine_version=engine.version, created_at=created, completed_at=datetime.now(timezone.utc),
-        results=results, input_summary={k: v.model_dump() for k, v in req.input_data.items()},
+        results=out.results, timeseries=out.timeseries, input_summary={k: v.model_dump() for k, v in req.input_data.items()},
         assumptions=req.assumptions, source_references=req.source_references,
-        warnings=warnings + engine_warnings,
-        calculation_metadata={"requested_by": caller.user_id, "schema_version": SCHEMA_VERSION})
+        warnings=warnings + out.warnings,
+        calculation_metadata={**out.metadata, "requested_by": caller.user_id, "schema_version": SCHEMA_VERSION})
 
 
 @router.get("/simulations/{simulation_id}", response_model=SimulationResponse)

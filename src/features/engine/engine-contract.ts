@@ -18,6 +18,18 @@ export const sourceReference = z.object({
   table: z.string().max(80).nullable().optional(),
   record_id: z.string().max(80).nullable().optional(),
 });
+export const seriesIn = z.object({
+  values: z.array(z.number().finite().nullable()).max(8784),
+  unit: z.string().min(1).max(40),
+  nature: dataNature,
+  source: z.string().max(500).nullable().optional(),
+});
+export const timeseriesIn = z.object({
+  timestamps: z.array(z.string().max(40)).max(8784),
+  utc_offset_hours: z.number().min(-12).max(14),
+  timestamp_convention: z.literal("period_start").default("period_start"),
+  series: z.record(z.string(), seriesIn),
+});
 export const simulationRequest = z.object({
   schema_version: z.literal(ENGINE_SCHEMA_VERSION),
   simulation_id: z.string().uuid().nullable().optional(),
@@ -27,6 +39,7 @@ export const simulationRequest = z.object({
   input_data: z.record(z.string(), inputValue),
   assumptions: z.record(z.string(), inputValue).default({}),
   source_references: z.array(sourceReference).max(200).default([]),
+  timeseries: timeseriesIn.nullable().optional(),
 });
 export const issue = z.object({ field: z.string().nullable().optional(), code: z.string(), message: z.string() });
 export const capability = z.object({
@@ -39,6 +52,22 @@ export const capability = z.object({
 export const capabilitiesResponse = z.object({ schema_version: z.string(), service_version: z.string(), engines: z.array(capability) });
 export const healthResponse = z.object({ status: z.literal("ok"), service_version: z.string(), schema_version: z.string(), environment: z.string(), auth_configured: z.boolean() });
 export const validationResponse = z.object({ valid: z.boolean(), engine: z.string(), engine_available: z.boolean(), warnings: z.array(issue), validation_errors: z.array(issue) });
+export const resultValue = z.object({ value: z.number().nullable(), unit: z.string(), nature: z.literal("calculated"), method: z.string() });
+export const seriesOut = z.object({ values: z.array(z.number()), unit: z.string(), method: z.string() });
+export const simulationResponse = z.object({
+  simulation_id: z.string().nullable(),
+  status: z.enum(["pending", "running", "completed", "failed"]),
+  engine: z.string(),
+  engine_version: z.string().nullable(),
+  schema_version: z.string(),
+  created_at: z.string(),
+  completed_at: z.string().nullable(),
+  results: z.record(z.string(), resultValue),
+  timeseries: z.record(z.string(), seriesOut),
+  warnings: z.array(issue),
+  validation_errors: z.array(issue),
+  calculation_metadata: z.record(z.string(), z.unknown()),
+});
 export const errorResponse = z.object({ error: z.object({ code: z.string(), message: z.string(), details: z.array(z.unknown()).default([]) }) });
 
 export type SimulationRequest = z.infer<typeof simulationRequest>;

@@ -27,6 +27,9 @@ def validate_request(req: SimulationRequest) -> tuple[list[Issue], list[Issue]]:
             elif v.unit not in units:
                 errors.append(Issue(field=f"input_data.{name}", code="incompatible_units",
                                     message=f"Unité « {v.unit} » non acceptée ; attendue : {', '.join(sorted(units))}. Aucune conversion implicite."))
+        e2, w2 = engine.validate(req)
+        errors += e2
+        warnings += w2
     if not req.source_references:
         warnings.append(Issue(field="source_references", code="no_sources", message="Aucune source déclarée."))
     return errors, warnings
