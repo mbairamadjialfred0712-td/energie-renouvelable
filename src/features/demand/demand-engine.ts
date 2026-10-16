@@ -23,6 +23,7 @@ export type Equipment = {
   hours_per_day: number | null; days_per_week: number | null; usage_factor: number | null;
   usage_factor_definition: string | null; usage_factor_source: string | null; priority: keyof typeof PRIORITIES; notes: string | null;
 };
+export type Supply = { current_source?: string | null; reliability?: string | null; outage_hours?: number | null; has_genset?: boolean | null; existing_installation?: string | null; autonomy?: string | null; load_shedding?: string | null; critical_loads?: string | null; site_constraints?: string | null };
 export type Measurement = { start: string; end: string; energy: number; unit: "Wh" | "kWh"; peak_kw: number | null; notes: string | null };
 export type ProfileSlot = { start_hour: number; end_hour: number; power_kw: number; nature: "measured" | "estimated" };
 
@@ -81,7 +82,7 @@ export function measurementErrors(m: Measurement[]): string[] {
 }
 export function overlappingMeasurements(m: Measurement[]) {
   const s = [...m].sort((a, b) => a.start.localeCompare(b.start));
-  for (let i = 1; i < s.length; i++) if (s[i].start <= s[i - 1].end) return true;
+  for (let i = 1; i < s.length; i++) if (s[i]!.start <= s[i - 1]!.end) return true;
   return false;
 }
 /** Moyenne journalière d'une mesure : conversion explicite Wh → kWh (÷ 1 000), divisée par le nombre de jours inclusifs. */
@@ -97,7 +98,7 @@ export function profileErrors(p: ProfileSlot[]): string[] {
   s.forEach((x, i) => {
     if (!(x.start_hour >= 0 && x.end_hour <= 24 && x.start_hour < x.end_hour)) out.push(`Créneau ${i + 1} : heures invalides (0 ≤ début < fin ≤ 24).`);
     if (!(x.power_kw >= 0)) out.push(`Créneau ${i + 1} : puissance négative.`);
-    if (i > 0 && x.start_hour < s[i - 1].end_hour) out.push(`Créneau ${i + 1} : chevauche le créneau précédent.`);
+    if (i > 0 && x.start_hour < s[i - 1]!.end_hour) out.push(`Créneau ${i + 1} : chevauche le créneau précédent.`);
   });
   return out;
 }

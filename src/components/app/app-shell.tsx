@@ -11,7 +11,7 @@ const nav = [
   { label: "Tableau de bord", to: "/dashboard", icon: LayoutDashboard },
   { label: "Territoires", to: "/geography", icon: Map },
   { label: "Ressources", to: "/resources", icon: Sun },
-  { label: "Demande", to: "/demand", icon: Activity },
+  { label: "Demande énergétique", to: "/demand", icon: Activity },
   { label: "Technologies", to: "/technologies", icon: Database },
   { label: "Simulations", to: "/simulations", icon: FlaskConical },
   { label: "Scénarios", to: "/scenarios", icon: Layers3 },
