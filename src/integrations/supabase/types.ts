@@ -271,60 +271,235 @@ export type Database = {
           },
         ]
       }
+      energy_demand_equipment: {
+        Row: {
+          category: string | null
+          created_at: string
+          days_per_week: number
+          demand_id: string
+          hours_per_day: number
+          id: string
+          name: string
+          notes: string | null
+          owner_id: string
+          power_unit: string
+          priority: string
+          quantity: number
+          sort_order: number
+          unit_power: number
+          usage_factor: number | null
+          usage_factor_definition: string | null
+          usage_factor_source: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          days_per_week: number
+          demand_id: string
+          hours_per_day: number
+          id?: string
+          name: string
+          notes?: string | null
+          owner_id: string
+          power_unit: string
+          priority?: string
+          quantity: number
+          sort_order?: number
+          unit_power: number
+          usage_factor?: number | null
+          usage_factor_definition?: string | null
+          usage_factor_source?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          days_per_week?: number
+          demand_id?: string
+          hours_per_day?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          owner_id?: string
+          power_unit?: string
+          priority?: string
+          quantity?: number
+          sort_order?: number
+          unit_power?: number
+          usage_factor?: number | null
+          usage_factor_definition?: string | null
+          usage_factor_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_demand_equipment_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "energy_demands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_demand_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          changes: Json
+          created_at: string
+          demand_id: string
+          id: string
+          owner_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          changes?: Json
+          created_at?: string
+          demand_id: string
+          id?: string
+          owner_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          changes?: Json
+          created_at?: string
+          demand_id?: string
+          id?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_demand_history_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "energy_demands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       energy_demands: {
         Row: {
+          acquisition_method: string | null
           annual_demand_kwh: number | null
           assumptions: string | null
+          collected_by: string | null
+          comments: string | null
+          consumer_category: string
+          consumer_detail: string | null
+          consumer_name: string | null
           created_at: string
+          created_by: string | null
+          criticality: string | null
           daily_demand_kwh: number | null
+          daily_profile: Json
+          data_time_basis: string | null
           demand_profile: Json | null
+          demand_status: Database["public"]["Enums"]["solar_status"]
+          description: string | null
           growth_rate_pct: number | null
+          has_history: boolean | null
           id: string
           locality_id: string
+          measured_peak_kw: number | null
+          measurements: Json
           name: string
           owner_id: string
           peak_power_kw: number | null
+          period_end: string | null
+          period_start: string | null
+          reference: string | null
+          seasonal_variation: string | null
           sector: string
+          site_id: string | null
           source: string | null
           study_year: number | null
+          supply: Json
           updated_at: string
+          users_count: number | null
           validation_status: Database["public"]["Enums"]["validation_status"]
+          weekday_variation: string | null
         }
         Insert: {
+          acquisition_method?: string | null
           annual_demand_kwh?: number | null
           assumptions?: string | null
+          collected_by?: string | null
+          comments?: string | null
+          consumer_category?: string
+          consumer_detail?: string | null
+          consumer_name?: string | null
           created_at?: string
+          created_by?: string | null
+          criticality?: string | null
           daily_demand_kwh?: number | null
+          daily_profile?: Json
+          data_time_basis?: string | null
           demand_profile?: Json | null
+          demand_status?: Database["public"]["Enums"]["solar_status"]
+          description?: string | null
           growth_rate_pct?: number | null
+          has_history?: boolean | null
           id?: string
           locality_id: string
+          measured_peak_kw?: number | null
+          measurements?: Json
           name: string
           owner_id?: string
           peak_power_kw?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          reference?: string | null
+          seasonal_variation?: string | null
           sector: string
+          site_id?: string | null
           source?: string | null
           study_year?: number | null
+          supply?: Json
           updated_at?: string
+          users_count?: number | null
           validation_status?: Database["public"]["Enums"]["validation_status"]
+          weekday_variation?: string | null
         }
         Update: {
+          acquisition_method?: string | null
           annual_demand_kwh?: number | null
           assumptions?: string | null
+          collected_by?: string | null
+          comments?: string | null
+          consumer_category?: string
+          consumer_detail?: string | null
+          consumer_name?: string | null
           created_at?: string
+          created_by?: string | null
+          criticality?: string | null
           daily_demand_kwh?: number | null
+          daily_profile?: Json
+          data_time_basis?: string | null
           demand_profile?: Json | null
+          demand_status?: Database["public"]["Enums"]["solar_status"]
+          description?: string | null
           growth_rate_pct?: number | null
+          has_history?: boolean | null
           id?: string
           locality_id?: string
+          measured_peak_kw?: number | null
+          measurements?: Json
           name?: string
           owner_id?: string
           peak_power_kw?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          reference?: string | null
+          seasonal_variation?: string | null
           sector?: string
+          site_id?: string | null
           source?: string | null
           study_year?: number | null
+          supply?: Json
           updated_at?: string
+          users_count?: number | null
           validation_status?: Database["public"]["Enums"]["validation_status"]
+          weekday_variation?: string | null
         }
         Relationships: [
           {
@@ -332,6 +507,13 @@ export type Database = {
             columns: ["locality_id"]
             isOneToOne: false
             referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "energy_demands_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "study_sites"
             referencedColumns: ["id"]
           },
         ]
