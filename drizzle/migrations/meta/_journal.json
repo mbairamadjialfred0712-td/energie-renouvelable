@@ -92,6 +92,13 @@
       "when": 1792150820166,
       "tag": "0012_battery_storage_module",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792152248247,
+      "tag": "0013_restrict_battery_datasheet_reads",
+      "breakpoints": true
     }
   ]
 }
