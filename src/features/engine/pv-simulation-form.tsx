@@ -7,7 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { runPvSimulation } from "@/lib/engine.functions";
 import { ENGINE_SCHEMA_VERSION, type SimulationRequest } from "./engine-contract";
-import { parsePvCsv, PV_SERIES, type ParsedSeries } from "./pv-csv";
+import { buildPvCsvTemplate, parsePvCsv, PV_SERIES, type ParsedSeries } from "./pv-csv";
+
+function downloadTemplate() {
+  const url = URL.createObjectURL(new Blob([buildPvCsvTemplate()], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "modele-pv-horaire-DEMONSTRATION-donnees-fictives.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
 
 const PARAMS = [
   { key: "latitude", label: "Latitude", unit: "°", hint: "−90 à 90" },
@@ -90,6 +98,10 @@ export function PvSimulationForm() {
       <section className="space-y-3 rounded-lg border p-5">
         <h2 className="font-semibold">1. Série météorologique horaire</h2>
         <p className="text-sm text-muted-foreground">CSV avec colonnes <code>timestamp;ghi;dni;dhi;temp_air;wind_speed</code> (+ <code>albedo</code> facultatif). 8 760 heures, heure locale standard au début de chaque heure (ex. 2023-01-01T00:00:00), 29 février retiré. Unités : W/m², °C, m/s. Cellules vides refusées, jamais remplacées par zéro.</p>
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-dashed p-3 text-sm">
+          <Button type="button" variant="outline" size="sm" onClick={downloadTemplate}>Télécharger le modèle CSV</Button>
+          <span className="text-muted-foreground">8 760 heures (année 2023). Valeurs <strong>fictives de démonstration</strong>, ne représentant aucun site : à remplacer par vos séries réelles sourcées.</span>
+        </div>
         <Input type="file" accept=".csv,text/csv" aria-label="Fichier CSV horaire" onChange={async (e) => { const f = e.target.files?.[0]; setCsv(f ? parsePvCsv(await f.text()) : null); }} />
         {csv && <p className="text-sm">{csv.timestamps.length} lignes lues · colonnes : {Object.keys(csv.series).join(", ") || "aucune"}{csv.errors.length ? ` · ${csv.errors.join(" ")}` : ""}</p>}
         <div className="grid gap-4 sm:grid-cols-3">

@@ -40,3 +40,20 @@ export function parsePvCsv(text: string): ParsedSeries {
   }
   return { timestamps, series, errors };
 }
+
+// Modèle CSV de DÉMONSTRATION : valeurs fictives générées par une forme sinusoïdale simple,
+// ne représentant aucun site réel. Sert uniquement à illustrer le format attendu.
+export function buildPvCsvTemplate(year = 2023): string {
+  const rows = ["timestamp;ghi;dni;dhi;temp_air;wind_speed"];
+  const start = Date.UTC(year, 0, 1);
+  for (let i = 0; i < 8760; i++) {
+    const d = new Date(start + i * 3600_000);
+    const h = d.getUTCHours();
+    const s = Math.max(0, Math.sin((Math.PI * (h - 6)) / 12));
+    const ghi = Math.round(800 * s), dni = Math.round(600 * s), dhi = Math.round(150 * s);
+    const temp = Math.round(22 + 8 * s);
+    const ts = d.toISOString().slice(0, 19);
+    rows.push(`${ts};${ghi};${dni};${dhi};${temp};3`);
+  }
+  return "\uFEFF" + rows.join("\r\n") + "\r\n";
+}
