@@ -14,6 +14,259 @@ export type Database = {
   }
   public: {
     Tables: {
+      battery_datasheet_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          datasheet_id: string
+          fields: string[]
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          datasheet_id: string
+          fields?: string[]
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          datasheet_id?: string
+          fields?: string[]
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battery_datasheet_history_datasheet_id_fkey"
+            columns: ["datasheet_id"]
+            isOneToOne: false
+            referencedRelation: "battery_datasheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      battery_datasheets: {
+        Row: {
+          acquisition_method: string | null
+          application: string | null
+          calendar_years: number | null
+          capacity_ah: number | null
+          certifications: string | null
+          charge_eff_pct: number | null
+          chemistry: string
+          chemistry_detail: string | null
+          comments: string | null
+          consulted_on: string | null
+          cooling: string | null
+          cost_source: string | null
+          created_at: string
+          currency: string | null
+          cycle_conditions: string | null
+          cycles: number | null
+          degradation_pct_year: number | null
+          degradation_source: string | null
+          description: string | null
+          discharge_eff_pct: number | null
+          doc_url: string | null
+          dod_pct: number | null
+          energy_kwh: number | null
+          eol_capacity_pct: number | null
+          extra: Json
+          has_bms: boolean | null
+          height_mm: number | null
+          id: string
+          install_cost: number | null
+          installation_location: string | null
+          installation_notes: string | null
+          ip_rating: string | null
+          length_mm: number | null
+          maintenance_cost: number | null
+          manufacturer: string
+          mass_kg: number | null
+          max_charge_a: number | null
+          max_charge_kw: number | null
+          max_discharge_a: number | null
+          max_discharge_kw: number | null
+          name: string
+          nominal_voltage_v: number | null
+          owner_id: string
+          page_ref: string | null
+          price: number | null
+          price_date: string | null
+          product_ref: string | null
+          published_on: string | null
+          replacement_cost: number | null
+          rte_pct: number | null
+          safety_notes: string | null
+          sheet_version: string | null
+          soc_max_pct: number | null
+          soc_min_pct: number | null
+          source: string
+          status: Database["public"]["Enums"]["solar_status"]
+          technology_id: string | null
+          temp_max_c: number | null
+          temp_min_c: number | null
+          temp_recommended_c: number | null
+          updated_at: string
+          usable_kwh: number | null
+          voltage_max_v: number | null
+          voltage_min_v: number | null
+          warranty: string | null
+          warranty_limits: string | null
+          width_mm: number | null
+        }
+        Insert: {
+          acquisition_method?: string | null
+          application?: string | null
+          calendar_years?: number | null
+          capacity_ah?: number | null
+          certifications?: string | null
+          charge_eff_pct?: number | null
+          chemistry: string
+          chemistry_detail?: string | null
+          comments?: string | null
+          consulted_on?: string | null
+          cooling?: string | null
+          cost_source?: string | null
+          created_at?: string
+          currency?: string | null
+          cycle_conditions?: string | null
+          cycles?: number | null
+          degradation_pct_year?: number | null
+          degradation_source?: string | null
+          description?: string | null
+          discharge_eff_pct?: number | null
+          doc_url?: string | null
+          dod_pct?: number | null
+          energy_kwh?: number | null
+          eol_capacity_pct?: number | null
+          extra?: Json
+          has_bms?: boolean | null
+          height_mm?: number | null
+          id?: string
+          install_cost?: number | null
+          installation_location?: string | null
+          installation_notes?: string | null
+          ip_rating?: string | null
+          length_mm?: number | null
+          maintenance_cost?: number | null
+          manufacturer: string
+          mass_kg?: number | null
+          max_charge_a?: number | null
+          max_charge_kw?: number | null
+          max_discharge_a?: number | null
+          max_discharge_kw?: number | null
+          name: string
+          nominal_voltage_v?: number | null
+          owner_id: string
+          page_ref?: string | null
+          price?: number | null
+          price_date?: string | null
+          product_ref?: string | null
+          published_on?: string | null
+          replacement_cost?: number | null
+          rte_pct?: number | null
+          safety_notes?: string | null
+          sheet_version?: string | null
+          soc_max_pct?: number | null
+          soc_min_pct?: number | null
+          source: string
+          status?: Database["public"]["Enums"]["solar_status"]
+          technology_id?: string | null
+          temp_max_c?: number | null
+          temp_min_c?: number | null
+          temp_recommended_c?: number | null
+          updated_at?: string
+          usable_kwh?: number | null
+          voltage_max_v?: number | null
+          voltage_min_v?: number | null
+          warranty?: string | null
+          warranty_limits?: string | null
+          width_mm?: number | null
+        }
+        Update: {
+          acquisition_method?: string | null
+          application?: string | null
+          calendar_years?: number | null
+          capacity_ah?: number | null
+          certifications?: string | null
+          charge_eff_pct?: number | null
+          chemistry?: string
+          chemistry_detail?: string | null
+          comments?: string | null
+          consulted_on?: string | null
+          cooling?: string | null
+          cost_source?: string | null
+          created_at?: string
+          currency?: string | null
+          cycle_conditions?: string | null
+          cycles?: number | null
+          degradation_pct_year?: number | null
+          degradation_source?: string | null
+          description?: string | null
+          discharge_eff_pct?: number | null
+          doc_url?: string | null
+          dod_pct?: number | null
+          energy_kwh?: number | null
+          eol_capacity_pct?: number | null
+          extra?: Json
+          has_bms?: boolean | null
+          height_mm?: number | null
+          id?: string
+          install_cost?: number | null
+          installation_location?: string | null
+          installation_notes?: string | null
+          ip_rating?: string | null
+          length_mm?: number | null
+          maintenance_cost?: number | null
+          manufacturer?: string
+          mass_kg?: number | null
+          max_charge_a?: number | null
+          max_charge_kw?: number | null
+          max_discharge_a?: number | null
+          max_discharge_kw?: number | null
+          name?: string
+          nominal_voltage_v?: number | null
+          owner_id?: string
+          page_ref?: string | null
+          price?: number | null
+          price_date?: string | null
+          product_ref?: string | null
+          published_on?: string | null
+          replacement_cost?: number | null
+          rte_pct?: number | null
+          safety_notes?: string | null
+          sheet_version?: string | null
+          soc_max_pct?: number | null
+          soc_min_pct?: number | null
+          source?: string
+          status?: Database["public"]["Enums"]["solar_status"]
+          technology_id?: string | null
+          temp_max_c?: number | null
+          temp_min_c?: number | null
+          temp_recommended_c?: number | null
+          updated_at?: string
+          usable_kwh?: number | null
+          voltage_max_v?: number | null
+          voltage_min_v?: number | null
+          warranty?: string | null
+          warranty_limits?: string | null
+          width_mm?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battery_datasheets_technology_id_fkey"
+            columns: ["technology_id"]
+            isOneToOne: false
+            referencedRelation: "technologies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biomass_reference_observations: {
         Row: {
           coordinate_reference: string | null
@@ -1146,6 +1399,96 @@ export type Database = {
             columns: ["resource_id"]
             isOneToOne: false
             referencedRelation: "energy_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_storage_configs: {
+        Row: {
+          aging_assumption: string | null
+          charge_eff_pct: number | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          datasheet_id: string
+          discharge_eff_pct: number | null
+          id: string
+          justification: string | null
+          module_count: number
+          owner_id: string
+          parallel_count: number | null
+          project_id: string
+          reference_temp_c: number | null
+          retained_cost: number | null
+          rte_pct: number | null
+          series_count: number | null
+          soc_max_pct: number | null
+          soc_min_pct: number | null
+          status: Database["public"]["Enums"]["solar_status"]
+          updated_at: string
+          usable_energy_limit_kwh: number | null
+        }
+        Insert: {
+          aging_assumption?: string | null
+          charge_eff_pct?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          datasheet_id: string
+          discharge_eff_pct?: number | null
+          id?: string
+          justification?: string | null
+          module_count: number
+          owner_id: string
+          parallel_count?: number | null
+          project_id: string
+          reference_temp_c?: number | null
+          retained_cost?: number | null
+          rte_pct?: number | null
+          series_count?: number | null
+          soc_max_pct?: number | null
+          soc_min_pct?: number | null
+          status?: Database["public"]["Enums"]["solar_status"]
+          updated_at?: string
+          usable_energy_limit_kwh?: number | null
+        }
+        Update: {
+          aging_assumption?: string | null
+          charge_eff_pct?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          datasheet_id?: string
+          discharge_eff_pct?: number | null
+          id?: string
+          justification?: string | null
+          module_count?: number
+          owner_id?: string
+          parallel_count?: number | null
+          project_id?: string
+          reference_temp_c?: number | null
+          retained_cost?: number | null
+          rte_pct?: number | null
+          series_count?: number | null
+          soc_max_pct?: number | null
+          soc_min_pct?: number | null
+          status?: Database["public"]["Enums"]["solar_status"]
+          updated_at?: string
+          usable_energy_limit_kwh?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_storage_configs_datasheet_id_fkey"
+            columns: ["datasheet_id"]
+            isOneToOne: false
+            referencedRelation: "battery_datasheets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_storage_configs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
