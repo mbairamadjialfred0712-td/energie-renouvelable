@@ -8,6 +8,7 @@ import { SolarComparison } from "@/features/resources/solar/solar-compare";
 import { StatusBadge, fmt, periodText } from "@/features/resources/solar/solar-ui";
 import { getLocalityWind } from "@/lib/wind.functions";
 import { WindComparison, WindStatusBadge } from "@/features/resources/wind/wind-ui";
+import { LocalityDemands } from "@/features/demand/locality-demands";
 import { getLocalityBiomass } from "@/lib/biomass.functions";
 import { BiomassComparison, BiomassStatusBadge, fmt as bfmt, periodText as bperiod, typeText } from "@/features/resources/biomass/biomass-ui";
 
@@ -63,6 +64,7 @@ function LocalityDetail() {
         )}
       </section>
       <LocalityBiomass id={id} canWrite={!!access?.canWrite} />
+      <LocalityDemands id={id} />
     </WorkspacePage>
   );
 }
