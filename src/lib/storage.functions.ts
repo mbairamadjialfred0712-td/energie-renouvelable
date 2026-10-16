@@ -110,3 +110,9 @@ export const deleteStorageConfig = createServerFn({ method: "POST" }).middleware
     if (error || !d?.length) throw new Error("La configuration n’a pas pu être supprimée.");
     return { ok: true };
   });
+
+export const listTechnologyCatalog = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const { data, error } = await (context.supabase as any).from("technologies").select("id, code, name, category, description, active").order("name");
+  if (error) throw new Error("Le catalogue n’a pas pu être chargé.");
+  return (data ?? []) as { id: string; code: string; name: string; category: string; description: string; active: boolean }[];
+});

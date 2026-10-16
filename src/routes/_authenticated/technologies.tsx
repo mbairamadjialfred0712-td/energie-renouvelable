@@ -1,3 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/app/module-page";
-export const Route=createFileRoute("/_authenticated/technologies")({head:()=>({meta:[{title:"Technologies — Énergie Renouvelable"},{name:"description",content:"Référentiel des technologies dont les moteurs scientifiques seront ajoutés après validation."},{property:"og:title",content:"Technologies — Énergie Renouvelable"},{property:"og:description",content:"Référentiel des technologies dont les moteurs scientifiques seront ajoutés après validation."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:()=> <ModulePage eyebrow="Référentiel technique" title="Technologies" description="Référentiel des technologies dont les moteurs scientifiques seront ajoutés après validation." fields={[{ label: 'Code', required: true }, { label: 'Nom', required: true }, { label: 'Catégorie', required: true }, { label: 'Description', required: true }]} />});
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+
+const tabs = [
+  { to: "/technologies", label: "Vue d’ensemble", exact: true },
+  { to: "/technologies/storage", label: "Stockage par batteries" },
+] as const;
+
+export const Route = createFileRoute("/_authenticated/technologies")({ component: TechnologiesLayout });
+
+function TechnologiesLayout() {
+  return <div>
+    <nav className="sticky top-0 z-20 flex gap-1 overflow-x-auto border-b border-border bg-background px-5 sm:px-8 lg:px-10">
+      {tabs.map((tab) => <Link key={tab.to} to={tab.to} activeOptions={{ exact: "exact" in tab }} className="whitespace-nowrap border-b-2 border-transparent px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground" activeProps={{ className: "border-primary text-foreground" }}>{tab.label}</Link>)}
+    </nav>
+    <Outlet />
+  </div>;
+}
