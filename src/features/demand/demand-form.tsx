@@ -23,7 +23,7 @@ function S({ v, set, items, empty }: { v: string; set: (s: string) => void; item
   return <select className={inputCls} value={v} onChange={(e) => set(e.target.value)}>{empty !== undefined && <option value="">{empty}</option>}{items.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>;
 }
 
-export function DemandForm({ row, defaultLocalityId, canValidate, onSaved, onCancel }: { row: DemandRow | null; defaultLocalityId?: string; canValidate: boolean; onSaved: (id: string) => void; onCancel: () => void }) {
+export function DemandForm({ row, defaultLocalityId, canValidate, onSaved, onCancel }: { row: DemandRow | null; defaultLocalityId?: string | undefined; canValidate: boolean; onSaved: (id: string) => void; onCancel: () => void }) {
   const { data: opt } = useQuery({ queryKey: ["demand-options"], queryFn: () => getDemandOptions() });
   const save = useServerFn(saveDemand);
   const [step, setStep] = useState(0);
