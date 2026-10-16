@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
+import { demandsToCsv, downloadCsv } from "@/features/demand/demand-csv";
 import { WorkspacePage, EmptyState } from "@/components/app/page";
 import { Button } from "@/components/ui/button";
 import { getDemandAccess, listDemands } from "@/lib/demand.functions";
@@ -31,7 +32,7 @@ function DemandList() {
   const measured = rows.filter((r) => r.measurements.length).length;
   const inventories = rows.filter((r) => inventoryTotal(r.equipment).complete).length;
   return <WorkspacePage eyebrow="Données / Demande" title="Demande énergétique" description={META}
-    action={access?.canWrite ? <Button asChild><Link to="/demand/new"><Plus />Nouvelle demande</Link></Button> : null}>
+    action={<div className="flex gap-2"><Button variant="outline" disabled={!shown.length} onClick={() => downloadCsv(demandsToCsv(shown), `demandes-energetiques-${new Date().toISOString().slice(0, 10)}.csv`)}><Download />Exporter CSV ({shown.length})</Button>{access?.canWrite && <Button asChild><Link to="/demand/new"><Plus />Nouvelle demande</Link></Button>}</div>}>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {[["Fiches", rows.length], ["Validées", rows.filter((r) => r.status === "validated").length], ["Avec mesures", measured], ["Inventaires complets", inventories]].map(([l, v]) => <div key={l} className="border border-border bg-background p-4"><p className="text-xs text-muted-foreground">{l}</p><p className="mt-1 text-2xl font-semibold">{v}</p></div>)}
     </div>
