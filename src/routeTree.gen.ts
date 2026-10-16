@@ -55,6 +55,7 @@ import { Route as AuthenticatedTechnologiesStorageRouteImport } from './routes/_
 import { Route as AuthenticatedDemandIdEditRouteImport } from './routes/_authenticated/demand_.$id.edit'
 import { Route as AuthenticatedGeographyLocalitiesIndexRouteImport } from './routes/_authenticated/geography.localities.index'
 import { Route as AuthenticatedGeographyLocalitiesIdRouteImport } from './routes/_authenticated/geography.localities.$id'
+import { Route as AuthenticatedProjectsIdStorageRouteImport } from './routes/_authenticated/projects_.$id.storage'
 import { Route as AuthenticatedResourcesBiomassIndexRouteImport } from './routes/_authenticated/resources.biomass.index'
 import { Route as AuthenticatedResourcesBiomassIdRouteImport } from './routes/_authenticated/resources.biomass.$id'
 import { Route as AuthenticatedResourcesBiomassNewRouteImport } from './routes/_authenticated/resources.biomass.new'
@@ -322,6 +323,12 @@ const AuthenticatedGeographyLocalitiesIdRoute =
     path: '/localities/$id',
     getParentRoute: () => AuthenticatedGeographyRoute,
   } as any)
+const AuthenticatedProjectsIdStorageRoute =
+  AuthenticatedProjectsIdStorageRouteImport.update({
+    id: '/projects_/$id/storage',
+    path: '/projects/$id/storage',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedResourcesBiomassIndexRoute =
   AuthenticatedResourcesBiomassIndexRouteImport.update({
     id: '/',
@@ -452,6 +459,7 @@ export interface FileRoutesByFullPath {
   '/technologies/': typeof AuthenticatedTechnologiesIndexRoute
   '/demand/$id/edit': typeof AuthenticatedDemandIdEditRoute
   '/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
+  '/projects/$id/storage': typeof AuthenticatedProjectsIdStorageRoute
   '/resources/biomass/$id': typeof AuthenticatedResourcesBiomassIdRoute
   '/resources/biomass/new': typeof AuthenticatedResourcesBiomassNewRoute
   '/resources/solar/$id': typeof AuthenticatedResourcesSolarIdRoute
@@ -504,6 +512,7 @@ export interface FileRoutesByTo {
   '/technologies': typeof AuthenticatedTechnologiesIndexRoute
   '/demand/$id/edit': typeof AuthenticatedDemandIdEditRoute
   '/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
+  '/projects/$id/storage': typeof AuthenticatedProjectsIdStorageRoute
   '/resources/biomass/$id': typeof AuthenticatedResourcesBiomassIdRoute
   '/resources/biomass/new': typeof AuthenticatedResourcesBiomassNewRoute
   '/resources/solar/$id': typeof AuthenticatedResourcesSolarIdRoute
@@ -567,6 +576,7 @@ export interface FileRoutesById {
   '/_authenticated/technologies/': typeof AuthenticatedTechnologiesIndexRoute
   '/_authenticated/demand_/$id/edit': typeof AuthenticatedDemandIdEditRoute
   '/_authenticated/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
+  '/_authenticated/projects_/$id/storage': typeof AuthenticatedProjectsIdStorageRoute
   '/_authenticated/resources/biomass/$id': typeof AuthenticatedResourcesBiomassIdRoute
   '/_authenticated/resources/biomass/new': typeof AuthenticatedResourcesBiomassNewRoute
   '/_authenticated/resources/solar/$id': typeof AuthenticatedResourcesSolarIdRoute
@@ -630,6 +640,7 @@ export interface FileRouteTypes {
     | '/technologies/'
     | '/demand/$id/edit'
     | '/geography/localities/$id'
+    | '/projects/$id/storage'
     | '/resources/biomass/$id'
     | '/resources/biomass/new'
     | '/resources/solar/$id'
@@ -682,6 +693,7 @@ export interface FileRouteTypes {
     | '/technologies'
     | '/demand/$id/edit'
     | '/geography/localities/$id'
+    | '/projects/$id/storage'
     | '/resources/biomass/$id'
     | '/resources/biomass/new'
     | '/resources/solar/$id'
@@ -744,6 +756,7 @@ export interface FileRouteTypes {
     | '/_authenticated/technologies/'
     | '/_authenticated/demand_/$id/edit'
     | '/_authenticated/geography/localities/$id'
+    | '/_authenticated/projects_/$id/storage'
     | '/_authenticated/resources/biomass/$id'
     | '/_authenticated/resources/biomass/new'
     | '/_authenticated/resources/solar/$id'
@@ -1097,6 +1110,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGeographyLocalitiesIdRouteImport
       parentRoute: typeof AuthenticatedGeographyRoute
     }
+    '/_authenticated/projects_/$id/storage': {
+      id: '/_authenticated/projects_/$id/storage'
+      path: '/projects/$id/storage'
+      fullPath: '/projects/$id/storage'
+      preLoaderRoute: typeof AuthenticatedProjectsIdStorageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/resources/biomass/': {
       id: '/_authenticated/resources/biomass/'
       path: '/'
@@ -1431,6 +1451,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTechnologiesRoute: typeof AuthenticatedTechnologiesRouteWithChildren
   AuthenticatedTestersRoute: typeof AuthenticatedTestersRoute
   AuthenticatedDemandIdEditRoute: typeof AuthenticatedDemandIdEditRoute
+  AuthenticatedProjectsIdStorageRoute: typeof AuthenticatedProjectsIdStorageRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1448,6 +1469,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTechnologiesRoute: AuthenticatedTechnologiesRouteWithChildren,
   AuthenticatedTestersRoute: AuthenticatedTestersRoute,
   AuthenticatedDemandIdEditRoute: AuthenticatedDemandIdEditRoute,
+  AuthenticatedProjectsIdStorageRoute: AuthenticatedProjectsIdStorageRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -48,7 +48,8 @@ export const FIELDS: FieldDef[] = [
 ];
 export const NUMERIC = FIELDS.filter((f) => ["num", "int", "pct"].includes(f.kind));
 
-export type Sheet = Record<string, any> & { name: string; manufacturer: string; chemistry: keyof typeof CHEMISTRIES; source: string; status: keyof typeof STATUSES };
+type Opt = "chemistry_detail" | "published_on" | "consulted_on" | "currency" | "doc_url" | "application" | "acquisition_method" | "cycle_conditions" | "degradation_source" | "product_ref" | "usable_kwh" | "energy_kwh" | "nominal_voltage_v" | "cycles" | "owner_id";
+export type Sheet = Record<string, any> & { [K in Opt]?: any } & { name: string; manufacturer: string; chemistry: keyof typeof CHEMISTRIES; source: string; status: keyof typeof STATUSES };
 const v = (s: Sheet, k: string): number | null => (s[k] == null || s[k] === "" ? null : Number(s[k]));
 
 export function sheetErrors(s: Sheet): string[] {
