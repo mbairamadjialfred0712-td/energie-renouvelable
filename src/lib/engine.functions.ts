@@ -100,7 +100,7 @@ export const runPvSimulation = createServerFn({ method: "POST" }).middleware([re
     };
     try {
       const v = await callEngine("/simulations/validate", validationResponse, { method: "POST", body: data.request, auth: true, timeoutMs: 60_000 });
-      if (!v.valid) return await fail("Données refusées par le moteur.", v.validation_errors);
+      if (!v.valid) return await fail("Données refusées par le moteur.", v.validation_errors.map((e) => ({ field: e.field ?? null, code: e.code, message: e.message })));
       const out = await callEngine("/simulations", simulationResponse, { method: "POST", body: { ...data.request, simulation_id: sim.id }, auth: true, timeoutMs: 60_000 });
       if (out.status !== "completed") return await fail("Le moteur n’a pas terminé le calcul.");
       const snapshot = { schema_version: out.schema_version, engine_version: out.engine_version, metadata: out.calculation_metadata, warnings: out.warnings } as unknown as Json;
@@ -111,7 +111,7 @@ export const runPvSimulation = createServerFn({ method: "POST" }).middleware([re
       const ins = await supabase.from("simulation_results").insert(rows);
       if (ins.error) return await fail("Résultats non enregistrés : la simulation est marquée en échec.");
       await supabase.from("simulations").update({ status: "completed", engine_version: `photovoltaic ${out.engine_version}` }).eq("id", sim.id);
-      return { id: sim.id as string, status: "completed" as const, message: "Simulation terminée.", details: out.warnings };
+      return { id: sim.id as string, status: "completed" as const, message: "Simulation terminée.", details: out.warnings.map((e) => ({ field: e.field ?? null, code: e.code, message: e.message })) };
     } catch (e) {
       return await fail(e instanceof Error ? e.message : "Erreur du moteur.");
     }
