@@ -56,6 +56,9 @@ import { Route as AuthenticatedTechnologiesStorageRouteImport } from './routes/_
 import { Route as AuthenticatedDemandIdEditRouteImport } from './routes/_authenticated/demand_.$id.edit'
 import { Route as AuthenticatedGeographyLocalitiesIndexRouteImport } from './routes/_authenticated/geography.localities.index'
 import { Route as AuthenticatedGeographyLocalitiesIdRouteImport } from './routes/_authenticated/geography.localities.$id'
+import { Route as AuthenticatedGeographyWeatherIndexRouteImport } from './routes/_authenticated/geography.weather.index'
+import { Route as AuthenticatedGeographyWeatherIdRouteImport } from './routes/_authenticated/geography.weather.$id'
+import { Route as AuthenticatedGeographyWeatherNewRouteImport } from './routes/_authenticated/geography.weather.new'
 import { Route as AuthenticatedProjectsIdStorageRouteImport } from './routes/_authenticated/projects_.$id.storage'
 import { Route as AuthenticatedResourcesBiomassIndexRouteImport } from './routes/_authenticated/resources.biomass.index'
 import { Route as AuthenticatedResourcesBiomassIdRouteImport } from './routes/_authenticated/resources.biomass.$id'
@@ -330,6 +333,24 @@ const AuthenticatedGeographyLocalitiesIdRoute =
     path: '/localities/$id',
     getParentRoute: () => AuthenticatedGeographyRoute,
   } as any)
+const AuthenticatedGeographyWeatherIndexRoute =
+  AuthenticatedGeographyWeatherIndexRouteImport.update({
+    id: '/weather/',
+    path: '/weather/',
+    getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
+const AuthenticatedGeographyWeatherIdRoute =
+  AuthenticatedGeographyWeatherIdRouteImport.update({
+    id: '/weather/$id',
+    path: '/weather/$id',
+    getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
+const AuthenticatedGeographyWeatherNewRoute =
+  AuthenticatedGeographyWeatherNewRouteImport.update({
+    id: '/weather/new',
+    path: '/weather/new',
+    getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
 const AuthenticatedProjectsIdStorageRoute =
   AuthenticatedProjectsIdStorageRouteImport.update({
     id: '/projects_/$id/storage',
@@ -467,6 +488,8 @@ export interface FileRoutesByFullPath {
   '/technologies/': typeof AuthenticatedTechnologiesIndexRoute
   '/demand/$id/edit': typeof AuthenticatedDemandIdEditRoute
   '/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
+  '/geography/weather/$id': typeof AuthenticatedGeographyWeatherIdRoute
+  '/geography/weather/new': typeof AuthenticatedGeographyWeatherNewRoute
   '/projects/$id/storage': typeof AuthenticatedProjectsIdStorageRoute
   '/resources/biomass/$id': typeof AuthenticatedResourcesBiomassIdRoute
   '/resources/biomass/new': typeof AuthenticatedResourcesBiomassNewRoute
@@ -479,6 +502,7 @@ export interface FileRoutesByFullPath {
   '/technologies/storage/compare': typeof AuthenticatedTechnologiesStorageCompareRoute
   '/technologies/storage/new': typeof AuthenticatedTechnologiesStorageNewRoute
   '/geography/localities/': typeof AuthenticatedGeographyLocalitiesIndexRoute
+  '/geography/weather/': typeof AuthenticatedGeographyWeatherIndexRoute
   '/resources/biomass/': typeof AuthenticatedResourcesBiomassIndexRoute
   '/resources/solar/': typeof AuthenticatedResourcesSolarIndexRoute
   '/resources/wind/': typeof AuthenticatedResourcesWindIndexRoute
@@ -520,6 +544,8 @@ export interface FileRoutesByTo {
   '/technologies': typeof AuthenticatedTechnologiesIndexRoute
   '/demand/$id/edit': typeof AuthenticatedDemandIdEditRoute
   '/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
+  '/geography/weather/$id': typeof AuthenticatedGeographyWeatherIdRoute
+  '/geography/weather/new': typeof AuthenticatedGeographyWeatherNewRoute
   '/projects/$id/storage': typeof AuthenticatedProjectsIdStorageRoute
   '/resources/biomass/$id': typeof AuthenticatedResourcesBiomassIdRoute
   '/resources/biomass/new': typeof AuthenticatedResourcesBiomassNewRoute
@@ -532,6 +558,7 @@ export interface FileRoutesByTo {
   '/technologies/storage/compare': typeof AuthenticatedTechnologiesStorageCompareRoute
   '/technologies/storage/new': typeof AuthenticatedTechnologiesStorageNewRoute
   '/geography/localities': typeof AuthenticatedGeographyLocalitiesIndexRoute
+  '/geography/weather': typeof AuthenticatedGeographyWeatherIndexRoute
   '/resources/biomass': typeof AuthenticatedResourcesBiomassIndexRoute
   '/resources/solar': typeof AuthenticatedResourcesSolarIndexRoute
   '/resources/wind': typeof AuthenticatedResourcesWindIndexRoute
@@ -585,6 +612,8 @@ export interface FileRoutesById {
   '/_authenticated/technologies/': typeof AuthenticatedTechnologiesIndexRoute
   '/_authenticated/demand_/$id/edit': typeof AuthenticatedDemandIdEditRoute
   '/_authenticated/geography/localities/$id': typeof AuthenticatedGeographyLocalitiesIdRoute
+  '/_authenticated/geography/weather/$id': typeof AuthenticatedGeographyWeatherIdRoute
+  '/_authenticated/geography/weather/new': typeof AuthenticatedGeographyWeatherNewRoute
   '/_authenticated/projects_/$id/storage': typeof AuthenticatedProjectsIdStorageRoute
   '/_authenticated/resources/biomass/$id': typeof AuthenticatedResourcesBiomassIdRoute
   '/_authenticated/resources/biomass/new': typeof AuthenticatedResourcesBiomassNewRoute
@@ -597,6 +626,7 @@ export interface FileRoutesById {
   '/_authenticated/technologies/storage/compare': typeof AuthenticatedTechnologiesStorageCompareRoute
   '/_authenticated/technologies/storage/new': typeof AuthenticatedTechnologiesStorageNewRoute
   '/_authenticated/geography/localities/': typeof AuthenticatedGeographyLocalitiesIndexRoute
+  '/_authenticated/geography/weather/': typeof AuthenticatedGeographyWeatherIndexRoute
   '/_authenticated/resources/biomass/': typeof AuthenticatedResourcesBiomassIndexRoute
   '/_authenticated/resources/solar/': typeof AuthenticatedResourcesSolarIndexRoute
   '/_authenticated/resources/wind/': typeof AuthenticatedResourcesWindIndexRoute
@@ -650,6 +680,8 @@ export interface FileRouteTypes {
     | '/technologies/'
     | '/demand/$id/edit'
     | '/geography/localities/$id'
+    | '/geography/weather/$id'
+    | '/geography/weather/new'
     | '/projects/$id/storage'
     | '/resources/biomass/$id'
     | '/resources/biomass/new'
@@ -662,6 +694,7 @@ export interface FileRouteTypes {
     | '/technologies/storage/compare'
     | '/technologies/storage/new'
     | '/geography/localities/'
+    | '/geography/weather/'
     | '/resources/biomass/'
     | '/resources/solar/'
     | '/resources/wind/'
@@ -703,6 +736,8 @@ export interface FileRouteTypes {
     | '/technologies'
     | '/demand/$id/edit'
     | '/geography/localities/$id'
+    | '/geography/weather/$id'
+    | '/geography/weather/new'
     | '/projects/$id/storage'
     | '/resources/biomass/$id'
     | '/resources/biomass/new'
@@ -715,6 +750,7 @@ export interface FileRouteTypes {
     | '/technologies/storage/compare'
     | '/technologies/storage/new'
     | '/geography/localities'
+    | '/geography/weather'
     | '/resources/biomass'
     | '/resources/solar'
     | '/resources/wind'
@@ -767,6 +803,8 @@ export interface FileRouteTypes {
     | '/_authenticated/technologies/'
     | '/_authenticated/demand_/$id/edit'
     | '/_authenticated/geography/localities/$id'
+    | '/_authenticated/geography/weather/$id'
+    | '/_authenticated/geography/weather/new'
     | '/_authenticated/projects_/$id/storage'
     | '/_authenticated/resources/biomass/$id'
     | '/_authenticated/resources/biomass/new'
@@ -779,6 +817,7 @@ export interface FileRouteTypes {
     | '/_authenticated/technologies/storage/compare'
     | '/_authenticated/technologies/storage/new'
     | '/_authenticated/geography/localities/'
+    | '/_authenticated/geography/weather/'
     | '/_authenticated/resources/biomass/'
     | '/_authenticated/resources/solar/'
     | '/_authenticated/resources/wind/'
@@ -1128,6 +1167,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGeographyLocalitiesIdRouteImport
       parentRoute: typeof AuthenticatedGeographyRoute
     }
+    '/_authenticated/geography/weather/': {
+      id: '/_authenticated/geography/weather/'
+      path: '/weather'
+      fullPath: '/geography/weather/'
+      preLoaderRoute: typeof AuthenticatedGeographyWeatherIndexRouteImport
+      parentRoute: typeof AuthenticatedGeographyRoute
+    }
+    '/_authenticated/geography/weather/$id': {
+      id: '/_authenticated/geography/weather/$id'
+      path: '/weather/$id'
+      fullPath: '/geography/weather/$id'
+      preLoaderRoute: typeof AuthenticatedGeographyWeatherIdRouteImport
+      parentRoute: typeof AuthenticatedGeographyRoute
+    }
+    '/_authenticated/geography/weather/new': {
+      id: '/_authenticated/geography/weather/new'
+      path: '/weather/new'
+      fullPath: '/geography/weather/new'
+      preLoaderRoute: typeof AuthenticatedGeographyWeatherNewRouteImport
+      parentRoute: typeof AuthenticatedGeographyRoute
+    }
     '/_authenticated/projects_/$id/storage': {
       id: '/_authenticated/projects_/$id/storage'
       path: '/projects/$id/storage'
@@ -1259,7 +1319,10 @@ interface AuthenticatedGeographyRouteChildren {
   AuthenticatedGeographySitesRoute: typeof AuthenticatedGeographySitesRoute
   AuthenticatedGeographyIndexRoute: typeof AuthenticatedGeographyIndexRoute
   AuthenticatedGeographyLocalitiesIdRoute: typeof AuthenticatedGeographyLocalitiesIdRoute
+  AuthenticatedGeographyWeatherIdRoute: typeof AuthenticatedGeographyWeatherIdRoute
+  AuthenticatedGeographyWeatherNewRoute: typeof AuthenticatedGeographyWeatherNewRoute
   AuthenticatedGeographyLocalitiesIndexRoute: typeof AuthenticatedGeographyLocalitiesIndexRoute
+  AuthenticatedGeographyWeatherIndexRoute: typeof AuthenticatedGeographyWeatherIndexRoute
 }
 
 const AuthenticatedGeographyRouteChildren: AuthenticatedGeographyRouteChildren =
@@ -1273,8 +1336,13 @@ const AuthenticatedGeographyRouteChildren: AuthenticatedGeographyRouteChildren =
     AuthenticatedGeographyIndexRoute: AuthenticatedGeographyIndexRoute,
     AuthenticatedGeographyLocalitiesIdRoute:
       AuthenticatedGeographyLocalitiesIdRoute,
+    AuthenticatedGeographyWeatherIdRoute: AuthenticatedGeographyWeatherIdRoute,
+    AuthenticatedGeographyWeatherNewRoute:
+      AuthenticatedGeographyWeatherNewRoute,
     AuthenticatedGeographyLocalitiesIndexRoute:
       AuthenticatedGeographyLocalitiesIndexRoute,
+    AuthenticatedGeographyWeatherIndexRoute:
+      AuthenticatedGeographyWeatherIndexRoute,
   }
 
 const AuthenticatedGeographyRouteWithChildren =

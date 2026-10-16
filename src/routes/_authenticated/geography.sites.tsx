@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SITE_TYPES, deleteStudySite, listLocalities, listStudySites, saveStudySite } from "@/lib/geography.functions";
 import { EntityManager, STATUS_FIELD, STATUS_LABELS, numberText, text } from "@/features/geography/entity-manager";
@@ -89,6 +89,7 @@ function SitesPage() {
         { key: "notes", label: "Notes", type: "textarea", colSpan: 2 },
       ]}
       columns={[
+        { label: "Météo", render: (r) => r.locality_id ? <Link to="/geography/weather" search={{ site: r.id }} className="text-primary hover:underline">Fiches météo</Link> : <span className="text-muted-foreground">Localité requise</span> },
         { label: "Nom", render: (r) => <span className="font-medium">{r.name}</span> },
         { label: "Type", render: (r) => typeLabel(r.site_type) },
         { label: "Localité", render: (r) => text(r.localities?.name) },

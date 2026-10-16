@@ -9,6 +9,9 @@ import { StatusBadge, fmt, periodText } from "@/features/resources/solar/solar-u
 import { getLocalityWind } from "@/lib/wind.functions";
 import { WindComparison, WindStatusBadge } from "@/features/resources/wind/wind-ui";
 import { LocalityDemands } from "@/features/demand/locality-demands";
+import { Suspense } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { weatherListOptions } from "@/features/weather/weather-ui";
 import { getLocalityBiomass } from "@/lib/biomass.functions";
 import { BiomassComparison, BiomassStatusBadge, fmt as bfmt, periodText as bperiod, typeText } from "@/features/resources/biomass/biomass-ui";
 
@@ -65,8 +68,15 @@ function LocalityDetail() {
       </section>
       <LocalityBiomass id={id} canWrite={!!access?.canWrite} />
       <LocalityDemands id={id} />
+      <Suspense fallback={<p className="mt-6 text-sm text-muted-foreground">Chargement météo…</p>}><LocalityWeather id={id} /></Suspense>
     </WorkspacePage>
   );
+}
+
+function LocalityWeather({ id }: { id: string }) {
+  const { data } = useSuspenseQuery(weatherListOptions);
+  const rows = data.filter((r) => r.locality_id === id);
+  return <section className="mt-8 space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold">Fiches météo des sites ({rows.length})</h2><Button asChild size="sm" variant="outline"><Link to="/geography/weather" search={{locality:id}}>Voir les fiches météo</Link></Button></div>{!rows.length ? <p className="text-sm text-muted-foreground">Aucune fiche météo enregistrée pour les sites de cette localité.</p> : <ul className="divide-y divide-border border border-border text-sm">{rows.map((r)=><li key={r.id} className="flex flex-wrap items-center justify-between gap-2 p-3"><Link to="/geography/weather/$id" params={{id:r.id}} className="text-primary hover:underline">{r.name} · {r.study_sites?.name}</Link><StatusBadge status={r.status}/></li>)}</ul>}</section>;
 }
 
 function LocalityBiomass({ id, canWrite }: { id: string; canWrite: boolean }) {
