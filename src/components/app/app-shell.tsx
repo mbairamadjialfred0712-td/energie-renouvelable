@@ -1,7 +1,7 @@
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, Map, Sun, Activity, FlaskConical, Layers3, LineChart, FolderKanban, Upload, FileText, Settings, LogOut, Menu, X, Database, ChevronRight } from "lucide-react";
+import { Battery, LayoutDashboard, Map, Sun, Activity, FlaskConical, Layers3, LineChart, FolderKanban, Upload, FileText, Settings, LogOut, Menu, X, Database, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logoAsset from "@/assets/energie-renouvelable-logo.png.asset.json";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ const nav = [
   { label: "Ressources", to: "/resources", icon: Sun },
   { label: "Demande énergétique", to: "/demand", icon: Activity },
   { label: "Technologies", to: "/technologies", icon: Database },
+  { label: "Stockage par batteries", to: "/technologies/storage", icon: Battery },
   { label: "Simulations", to: "/simulations", icon: FlaskConical },
   { label: "Scénarios", to: "/scenarios", icon: Layers3 },
   { label: "Analyse financière", to: "/finance", icon: LineChart },
