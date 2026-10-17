@@ -45,6 +45,8 @@ def _load() -> dict[str, Engine]:
         engines["photovoltaic"] = PVWattsV8Engine()
     except ImportError:
         pass
+    from app.engines.battery.engine import BatteryEngine  # moteur propre, aucune dépendance optionnelle
+    engines["battery"] = BatteryEngine()
     return engines
 
 
