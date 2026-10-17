@@ -67,7 +67,7 @@ function ProjectStorage() {
       const c = c0 as any; const snap = (c.snapshot ?? null) as ConfigSnapshot | null;
       // Valeurs fabricant figées : instantané si disponible, sinon fiche actuelle (signalé, jamais de valeurs fabriquées).
       const ref = (snap?.sheet ?? s) as Sheet; const t = configTotals(c, ref);
-      const hist = (data.history ?? []).filter((h) => h.config_id === c.id);
+      const hist = (((data as any).history ?? []) as { id: string; config_id: string; action: string; changes: Record<string, { old: unknown; new: unknown }> | null; created_at: string }[]).filter((h) => h.config_id === c.id);
       return <section key={c.id} className="mb-6 border border-border bg-background p-4">
       <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold"><Link to="/technologies/storage/$id" params={{ id: s.id }} className="text-primary hover:underline">{ref.name ?? s.name}</Link> · {ref.manufacturer ?? s.manufacturer} · {c.module_count} module(s){c.series_count && c.parallel_count ? ` (${c.series_count}S × ${c.parallel_count}P)` : ""}</h2>
         <div className="flex flex-wrap items-center gap-2"><StatusBadge status={c.status as any} />{canWrite && <>
