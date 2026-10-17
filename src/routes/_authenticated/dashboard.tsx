@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
 const STATUS: Record<string, string> = { draft: "Brouillon", preliminary_study: "Étude préliminaire", feasibility: "Faisabilité", design: "Conception", financing: "Financement", procurement: "Approvisionnement", implementation: "Réalisation", completed: "Terminé" };
+const STATUS_LABELS: Record<string, string> = { unverified: "Non vérifié", in_review: "À examiner", validated: "Validé", rejected: "Rejeté", archived: "Archivé" };
 
 export function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return <div className="bg-background p-5"><p className="text-sm text-muted-foreground">{label}</p><p className="mt-3 text-3xl font-semibold tabular-nums">{value}</p>{hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}</div>;
