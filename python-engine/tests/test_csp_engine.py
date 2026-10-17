@@ -140,3 +140,16 @@ def test_net_negative_is_import_not_clipped():
     r["input_data"]["auxiliary_power"] = {"value": 20000, "unit": "W", "nature": "assumption", "source": "Test only"}
     out = ENGINE.run(SimulationRequest(**r))
     assert out.results["net_electric_energy"].value == pytest.approx(-12.8)
+
+@pytest.mark.parametrize("year,hours", [(2023,8760), (2024,8784)])
+def test_full_calendar_year_including_leap_day(year, hours):
+    from datetime import datetime, timedelta
+    r = fixture(); start = datetime(year,1,1)
+    r["timeseries"]["timestamps"] = [(start+timedelta(hours=h)).strftime("%Y-%m-%dT%H:00:00Z") for h in range(hours)]
+    r["timeseries"]["series"]["dni"]["values"] = [800]*hours
+    r["input_data"]["period_start"]["value"] = f"{year}-01-01T00:00:00Z"
+    r["input_data"]["period_end"]["value"] = f"{year+1}-01-01T00:00:00Z"
+    out = ENGINE.run(SimulationRequest(**r))
+    assert out.metadata["coverage"] == "full_calendar_year"
+    assert out.results["incident_energy"].value == 80*hours
+    assert len([k for k in out.results if k.startswith("monthly_incident_energy_")]) == 12
