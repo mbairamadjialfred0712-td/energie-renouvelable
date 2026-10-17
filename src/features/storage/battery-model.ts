@@ -20,8 +20,8 @@ export const FIELDS: FieldDef[] = [
     { key: "max_discharge_a", label: "Courant max. de décharge", unit: "A", kind: "num", min: 0 }, { key: "voltage_min_v", label: "Tension minimale", unit: "V", kind: "num", min: 0 },
     { key: "voltage_max_v", label: "Tension maximale", unit: "V", kind: "num", min: 0 }]),
   ...g("Énergie utilisable et SOC", [
-    { key: "dod_pct", label: "Profondeur de décharge (DoD)", unit: "%", kind: "pct" }, { key: "soc_min_pct", label: "SOC minimum", unit: "%", kind: "pct" },
-    { key: "soc_max_pct", label: "SOC maximum", unit: "%", kind: "pct" }, { key: "usable_kwh", label: "Capacité utilisable déclarée", unit: "kWh", kind: "num" },
+    { key: "dod_pct", label: "Profondeur de décharge (DoD)", unit: "%", kind: "pct" }, { key: "soc_min_pct", label: "SOC minimum", unit: "%", kind: "pct", min: 0 },
+    { key: "soc_max_pct", label: "SOC maximum", unit: "%", kind: "pct", min: 0 }, { key: "usable_kwh", label: "Capacité utilisable déclarée", unit: "kWh", kind: "num" },
     { key: "warranty_limits", label: "Limites liées à la garantie", kind: "text" }]),
   ...g("Rendements et limites", [
     { key: "rte_pct", label: "Rendement aller-retour", unit: "%", kind: "pct" }, { key: "charge_eff_pct", label: "Rendement de charge", unit: "%", kind: "pct" },
@@ -31,7 +31,7 @@ export const FIELDS: FieldDef[] = [
   ...g("Durée de vie", [
     { key: "cycles", label: "Nombre de cycles annoncé", unit: "cycles", kind: "int" }, { key: "cycle_conditions", label: "Conditions des cycles (DoD, T°, régime)", kind: "text" },
     { key: "calendar_years", label: "Durée de vie calendaire", unit: "ans", kind: "num" }, { key: "eol_capacity_pct", label: "Capacité résiduelle garantie", unit: "%", kind: "pct" },
-    { key: "degradation_pct_year", label: "Dégradation annuelle documentée", unit: "%/an", kind: "pct" }, { key: "degradation_source", label: "Source de la dégradation", kind: "text" },
+    { key: "degradation_pct_year", label: "Dégradation annuelle documentée", unit: "%/an", kind: "pct", min: 0 }, { key: "degradation_source", label: "Source de la dégradation", kind: "text" },
     { key: "warranty", label: "Conditions de garantie", kind: "long" }]),
   ...g("Installation et sécurité", [
     { key: "mass_kg", label: "Masse", unit: "kg", kind: "num" }, { key: "length_mm", label: "Longueur", unit: "mm", kind: "num" }, { key: "width_mm", label: "Largeur", unit: "mm", kind: "num" },
@@ -54,9 +54,9 @@ const v = (s: Sheet, k: string): number | null => (s[k] == null || s[k] === "" ?
 
 export function sheetErrors(s: Sheet): string[] {
   const e: string[] = [];
-  if (!s.name?.trim()) e.push("Le nom commercial est obligatoire.");
+  if (!s.name?.trim() || s.name.trim().length < 2) e.push("Le nom commercial est obligatoire (2 caractères minimum).");
   if (!s.manufacturer?.trim()) e.push("Le fabricant est obligatoire.");
-  if (!s.source?.trim()) e.push("La source documentaire est obligatoire.");
+  if (!s.source?.trim() || s.source.trim().length < 2) e.push("La source documentaire est obligatoire (2 caractères minimum).");
   if (s.chemistry === "other" && !s.chemistry_detail?.trim()) e.push("Précisez la technologie pour « Autre ».");
   for (const f of NUMERIC) {
     const x = v(s, f.key); if (x == null) continue;
