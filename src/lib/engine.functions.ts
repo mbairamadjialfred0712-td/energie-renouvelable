@@ -9,6 +9,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { cspRequestSchema } from "@/features/engine/csp-contract";
 import { windRequestSchema } from "@/features/engine/wind-contract";
 import { biomassRequestSchema } from "@/features/engine/biomass-contract";
+import { batteryRequestSchema } from "@/features/engine/battery-contract";
 
 export const getEngineStatus = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async (): Promise<EngineStatus> => {
   const { callEngine, EngineCallError } = await import("./engine-http.server");
@@ -28,6 +29,7 @@ export const validateSimulationRequest = createServerFn({ method: "POST" }).midd
     if (raw.engine === "csp") cspRequestSchema.parse(input);
     if (raw.engine === "wind") windRequestSchema.parse(input);
     if (raw.engine === "biomass") biomassRequestSchema.parse(input);
+    if (raw.engine === "battery") batteryRequestSchema.parse(input);
     return simulationRequest.parse(input);
   })
   .handler(async ({ data }) => {
@@ -48,6 +50,9 @@ const runInput = z.object({
   request: simulationRequest,
   weather_dataset_id: z.string().uuid().optional(),
   biomass_resource_id: z.string().uuid().optional(),
+  storage_config_id: z.string().uuid().optional(),
+  pv_simulation_id: z.string().uuid().optional(),
+  confirm_demand_project: z.boolean().optional(),
   confirm_hourly_mean: z.boolean().optional(),
   confirm_radiation_conversion: z.boolean().optional(),
 }).strict();
@@ -68,6 +73,15 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
     const objective = ENGINES[data.request.engine];
     if (!objective) throw new Error("Moteur non disponible.");
     let sourceSnapshot: Json = null;
+    if (data.request.engine === "battery") {
+      if (data.confirm_demand_project !== true) throw new Error("Confirmez que la demande horaire correspond au projet de la configuration et du PV.");
+      const { prepareBatterySource } = await import("./battery-source.server");
+      const prepared = await prepareBatterySource(context.supabase, data.request, data.storage_config_id, data.pv_simulation_id);
+      if (data.project_id && data.project_id !== prepared.projectId) throw new Error("Projet batterie incohérent.");
+      if (data.locality_id && data.locality_id !== prepared.localityId) throw new Error("Localité batterie incohérente.");
+      data.project_id = prepared.projectId; data.locality_id = prepared.localityId;
+      data.request = prepared.request; sourceSnapshot = prepared.provenance as unknown as Json;
+    }
     if (data.request.engine === "biomass") {
       const { prepareBiomassSource } = await import("./biomass-source.server");
       const prepared = await prepareBiomassSource(context.supabase, data.request, data.biomass_resource_id);
@@ -143,6 +157,12 @@ export const runCspSimulation = runEngine;
 export const runWindSimulation = runEngine;
 export const runBiomassSimulation = runEngine;
 
+export const listBatteryConfigurations = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const { data, error } = await context.supabase.from("project_storage_configs").select("id,project_id,status,snapshot,module_count,soc_min_pct,soc_max_pct,charge_eff_pct,discharge_eff_pct").eq("status", "validated");
+  if (error) throw new Error("Configurations de stockage indisponibles.");
+  return data ?? [];
+});
+
 /** Séries horaires de résultats d'une simulation terminée (ex. ac_energy PV pour alimenter le moteur batterie). */
 export const getSimulationSeries = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), resultType: z.string().regex(/^series_[a-z_]+$/) }).parse(input))
@@ -171,6 +191,8 @@ export const getSimulation = createServerFn({ method: "GET" }).middleware([requi
     return {
       simulation: { id: sim.data.id, name: sim.data.name, status: sim.data.status, engine_version: sim.data.engine_version, created_at: sim.data.created_at },
       inputs: params.request?.input_data ?? {},
+      batterySource: (sim.data.parameters as {request?:{engine?:string}} | null)?.request?.engine === "battery" ? JSON.stringify((sim.data.parameters as {source_snapshot?:Json}|null)?.source_snapshot??null,null,2) : null,
+      batterySeries: (sim.data.parameters as {request?:{engine?:string}} | null)?.request?.engine === "battery" && sim.data.status === "completed" ? (res.data??[]).filter(r=>r.result_type.startsWith("series_")).map(r=>({key:r.result_type.slice(7),unit:r.unit,values:(r.timeseries as {values?:number[]}|null)?.values??[]})) : [],
       biomassSource: (sim.data.parameters as { request?: { engine?: string } } | null)?.request?.engine === "biomass" ? JSON.stringify((sim.data.parameters as { source_snapshot?: Json } | null)?.source_snapshot ?? null, null, 2) : null,
       windMetadata: (sim.data.parameters as { request?: { engine?: string } } | null)?.request?.engine === "wind" && sim.data.status === "completed" ? JSON.stringify({ metadata: (res.data?.[0]?.input_snapshot as { metadata?: Json } | null)?.metadata, source: (sim.data.parameters as { source_snapshot?: Json } | null)?.source_snapshot }, null, 2) : null,
       windSeries: (sim.data.parameters as { request?: { engine?: string } } | null)?.request?.engine === "wind" && sim.data.status === "completed" ? (res.data ?? []).filter((r) => r.result_type.startsWith("series_")).map((r) => ({ key: r.result_type.slice(7), unit: r.unit, values: ((r.timeseries as { values?: number[] } | null)?.values ?? []), method: r.calculation_method })) : [],

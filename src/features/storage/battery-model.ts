@@ -78,18 +78,29 @@ export function sheetErrors(s: Sheet): string[] {
   return e;
 }
 
+/** Level A: explicit declared nominal energy wins; V×Ah fallback is labelled calculated, never certified. */
+export function nominalCapacity(s: Sheet) {
+  const declared = v(s, "energy_kwh");
+  if (declared != null) return Number.isFinite(declared) && declared > 0 ? { kwh: declared, basis: "declared" as const, formula: "Énergie nominale saisie/documentée (valeur retenue)" } : null;
+  const V = v(s, "nominal_voltage_v"), Ah = v(s, "capacity_ah");
+  if (V == null || Ah == null || !Number.isFinite(V) || !Number.isFinite(Ah) || V <= 0 || Ah <= 0) return null;
+  const kwh = V * Ah / 1000;
+  return Number.isFinite(kwh) && kwh > 0 ? { kwh, basis: "calculated" as const, formula: "V × Ah ÷ 1 000 — estimation nominale, pas une énergie certifiée" } : null;
+}
+
 /** Contrôle indicatif : V × Ah ÷ 1 000 comparé à l'énergie déclarée. Ne remplace jamais la donnée fabricant. */
 export function energyCheck(s: Sheet) {
   const V = v(s, "nominal_voltage_v"), Ah = v(s, "capacity_ah"), E = v(s, "energy_kwh");
   if (V == null || Ah == null || E == null) return null;
   const computed = (V * Ah) / 1000;
+  if (![V, Ah, E, computed].every(x => Number.isFinite(x) && x > 0)) return null;
   return { computed, declared: E, gapPct: (Math.abs(computed - E) / E) * 100 };
 }
 /** Énergie utilisable estimée = énergie nominale × DoD, uniquement si la capacité utilisable n'est pas déclarée. */
 export function usableEstimate(s: Sheet) {
   if (v(s, "usable_kwh") != null) return null;
-  const E = v(s, "energy_kwh"), dod = v(s, "dod_pct");
-  return E != null && dod != null ? { kwh: (E * dod) / 100, formula: "Énergie nominale × DoD ÷ 100 (seule réduction appliquée)" } : null;
+  const E = nominalCapacity(s)?.kwh ?? null, dod = v(s, "dod_pct");
+  return E != null && dod != null && Number.isFinite(E) && E > 0 && Number.isFinite(dod) && dod > 0 && dod <= 100 && Number.isFinite(E * dod / 100) ? { kwh: (E * dod) / 100, formula: "Énergie nominale × DoD ÷ 100 (seule réduction appliquée)" } : null;
 }
 export function costPerKwh(s: Sheet) {
   const p = v(s, "price"); if (p == null || !s.currency) return [];
@@ -144,12 +155,12 @@ export type StorageConfig = { module_count: number | null; series_count: number 
 export function configErrors(c: StorageConfig): string[] {
   const e: string[] = [];
   if (c.module_count == null || !Number.isInteger(c.module_count) || c.module_count <= 0) e.push("Le nombre de modules doit être un entier positif.");
-  for (const k of ["series_count", "parallel_count"] as const) if (c[k] != null && (!Number.isInteger(c[k]) || c[k]! <= 0)) e.push("Série et parallèle doivent être des entiers positifs.");
+  for (const k of ["series_count", "parallel_count"] as const) { const value = c[k]; if (value != null && (!Number.isInteger(value) || value <= 0)) e.push("Série et parallèle doivent être des entiers positifs."); }
   if (c.series_count != null && c.parallel_count != null && c.module_count != null && c.series_count * c.parallel_count !== c.module_count) e.push("Série × parallèle doit être égal au nombre de modules.");
-  for (const k of ["soc_min_pct", "soc_max_pct", "rte_pct", "charge_eff_pct", "discharge_eff_pct"] as const) if (c[k] != null && (c[k]! < 0 || c[k]! > 100)) e.push("Les pourcentages doivent être compris entre 0 et 100.");
+  for (const k of ["soc_min_pct", "soc_max_pct", "rte_pct", "charge_eff_pct", "discharge_eff_pct"] as const) { const value = c[k]; if (value != null && (!Number.isFinite(value) || value < 0 || value > 100)) e.push("Les pourcentages doivent être finis et compris entre 0 et 100."); }
   if (c.soc_min_pct != null && c.soc_max_pct != null && c.soc_min_pct >= c.soc_max_pct) e.push("Le SOC minimum doit être strictement inférieur au SOC maximum.");
-  if (c.usable_energy_limit_kwh != null && c.usable_energy_limit_kwh <= 0) e.push("La limite d’énergie utilisable doit être positive.");
-  if (c.retained_cost != null && (c.retained_cost < 0 || !c.currency)) e.push("Un coût retenu doit être positif et accompagné de sa devise.");
+  if (c.usable_energy_limit_kwh != null && (!Number.isFinite(c.usable_energy_limit_kwh) || c.usable_energy_limit_kwh <= 0)) e.push("La limite d’énergie utilisable doit être positive et finie.");
+  if (c.retained_cost != null && (!Number.isFinite(c.retained_cost) || c.retained_cost < 0 || !c.currency)) e.push("Un coût retenu doit être fini, positif et accompagné de sa devise.");
   return e;
 }
 /** Totaux nominaux = nombre de modules × valeurs de la fiche ; puissance seulement si la limite par module est connue. */

@@ -7,6 +7,8 @@ import { CSP_LABELS } from "@/features/engine/csp-contract";
 import { CspResults } from "@/features/engine/csp-results";
 import { WIND_LABELS } from "@/features/engine/wind-contract";
 import { WindResults } from "@/features/engine/wind-results";
+import { BatteryResults } from "@/features/engine/battery-results";
+import { BATTERY_LABELS } from "@/features/engine/battery-contract";
 import { BIOMASS_LABELS, BIOMASS_INPUT_LABELS } from "@/features/engine/biomass-contract";
 
 const opts = (id: string) => queryOptions({ queryKey: ["simulation", id], queryFn: () => getSimulation({ data: { id } }) });
@@ -41,18 +43,20 @@ function Results() {
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">Valeurs calculées par {s.engine_version ?? "le moteur scientifique"}. Résultat indicatif : modèle et paramètres à valider par l’ingénieur.</p>
           {data.cspLimits && <p className="border-l-2 border-primary pl-4 text-sm">{data.cspLimits}</p>}
           <div className="grid gap-4 sm:grid-cols-2">
-            {scalars.map((r) => <div key={r.result_type} className="rounded-lg border p-4"><p className="text-xs text-muted-foreground">{(data.biomassSource ? BIOMASS_LABELS[r.result_type] : undefined) ?? WIND_LABELS[r.result_type] ?? CSP_LABELS[r.result_type] ?? LABELS[r.result_type] ?? r.result_type}</p><p className="mt-1 text-2xl font-semibold">{r.value === null ? "Indisponible" : r.value.toLocaleString("fr-FR")} <span className="text-base font-normal">{r.value === null ? "" : r.unit}</span></p><p className="mt-1 text-xs text-muted-foreground">{r.calculation_method}</p></div>)}
+            {scalars.map((r) => <div key={r.result_type} className="rounded-lg border p-4"><p className="text-xs text-muted-foreground">{(data.batterySource ? BATTERY_LABELS[r.result_type] : undefined) ?? (data.biomassSource ? BIOMASS_LABELS[r.result_type] : undefined) ?? WIND_LABELS[r.result_type] ?? CSP_LABELS[r.result_type] ?? LABELS[r.result_type] ?? r.result_type}</p><p className="mt-1 text-2xl font-semibold">{r.value === null ? "Indisponible" : r.value.toLocaleString("fr-FR")} <span className="text-base font-normal">{r.value === null ? "" : r.unit}</span></p><p className="mt-1 text-xs text-muted-foreground">{r.calculation_method}</p></div>)}
           </div>
           {monthly.length > 0 && <section className="rounded-lg border p-4">
             <h2 className="mb-3 font-semibold">Énergie AC mensuelle (kWh, somme des heures)</h2>
             <div className="h-64"><ResponsiveContainer><BarChart data={monthly}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} /><Tooltip /><Bar dataKey="kWh" fill="var(--color-primary)" /></BarChart></ResponsiveContainer></div>
           </section>}
           {data.cspSeries.length > 0 && <CspResults series={data.cspSeries} start={data.firstTimestamp} source={data.sourceSnapshot} />}
+          {data.batterySeries.length > 0 && <BatteryResults series={data.batterySeries} />}
           {data.windSeries.length > 0 && <WindResults series={data.windSeries} metadata={data.windMetadata} />}
           {meta.warnings && meta.warnings.length > 0 && <section className="rounded-lg border p-4 text-sm"><h2 className="font-semibold">Avertissements</h2><ul className="mt-2 list-disc pl-6">{meta.warnings.map((w, i) => <li key={i}>{w.message}</li>)}</ul></section>}
         </>}
         <section className="rounded-lg border p-4 text-sm">
           <h2 className="font-semibold">Traçabilité des entrées</h2>
+          {data.batterySource && <details className="mt-2"><summary className="cursor-pointer font-medium">Batterie, configuration, projet et demande — instantané du calcul</summary><pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs">{data.batterySource}</pre></details>}
           {data.biomassSource && <><p className="mt-2">Bilan non électrique · simulation {s.id} · {String(data.inputs["period_start"]?.value ?? "—")} → {String(data.inputs["period_end"]?.value ?? "—")}</p><details className="mt-3"><summary className="cursor-pointer font-medium">Instantané de la fiche, sources et déclarations</summary><pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs">{data.biomassSource}</pre></details></>}
           {!data.biomassSource && <p className="mt-1 text-muted-foreground">Première heure : {data.firstTimestamp ?? "—"} · UTC{data.utcOffset !== null && data.utcOffset >= 0 ? "+" : ""}{data.utcOffset ?? "?"} · début d’heure</p>}
           <p className="mt-1 text-muted-foreground">{!data.biomassSource && <>Dernière heure : {data.lastTimestamp ?? "—"} · </>}Calcul terminé : {data.calculatedAt ?? (s.status === "completed" ? "Non enregistré dans l’historique ancien" : "Non exécuté ou non terminé")}</p>

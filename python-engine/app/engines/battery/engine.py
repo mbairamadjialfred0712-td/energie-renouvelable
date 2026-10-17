@@ -3,8 +3,8 @@ validé par l'ingénieur avant implémentation (règle du projet).
 
 Bilan horaire : net_h = pv_kwh[h] - demande_kwh[h].
   - Surplus : charge = min(net, P_charge_max, place disponible / eta_charge) ; énergie stockée = charge x eta_charge.
-  - Déficit : décharge = min(|net|, P_décharge_max, énergie disponible x eta_décharge) ; servi par batterie = décharge x eta_décharge.
-SOC horaire borné [E_utile x SOC_min, E_utile x SOC_max] ; pas d'auto-décharge ni de vieillissement (V1, signalé).
+  - Déficit : énergie AC délivrée = min(|net|, P_décharge_max × 1 h, énergie disponible × eta_décharge) ; retrait côté batterie = AC / eta_décharge.
+SOC horaire borné [E_référence x SOC_min, E_référence x SOC_max] (clé historique usable_energy_kwh, capacité de référence AVANT réduction SOC) ; pas d'auto-décharge ni de vieillissement (V1, signalé).
 Stratégies : self_consumption (règles telles quelles) ; peak_shaving (décharge prioritaire sur les heures de
 pointe déclarées, charge uniquement sur surplus PV, jamais depuis le réseau — hypothèse explicite).
 Le moteur n'invente rien : toute donnée manquante est un refus, jamais une valeur par défaut cachée.
@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from app.api.schemas.contract import Issue, ResultValue, SeriesOut, SimulationRequest
 from app.engines.base import EngineOutput
 
-ENGINE_VERSION = "1.0.0"
+ENGINE_VERSION = "1.1.0"
 MODEL = "Réservoir + rendements (bilan horaire déterministe)"
 
 # nom -> (unités acceptées, min, max). Aucune conversion d'unité.
@@ -48,10 +48,6 @@ def _parse_ts(raw: str) -> datetime | None:
     return dt.replace(tzinfo=None) if dt.tzinfo is None else None
 
 
-def _sig(x: float, n: int = 3) -> float:
-    if x == 0 or not math.isfinite(x):
-        return x
-    return round(x, -int(math.floor(math.log10(abs(x)))) + (n - 1))
 
 
 class BatteryEngine:
@@ -68,12 +64,17 @@ class BatteryEngine:
         for name, (units, lo, hi) in PARAMS.items():
             v = req.input_data.get(name)
             if v is None or not isinstance(v.value, (int, float)) or isinstance(v.value, bool):
-                continue  # absence / unité signalées par la validation générique
-            if v.unit in units and not (lo <= float(v.value) <= hi):
+                errors.append(Issue(field=f"input_data.{name}", code="invalid_number", message="Nombre fini explicite requis."))
+                continue
+            if v.unit not in units:
+                errors.append(Issue(field=f"input_data.{name}", code="incompatible_units", message="Unité incompatible, aucune conversion implicite."))
+            if not math.isfinite(float(v.value)) or not (lo <= float(v.value) <= hi):
                 errors.append(Issue(field=f"input_data.{name}", code="out_of_range", message=f"Valeur hors plage [{lo} ; {hi}] {next(iter(units))}."))
         got = {k: float(req.input_data[k].value) for k in PARAMS if req.input_data.get(k) and isinstance(req.input_data[k].value, (int, float))}  # type: ignore[arg-type]
         if "soc_min_pct" in got and "soc_max_pct" in got and got["soc_min_pct"] >= got["soc_max_pct"]:
             errors.append(Issue(field="input_data.soc_min_pct", code="invalid_range", message="SOC minimum >= SOC maximum."))
+        if all(k in got for k in ("initial_soc_pct", "soc_min_pct", "soc_max_pct")) and not got["soc_min_pct"] <= got["initial_soc_pct"] <= got["soc_max_pct"]:
+            errors.append(Issue(field="input_data.initial_soc_pct", code="invalid_initial_soc", message="SOC initial hors limites retenues ; aucune correction automatique."))
         if "charge_eff_pct" in got and "discharge_eff_pct" in got and got["charge_eff_pct"] * got["discharge_eff_pct"] / 100 < 50:
             warnings.append(Issue(field=None, code="low_round_trip_efficiency", message="Rendement aller-retour implicite < 50 % : vérifiez les rendements charge/décharge."))
         strat = req.input_data.get("strategy")
@@ -83,10 +84,12 @@ class BatteryEngine:
             errors.append(Issue(field="input_data.strategy", code="invalid_value", message="Stratégie inconnue."))
         peak = req.assumptions.get("peak_hours")
         if strat is not None and strat.value == "peak_shaving":
-            if peak is None or not isinstance(peak.value, list) or not peak.value or any(not isinstance(h, (int, float)) or not (0 <= h <= 23) for h in peak.value):
+            if peak is None or not isinstance(peak.value, list) or not peak.value or any(isinstance(h, bool) or not isinstance(h, (int, float)) or not math.isfinite(h) or not float(h).is_integer() or not (0 <= h <= 23) for h in peak.value):
                 errors.append(Issue(field="assumptions.peak_hours", code="missing_parameter", message="Heures de pointe requises (liste d'heures 0-23) pour la stratégie de réduction de pointe."))
             else:
                 warnings.append(Issue(field="assumptions.peak_hours", code="explicit_assumption", message="Réduction de pointe : charge uniquement sur surplus PV, jamais depuis le réseau (hypothèse explicite)."))
+        if strat is not None and strat.value == "peak_shaving":
+            warnings.append(Issue(code="strategy_alias", message="V1 : réduction de pointe conserve le même pilotage que l’autoconsommation ; les heures déclarées ne modifient pas la décharge. Aucun objectif de pointe garanti."))
         ts = req.timeseries
         if ts is None:
             errors.append(Issue(field="timeseries", code="missing_parameter", message="Séries horaires PV et demande requises."))
@@ -105,7 +108,7 @@ class BatteryEngine:
             if stamps[i] - stamps[i - 1] != timedelta(hours=1):
                 errors.append(Issue(field="timeseries.timestamps", code="irregular_timestep", message=f"Pas horaire irrégulier entre {stamps[i-1].isoformat()} et {stamps[i].isoformat()}."))
                 break
-        if any(s.minute or s.second for s in stamps if s):
+        if any(s.minute or s.second or s.microsecond for s in stamps if s):
             errors.append(Issue(field="timeseries.timestamps", code="not_hourly", message="Horodatages au début de chaque heure (minute 0) requis."))
         for name in ts.series:
             if name not in SERIES:
@@ -135,6 +138,9 @@ class BatteryEngine:
 
     # ---------- exécution ----------
     def run(self, req: SimulationRequest) -> EngineOutput:
+        errors, _ = self.validate(req)
+        if errors:
+            raise ValueError(" ; ".join(e.message for e in errors))
         ts = req.timeseries
         assert ts is not None
         p = {k: float(req.input_data[k].value) for k in PARAMS}  # type: ignore[arg-type]
@@ -144,7 +150,8 @@ class BatteryEngine:
         soc_max = e_nom * p["soc_max_pct"] / 100
         eta_c = p["charge_eff_pct"] / 100
         eta_d = p["discharge_eff_pct"] / 100
-        soc = min(max(e_nom * p["initial_soc_pct"] / 100, soc_min), soc_max)
+        soc = e_nom * p["initial_soc_pct"] / 100
+        initial_energy = soc
         peak_hours = {int(h) for h in (req.assumptions.get("peak_hours").value or [])} if strategy == "peak_shaving" else set()  # type: ignore[union-attr]
         pv = [float(x) for x in ts.series["pv_energy"].values]  # type: ignore[arg-type]
         dem = [float(x) for x in ts.series["demand_energy"].values]  # type: ignore[arg-type]
@@ -187,12 +194,12 @@ class BatteryEngine:
                 soc -= discharge_ac / eta_d if eta_d > 0 else 0.0
                 from_batt = discharge_ac
                 ens = deficit - discharge_ac
-            s_soc.append(round(soc, 4))
-            s_direct.append(round(direct, 4))
-            s_from_batt.append(round(from_batt, 4))
-            s_charge.append(round(charged_ac, 4))
-            s_curtailed.append(round(curtailed, 4))
-            s_ens.append(round(ens, 4))
+            s_soc.append(soc)
+            s_direct.append(direct)
+            s_from_batt.append(from_batt)
+            s_charge.append(charged_ac)
+            s_curtailed.append(curtailed)
+            s_ens.append(ens)
             net_after.append(round(net - (from_batt if net < 0 else 0) + (charged_ac if net >= 0 else 0), 4))
 
         total_pv = sum(pv)
@@ -212,6 +219,10 @@ class BatteryEngine:
             warnings.append(Issue(code="energy_balance_mismatch", message="Écart du bilan côté demande : servi + ENS != demande."))
         if abs(total_direct + total_charged + total_curtailed - total_pv) > max(1e-6, total_pv * 1e-9):
             warnings.append(Issue(code="energy_balance_mismatch", message="Écart du bilan côté PV : direct + charge + non distribué != production."))
+        if abs(soc - initial_energy - total_charged * eta_c + energy_discharged_dc) > max(1e-8, e_nom * 1e-9):
+            raise ValueError("Bilan de stockage incohérent ; aucun résultat confirmé.")
+        if warnings:
+            raise ValueError("Bilan énergétique incohérent ; aucun résultat confirmé.")
         peak_in = max((d for d in dem), default=0.0)
         grid_in = [max(0.0, dem[h] - pv[h] - s_from_batt[h]) for h in range(n)]
         grid_out = [max(0.0, pv[h] - dem[h] - s_charge[h]) for h in range(n)]
@@ -220,22 +231,22 @@ class BatteryEngine:
 
         m = MODEL
         results = {
-            "pv_total_energy": ResultValue(value=_sig(total_pv), unit="kWh", method=f"{m} ; somme de la série PV"),
-            "demand_total_energy": ResultValue(value=_sig(total_dem), unit="kWh", method=f"{m} ; somme de la série demande"),
-            "pv_self_consumed_direct": ResultValue(value=_sig(total_direct), unit="kWh", method=f"{m} ; Σ min(PV, demande)"),
-            "energy_served_by_battery": ResultValue(value=_sig(total_from_batt), unit="kWh", method=f"{m} ; Σ décharge AC"),
-            "energy_charged": ResultValue(value=_sig(total_charged), unit="kWh", method=f"{m} ; Σ charge AC (surplus PV)"),
-            "energy_not_distributed": ResultValue(value=_sig(total_curtailed), unit="kWh", method=f"{m} ; surplus PV non stocké"),
-            "energy_not_served": ResultValue(value=_sig(total_ens), unit="kWh", method=f"{m} ; déficit non couvert"),
-            "self_consumption_rate": ResultValue(value=_sig(100 * (total_direct + total_charged) / total_pv) if total_pv > 0 else None, unit="%", method=f"{m} ; (PV directe + PV stockée) / PV produite"),
-            "demand_coverage_rate": ResultValue(value=_sig(100 * served / total_dem) if total_dem > 0 else None, unit="%", method=f"{m} ; demande servie / demande totale"),
-            "charge_losses": ResultValue(value=_sig(loss_charge), unit="kWh", method=f"{m} ; (1 − η_charge) × énergie chargée"),
-            "discharge_losses": ResultValue(value=_sig(loss_discharge), unit="kWh", method=f"{m} ; (1 − η_décharge) × énergie déchargée (côté stockage)"),
-            "final_soc": ResultValue(value=_sig(s_soc[-1]) if s_soc else None, unit="kWh", method=f"{m} ; SOC en fin de période"),
-            "equivalent_full_cycles": ResultValue(value=_sig(sum(x for x in s_from_batt) / (soc_max - soc_min)) if soc_max > soc_min else None, unit="cycles", method=f"{m} ; énergie déchargée / plage SOC utile (indicatif, sans vieillissement)"),
-            "demand_peak_power": ResultValue(value=_sig(peak_in), unit="kW", method=f"{m} ; puissance horaire maximale de la demande"),
-            "net_peak_power_before_battery": ResultValue(value=_sig(peak_net_before), unit="kW", method=f"{m} ; max(demande − PV) avant batterie"),
-            "net_peak_power_after_battery": ResultValue(value=_sig(peak_net_after), unit="kW", method=f"{m} ; max(demande − PV − décharge) après batterie (foisonnement)"),
+            "pv_total_energy": ResultValue(value=float(total_pv), unit="kWh", method=f"{m} ; somme de la série PV"),
+            "demand_total_energy": ResultValue(value=float(total_dem), unit="kWh", method=f"{m} ; somme de la série demande"),
+            "pv_self_consumed_direct": ResultValue(value=float(total_direct), unit="kWh", method=f"{m} ; Σ min(PV, demande)"),
+            "energy_served_by_battery": ResultValue(value=float(total_from_batt), unit="kWh", method=f"{m} ; Σ décharge AC"),
+            "energy_charged": ResultValue(value=float(total_charged), unit="kWh", method=f"{m} ; Σ charge AC (surplus PV)"),
+            "energy_not_distributed": ResultValue(value=float(total_curtailed), unit="kWh", method=f"{m} ; surplus PV non stocké"),
+            "energy_not_served": ResultValue(value=float(total_ens), unit="kWh", method=f"{m} ; déficit non couvert"),
+            "self_consumption_rate": ResultValue(value=float(100 * (total_direct + total_charged) / total_pv) if total_pv > 0 else None, unit="%", method=f"{m} ; (PV directe + PV stockée) / PV produite"),
+            "demand_coverage_rate": ResultValue(value=float(100 * served / total_dem) if total_dem > 0 else None, unit="%", method=f"{m} ; demande servie / demande totale"),
+            "charge_losses": ResultValue(value=float(loss_charge), unit="kWh", method=f"{m} ; (1 − η_charge) × énergie chargée"),
+            "discharge_losses": ResultValue(value=float(loss_discharge), unit="kWh", method=f"{m} ; (1 − η_décharge) × énergie déchargée (côté stockage)"),
+            "final_soc": ResultValue(value=float(s_soc[-1]) if s_soc else None, unit="kWh", method=f"{m} ; SOC en fin de période"),
+            "equivalent_full_cycles": ResultValue(value=float(energy_discharged_dc / (soc_max - soc_min)) if soc_max > soc_min else None, unit="cycles", method=f"{m} ; énergie retirée côté batterie / plage SOC utile (indicatif, sans vieillissement)"),
+            "demand_peak_power": ResultValue(value=float(peak_in), unit="kW", method=f"{m} ; puissance horaire maximale de la demande"),
+            "net_peak_power_before_battery": ResultValue(value=float(peak_net_before), unit="kW", method=f"{m} ; max(demande − PV) avant batterie"),
+            "net_peak_power_after_battery": ResultValue(value=float(peak_net_after), unit="kW", method=f"{m} ; max(demande − PV − décharge) après batterie (foisonnement)"),
         }
         series = {
             "soc": SeriesOut(values=s_soc, unit="kWh", method=f"{m} ; état de charge en fin d'heure"),
@@ -244,13 +255,13 @@ class BatteryEngine:
             "battery_charge": SeriesOut(values=s_charge, unit="kWh", method=f"{m} ; surplus PV chargé"),
             "energy_not_distributed": SeriesOut(values=s_curtailed, unit="kWh", method=f"{m} ; surplus non stocké"),
             "energy_not_served": SeriesOut(values=s_ens, unit="kWh", method=f"{m} ; déficit non couvert"),
-            "grid_import": SeriesOut(values=[round(x, 4) for x in grid_in], unit="kWh", method=f"{m} ; demande − PV − décharge (≥ 0)"),
-            "grid_export": SeriesOut(values=[round(x, 4) for x in grid_out], unit="kWh", method=f"{m} ; PV − demande − charge (≥ 0)"),
+            "grid_import": SeriesOut(values=grid_in, unit="kWh", method=f"{m} ; demande − PV − décharge (≥ 0)"),
+            "grid_export": SeriesOut(values=grid_out, unit="kWh", method=f"{m} ; PV − demande − charge (≥ 0)"),
         }
         meta = {"model": m, "engine_version": ENGINE_VERSION, "strategy": strategy,
                 "timestamp_convention": ts.timestamp_convention, "utc_offset_hours": ts.utc_offset_hours,
                 "first_timestamp": ts.timestamps[0], "last_timestamp": ts.timestamps[-1],
                 "parameters": {k: p[k] for k in PARAMS},
                 "limits": ["pas d'auto-décharge", "pas de vieillissement", "rendements constants", "pas de limite C-rate dynamique"],
-                "significant_figures_aggregates": 3}
+                "level": "C", "reference_capacity_kwh": e_nom, "initial_energy_kwh": initial_energy, "usable_window_kwh": soc_max - soc_min, "aggregate_precision": "unrounded", "step_hours": 1, "scientific_validation": "pending"}
         return EngineOutput(results=results, timeseries=series, warnings=warnings, metadata=meta)
