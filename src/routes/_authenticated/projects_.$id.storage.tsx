@@ -5,8 +5,8 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { WorkspacePage } from "@/components/app/page";
 import { Button } from "@/components/ui/button";
-import { deleteStorageConfig, getProjectStorage, getStorageAccess, listDatasheets, saveStorageConfig } from "@/lib/storage.functions";
-import { STATUSES, configErrors, configTotals, type Sheet, type StorageConfig } from "@/features/storage/battery-model";
+import { deleteStorageConfig, getProjectStorage, getStorageAccess, listDatasheets, refreshStorageConfigSnapshot, saveStorageConfig, setStorageConfigStatus } from "@/lib/storage.functions";
+import { STATUSES, configErrors, configTotals, snapshotDiff, type ConfigSnapshot, type Sheet, type StorageConfig } from "@/features/storage/battery-model";
 import { StatusBadge, val } from "@/features/storage/battery-ui";
 import { inputCls } from "@/features/storage/battery-form";
 
@@ -27,6 +27,16 @@ function ProjectStorage() {
   const { data: sheets = [] } = useQuery({ queryKey: ["battery-sheets"], queryFn: () => listDatasheets() });
   const { data: access } = useQuery({ queryKey: ["storage-access"], queryFn: () => getStorageAccess() });
   const save = useServerFn(saveStorageConfig); const del = useServerFn(deleteStorageConfig);
+  const setStatus = useServerFn(setStorageConfigStatus); const refreshSnap = useServerFn(refreshStorageConfigSnapshot);
+  const changeStatus = async (id: string, status: keyof typeof STATUSES) => { try { await setStatus({ data: { id, status } }); qc.invalidateQueries(); } catch (x) { alert((x as Error).message); } };
+  const refresh = async (id: string, snap: ConfigSnapshot | null, current: Sheet) => {
+    const d = snap ? snapshotDiff(snap, current) : [];
+    const msg = snap
+      ? d.length ? `L’instantané sera reconstruit depuis la fiche actuelle. Changements détectés :\n${d.map((x) => `• ${x.label} : ${x.oldVal ?? "—"} → ${x.newVal ?? "—"}${x.unit ? " " + x.unit : ""}`).join("\n")}\n\nLes valeurs retenues et justifiées pour le projet ne sont jamais remplacées. Confirmer ?` : "Aucun changement détecté entre l’instantané et la fiche actuelle. Reconstituer quand même ?"
+      : "Aucun instantané n’existe pour cette configuration historique. Un instantané sera constitué à partir de la fiche actuelle (sans fabriquer de valeurs passées). Confirmer ?";
+    if (!confirm(msg)) return;
+    try { await refreshSnap({ data: { id } }); qc.invalidateQueries(); } catch (x) { alert((x as Error).message); }
+  };
   const [form, setForm] = useState<Cfg | null>(null); const [errors, setErrors] = useState<string[]>([]);
   if (isLoading) return <WorkspacePage eyebrow="Projets / Stockage" title="Stockage" description="Chargement…"><span /></WorkspacePage>;
   if (!data) return <WorkspacePage eyebrow="Projets / Stockage" title="Projet inaccessible" description="Ce projet n’existe pas ou vous n’y avez pas accès."><Link to="/projects" className="text-primary">Retour</Link></WorkspacePage>;
@@ -46,7 +56,7 @@ function ProjectStorage() {
       {!sheets.length && <p className="text-sm text-muted-foreground">Aucune fiche dans la bibliothèque. <Link to="/technologies/storage/new" className="text-primary">Créer une fiche</Link>.</p>}
       <div className="grid gap-3 sm:grid-cols-3">{NUMS.map(([k, l]) => <label key={k} className="block text-sm"><span className="font-medium">{l}</span><input aria-label={l} type="number" step="any" className={`mt-1 ${inputCls}`} value={(form[k] as number | null) ?? ""} onChange={(e) => setForm({ ...form, [k]: e.target.value === "" ? null : Number(e.target.value) })} /></label>)}
         <label className="block text-sm"><span className="font-medium">Devise</span><input aria-label="Devise" className={`mt-1 ${inputCls}`} value={form.currency ?? ""} onChange={(e) => setForm({ ...form, currency: e.target.value || null })} /></label>
-        <label className="block text-sm"><span className="font-medium">Statut</span><select aria-label="Statut" className={`mt-1 ${inputCls}`} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Cfg["status"] })}>{Object.entries(STATUSES).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label></div>
+        <div className="text-sm"><span className="font-medium">Statut : </span><StatusBadge status={form.status} /><span className="ml-2 text-xs text-muted-foreground">le changement de statut se fait depuis la configuration (action dédiée, réservée aux rôles autorisés).</span></div></div>
       <label className="block text-sm"><span className="font-medium">Hypothèses de vieillissement</span><textarea aria-label="Hypothèses de vieillissement" className={`mt-1 ${inputCls} h-14 py-2`} value={form.aging_assumption ?? ""} onChange={(e) => setForm({ ...form, aging_assumption: e.target.value || null })} /></label>
       <label className="block text-sm"><span className="font-medium">Source et justification des paramètres modifiés</span><textarea aria-label="Justification" className={`mt-1 ${inputCls} h-14 py-2`} value={form.justification ?? ""} onChange={(e) => setForm({ ...form, justification: e.target.value || null })} /></label>
       {sheet && <p className="text-sm">Totaux nominaux (modules × fiche) : énergie {val(configTotals(form, sheet).energyKwh, "kWh")} · charge {val(configTotals(form, sheet).chargeKw, "kW")} · décharge {val(configTotals(form, sheet).dischargeKw, "kW")}</p>}
