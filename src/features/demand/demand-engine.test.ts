@@ -95,6 +95,7 @@ describe("profileErrors", () => {
 });
 
 describe("avertissements non bloquants (A2.1)", () => {
+  const m = (p: Partial<Measurement> = {}): Measurement => ({ start: "2024-01-01", end: "2024-01-31", energy: 310, unit: "kWh", peak_kw: null, notes: null, ...p });
   it("signale une quantité fractionnaire sans la bloquer", () => {
     expect(equipmentErrors(eq({ quantity: 2.5 }), 0)).toEqual([]);
     expect(equipmentWarnings(eq({ quantity: 2.5 }), 0).join(" ")).toMatch(/fractionnaire/);
