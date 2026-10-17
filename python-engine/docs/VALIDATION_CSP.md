@@ -80,3 +80,14 @@ Ces références ne valident pas des coefficients absents ni un bilan réduit co
 - Requête/instantané figés dans `simulations.parameters`, sorties selon `simulation_results` et écritures serveur déjà protégées. Courbes de puissances réellement retournées seulement ; valeurs non calculables `null` avec motif visible. Historique conservé.
 - Aucun jeu météo validé disponible dans le compte testé : aucun jeu fictif créé pour déverrouiller l’interface. Aucun résultat CSP de projet persisté ; intégration hébergée bloquée par service non configuré et données/paramètres réels à fournir.
 - Température et fluide sont des conditions documentées, pas des entrées d’un solveur thermodynamique ; aucune compatibilité fabricant calculée. Efficacité et pertes constantes doivent être justifiées pour toute la période. Nuit/refroidissement et comportement à charge partielle restent non simulés.
+
+## 8. Preuves exécutées le 17 octobre 2026
+
+- Python : **110/110 tests réussis**, dont **44 nouveaux cas CSP** et 66 existants réexécutés (deux assertions historiques de capacités adaptées à CSP). Un avertissement de dépréciation Starlette/httpx, aucun échec.
+- TypeScript : **171/171 tests réussis**, dont **24 nouveaux CSP** : données/conversion 8, contrat 7, réponses 5, contrôle serveur source 4. Les 147 tests existants passent.
+- API de laboratoire : validation, calcul, absence d’authentification, clé non configurée, champs inconnus et données invalides testés ; ces tests utilisent une identité simulée explicitement.
+- Service local Uvicorn : un parcours health → validation → calcul CSP avec jeton réel vérifié par Lovable Cloud, puis refus sans authentification. Données arithmétiques uniquement ; aucune simulation de projet enregistrée. Pas Render, pas une liaison hébergée Lovable → Python.
+- Navigateur connecté : onglet CSP visible, un projet accessible, zéro jeu météo validé ; service explicitement indisponible, lancement désactivé, zéro erreur navigateur. Aucun calcul réussi ni donnée de test créée dans la base.
+- Dernière vérification automatique de l’application : **build OK**, aucun diagnostic TypeScript. Aucun build/typecheck manuel supplémentaire exécuté.
+- Nouvelles vérifications RLS en base : **NON EXÉCUTÉES dans cette intervention** (aucun changement de politiques/table). Les protections serveur et les tests source sont exercés ; les preuves DB de l’audit PV précédent ne sont pas comptées comme nouveaux tests CSP.
+- Validation scientifique : **À VALIDER PAR L’INGÉNIEUR** ; coefficients réels, référentiel de pertes, validité du cycle et de ses frontières, cas de référence et critères d’acceptation toujours à fournir.
