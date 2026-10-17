@@ -65,7 +65,8 @@ class BiomassPrimaryEngine:
         for key, expected in [("status", "validated"), ("mass_basis", "as_received"), ("pci_basis", "as_received")]:
             if raw(key) != expected: error(key, "Fiche validée et bases matière reçue concordantes requises ; aucune conversion depuis la matière sèche.")
         if raw("moisture_basis") not in ("wet", "dry"): error("moisture_basis", "Convention d'humidité base humide ou sèche documentée requise.")
-        if raw("basis_compatibility") is not True or len((values.get("basis_compatibility").source or "").strip()) < 10 if values.get("basis_compatibility") else True:
+        confirmation = values.get("basis_compatibility")
+        if confirmation is None or confirmation.value is not True or len((confirmation.source or "").strip()) < 10:
             error("basis_compatibility", "Compatibilité masse/PCI/humidité à confirmer avec une justification documentée.")
         for key in ["resource_id", "site_id", "quality"]:
             if not isinstance(raw(key), str) or not raw(key).strip(): error(key, "Identifiant/qualité explicite requis.")
