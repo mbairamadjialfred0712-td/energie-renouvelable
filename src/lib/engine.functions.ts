@@ -92,7 +92,7 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
       owner_id: context.userId, name: data.name, description: data.description ?? null,
       project_id: data.project_id ?? null, locality_id: data.locality_id ?? null,
       period_start: ts?.timestamps[0]?.slice(0, 10) ?? null, period_end: ts?.timestamps.at(-1)?.slice(0, 10) ?? null,
-      objective: "Production photovoltaïque horaire", status: "running",
+      objective, status: "running",
       parameters: { request: data.request } as unknown as Json, assumptions: data.request.assumptions as unknown as Json,
     }).select("id").single();
     if (error || !sim) throw new Error("La simulation n’a pas pu être créée.");
@@ -113,11 +113,30 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
       ];
       const ins = await supabase.from("simulation_results").insert(rows);
       if (ins.error) return await fail("Résultats non enregistrés : la simulation est marquée en échec.");
-      await supabase.from("simulations").update({ status: "completed", engine_version: `photovoltaic ${out.engine_version}` }).eq("id", sim.id);
+      await supabase.from("simulations").update({ status: "completed", engine_version: `${data.request.engine} ${out.engine_version}` }).eq("id", sim.id);
       return { id: sim.id as string, status: "completed" as const, message: "Simulation terminée.", details: out.warnings.map((e) => ({ field: e.field ?? null, code: e.code, message: e.message })) };
     } catch (e) {
       return await fail(e instanceof Error ? e.message : "Erreur du moteur.");
     }
+  });
+
+export const runPvSimulation = runEngine;
+export const runBatterySimulation = runEngine;
+
+/** Séries horaires de résultats d'une simulation terminée (ex. ac_energy PV pour alimenter le moteur batterie). */
+export const getSimulationSeries = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), resultType: z.string().regex(/^series_[a-z_]+$/) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: sim } = await context.supabase.from("simulations").select("id,name,status").eq("id", data.id).maybeSingle();
+    if (!sim) throw new Error("Simulation introuvable.");
+    if (sim.status !== "completed") throw new Error("Seules les simulations terminées fournissent des séries.");
+    const { data: row, error } = await context.supabase.from("simulation_results").select("timeseries,unit").eq("simulation_id", data.id).eq("result_type", data.resultType).maybeSingle();
+    if (error) throw new Error("Série indisponible.");
+    const t = row?.timeseries as { values?: number[] } | null;
+    if (!t?.values?.length) return null;
+    const { data: full } = await context.supabase.from("simulations").select("parameters").eq("id", data.id).single();
+    const ts = (full?.parameters as { request?: { timeseries?: { timestamps?: string[]; utc_offset_hours?: number } } } | null)?.request?.timeseries;
+    return { name: sim.name as string, values: t.values, unit: row.unit as string, timestamps: ts?.timestamps ?? [], utcOffset: ts?.utc_offset_hours ?? null };
   });
 
 export const listSimulations = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
