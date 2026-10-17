@@ -62,8 +62,9 @@ export function sheetErrors(s: Sheet): string[] {
     const x = v(s, f.key); if (x == null) continue;
     if (!Number.isFinite(x)) e.push(`${f.label} : valeur numérique invalide.`);
     else if (f.kind === "pct" && (x < 0 || x > 100)) e.push(`${f.label} doit être compris entre 0 et 100 %.`);
+    else if (f.kind === "pct" && f.min !== 0 && x <= 0) e.push(`${f.label} doit être strictement positif.`);
     else if (f.kind === "int" && (!Number.isInteger(x) || x <= 0)) e.push(`${f.label} doit être un entier positif.`);
-    else if (!f.key.startsWith("temp_") && (f.min === 0 ? x < 0 : x <= 0)) e.push(`${f.label} doit être ${f.min === 0 ? "positif ou nul" : "strictement positif"}.`);
+    else if (f.kind !== "pct" && !f.key.startsWith("temp_") && (f.min === 0 ? x < 0 : x <= 0)) e.push(`${f.label} doit être ${f.min === 0 ? "positif ou nul" : "strictement positif"}.`);
   }
   const lo = v(s, "soc_min_pct"), hi = v(s, "soc_max_pct");
   if (lo != null && hi != null && lo >= hi) e.push("Le SOC minimum doit être strictement inférieur au SOC maximum.");
