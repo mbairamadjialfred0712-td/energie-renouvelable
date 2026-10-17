@@ -121,7 +121,12 @@ export const saveBiomass = createServerFn({ method: "POST" })
     };
     const { data: existing } = await sb.from("biomass_resources").select("id").eq("resource_id", id).maybeSingle();
     const { error: de } = existing ? await sb.from("biomass_resources").update(detail).eq("id", existing.id) : await sb.from("biomass_resources").insert(detail);
-    if (de) { console.error("biomass detail", de); throw new Error("Les caractéristiques de biomasse n’ont pas pu être enregistrées."); }
+    if (de) {
+      console.error("biomass detail", de);
+      // Compensation : ne pas laisser un parent créé sans ses caractéristiques.
+      if (!data.id) await sb.from("energy_resources").delete().eq("id", id);
+      throw new Error("Les caractéristiques de biomasse n’ont pas pu être enregistrées.");
+    }
     return { id };
   });
 
