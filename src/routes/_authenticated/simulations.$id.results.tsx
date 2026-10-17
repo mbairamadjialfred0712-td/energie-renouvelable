@@ -33,21 +33,23 @@ function Results() {
           </section>
         )}
         {s.status === "completed" && <>
-          <p className="rounded-lg border bg-muted/40 p-4 text-sm">Valeurs calculées par PVWatts v8 (3 chiffres significatifs). Résultat indicatif : modèle et paramètres à valider par l’ingénieur.</p>
+          <p className="rounded-lg border bg-muted/40 p-4 text-sm">Valeurs calculées par {s.engine_version ?? "le moteur scientifique"}. Résultat indicatif : modèle et paramètres à valider par l’ingénieur.</p>
           <div className="grid gap-4 sm:grid-cols-2">
             {scalars.map((r) => <div key={r.result_type} className="rounded-lg border p-4"><p className="text-xs text-muted-foreground">{LABELS[r.result_type] ?? r.result_type}</p><p className="mt-1 text-2xl font-semibold">{r.value?.toLocaleString("fr-FR")} <span className="text-base font-normal">{r.unit}</span></p><p className="mt-1 text-xs text-muted-foreground">{r.calculation_method}</p></div>)}
           </div>
-          <section className="rounded-lg border p-4">
+          {monthly.length > 0 && <section className="rounded-lg border p-4">
             <h2 className="mb-3 font-semibold">Énergie AC mensuelle (kWh, somme des heures)</h2>
             <div className="h-64"><ResponsiveContainer><BarChart data={monthly}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} /><Tooltip /><Bar dataKey="kWh" fill="var(--color-primary)" /></BarChart></ResponsiveContainer></div>
-          </section>
+          </section>}
           {meta.warnings && meta.warnings.length > 0 && <section className="rounded-lg border p-4 text-sm"><h2 className="font-semibold">Avertissements</h2><ul className="mt-2 list-disc pl-6">{meta.warnings.map((w, i) => <li key={i}>{w.message}</li>)}</ul></section>}
         </>}
         <section className="rounded-lg border p-4 text-sm">
           <h2 className="font-semibold">Traçabilité des entrées</h2>
           <p className="mt-1 text-muted-foreground">Première heure : {data.firstTimestamp ?? "—"} · UTC{data.utcOffset !== null && data.utcOffset >= 0 ? "+" : ""}{data.utcOffset ?? "?"} · début d’heure</p>
+          <p className="mt-1 text-muted-foreground">Dernière heure : {data.lastTimestamp ?? "—"} · Calcul terminé : {data.calculatedAt ?? (s.status === "completed" ? "Non enregistré dans l’historique ancien" : "Non exécuté ou non terminé")}</p>
           <ul className="mt-2 grid gap-1 sm:grid-cols-2">{Object.entries(data.seriesMeta).map(([k, v]) => <li key={k}>{k} ({v.unit}) — {v.nature}{v.source ? ` · ${v.source}` : ""}</li>)}</ul>
           <ul className="mt-2 grid gap-1 sm:grid-cols-2">{Object.entries(data.inputs).map(([k, v]) => <li key={k}>{k} = {String(v.value)} {v.unit} — {v.nature}</li>)}</ul>
+          <ul className="mt-2 grid gap-1 sm:grid-cols-2">{Object.entries(data.assumptions).map(([k, v]) => <li key={k}>{k} = {String(v.value)} {v.unit} — {v.nature}</li>)}</ul>
         </section>
       </div>
     </WorkspacePage>

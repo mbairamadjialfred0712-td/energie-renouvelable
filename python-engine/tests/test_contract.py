@@ -71,3 +71,16 @@ def test_run_refuses_unimplemented_engine(client):
 def test_unknown_simulation_404(client):
     r = client.get("/api/v1/simulations/abc/results", headers=H)
     assert r.status_code == 404 and r.json()["error"]["code"] == "simulation_not_found"
+
+
+def test_chunked_body_limit(client, monkeypatch):
+    monkeypatch.setenv("MAX_BODY_BYTES", "10")
+    get_settings.cache_clear()
+    r = client.post("/api/v1/simulations/validate", content=iter([b"123456", b"789012"]), headers=H)
+    assert r.status_code == 413
+    assert "results" not in r.json()
+
+
+def test_invalid_content_length(client):
+    r = client.post("/api/v1/simulations/validate", content=b"{}", headers={**H, "Content-Length": "invalid"})
+    assert r.status_code == 400

@@ -177,3 +177,72 @@ def test_api_invalid_never_returns_results(client, base):
     b["timeseries"]["series"]["ghi"]["values"][0] = None
     r = client.post("/api/v1/simulations", json=b, headers=H)
     assert r.status_code == 422 and "results" not in r.json()
+
+
+@pytest.mark.parametrize("key", ["latitude", "longitude", "elevation", "system_capacity", "dc_ac_ratio", "inv_eff", "losses", "tilt", "azimuth", "module_type", "array_type", "gcr"])
+def test_each_required_parameter_missing(base, key):
+    b = copy.deepcopy(base)
+    del b["input_data"][key]
+    assert "missing_parameter" in _errors(b)
+
+
+@pytest.mark.parametrize("value", [True, "4", [4], float("inf"), float("nan")])
+def test_non_numeric_or_nonfinite_parameter_rejected(base, value):
+    b = copy.deepcopy(base)
+    b["input_data"]["system_capacity"]["value"] = value
+    assert _errors(b)
+
+
+def test_wrong_parameter_unit_rejected(base):
+    b = copy.deepcopy(base)
+    b["input_data"]["system_capacity"]["unit"] = "W"
+    assert "incompatible_units" in _errors(b)
+
+
+def test_rolling_year_rejected(base):
+    from datetime import datetime, timedelta
+    b = copy.deepcopy(base)
+    b["timeseries"]["timestamps"] = [(datetime(2023, 2, 1) + timedelta(hours=i)).isoformat() for i in range(8760)]
+    assert "calendar_year" in _errors(b)
+
+
+def leap_request(base):
+    from datetime import datetime, timedelta
+    b = copy.deepcopy(base)
+    stamps = [datetime(2024, 1, 1) + timedelta(hours=i) for i in range(8784)]
+    b["timeseries"]["timestamps"] = [s.isoformat() for s in stamps if (s.month, s.day) != (2, 29)]
+    return b
+
+
+def test_leap_requires_explicit_convention(base):
+    assert "leap_convention_required" in _errors(leap_request(base))
+
+
+def test_explicit_leap_year_omission_accepted(base):
+    b = leap_request(base)
+    b["timeseries"]["leap_day_convention"] = "omit_feb29"
+    assert _errors(b) == set()
+
+
+def test_microseconds_rejected(base):
+    b = copy.deepcopy(base)
+    b["timeseries"]["timestamps"] = [s + ".000001" for s in b["timeseries"]["timestamps"]]
+    assert "not_hourly" in _errors(b)
+
+
+def test_boolean_albedo_rejected(base):
+    b = copy.deepcopy(base)
+    b["assumptions"]["albedo"]["value"] = True
+    assert "missing_parameter" in _errors(b)
+
+
+def test_direct_run_rejects_invalid_data(base):
+    b = copy.deepcopy(base)
+    b["timeseries"]["series"]["ghi"]["values"][0] = None
+    with pytest.raises(ValueError, match="Entrées PV invalides"):
+        PVWattsV8Engine().run(SimulationRequest.model_validate(b))
+
+
+def test_fixed_settings_traceable(output):
+    assert output.metadata["fixed_settings"] == {"en_snowloss": 0, "bifaciality": 0, "dc_degradation": 0, "analysis_period_years": 1}
+    assert output.metadata["pysam_version"] == "7.1.1.post1"

@@ -43,6 +43,7 @@ export function PvSimulationForm() {
   const [seriesSource, setSeriesSource] = useState("");
   const [utcOffset, setUtcOffset] = useState("");
   const [albedo, setAlbedo] = useState("");
+  const [omitLeapDay, setOmitLeapDay] = useState(false);
   const [busy, setBusy] = useState(false);
   const [issues, setIssues] = useState<string[]>([]);
 
@@ -53,6 +54,9 @@ export function PvSimulationForm() {
     if (name.trim().length < 3) errs.push("Nom de la simulation requis.");
     if (!csv) errs.push("Série horaire CSV requise.");
     if (csv?.errors.length) errs.push(...csv.errors);
+    const year = Number(csv?.timestamps[0]?.slice(0, 4));
+    const isLeap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    if (isLeap && !omitLeapDay) errs.push("Confirmer la convention bissextile : 29 février exclu des données fournies.");
     const offset = num(utcOffset);
     if (offset === null || !Number.isFinite(offset)) errs.push("Décalage UTC requis.");
     const input_data: SimulationRequest["input_data"] = {};
@@ -73,7 +77,8 @@ export function PvSimulationForm() {
       schema_version: ENGINE_SCHEMA_VERSION, engine: "photovoltaic", input_data, assumptions,
       source_references: seriesSource.trim() ? [{ label: seriesSource.trim() }] : [],
       timeseries: { timestamps: csv.timestamps, utc_offset_hours: offset, timestamp_convention: "period_start",
-        series: Object.fromEntries(Object.entries(csv.series).map(([k, vals]) => [k, { values: vals, unit: PV_SERIES.find((s) => s.key === k)!.unit, nature: seriesNature as "external", source: seriesSource.trim() || null }])) },
+        leap_day_convention: omitLeapDay ? "omit_feb29" : null,
+        series: Object.fromEntries(Object.entries(csv.series).flatMap(([k, vals]) => { const metric = PV_SERIES.find((s) => s.key === k); return metric ? [[k, { values: vals, unit: metric.unit, nature: seriesNature as "external", source: seriesSource.trim() || null }]] : []; })) },
     };
     setBusy(true);
     try {
@@ -103,6 +108,7 @@ export function PvSimulationForm() {
           <span className="text-muted-foreground">8 760 heures (année 2023). Valeurs <strong>fictives de démonstration</strong>, ne représentant aucun site : à remplacer par vos séries réelles sourcées.</span>
         </div>
         <Input type="file" accept=".csv,text/csv" aria-label="Fichier CSV horaire" onChange={async (e) => { const f = e.target.files?.[0]; setCsv(f ? parsePvCsv(await f.text()) : null); }} />
+        <Label className="flex items-center gap-2"><input type="checkbox" checked={omitLeapDay} onChange={(e) => setOmitLeapDay(e.target.checked)} />Année bissextile : je confirme que le 29 février est exclu (aucune suppression automatique).</Label>
         {csv && <p className="text-sm">{csv.timestamps.length} lignes lues · colonnes : {Object.keys(csv.series).join(", ") || "aucune"}{csv.errors.length ? ` · ${csv.errors.join(" ")}` : ""}</p>}
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-1"><Label htmlFor="utc">Décalage UTC de l’heure standard (h) *</Label><Input id="utc" value={utcOffset} onChange={(e) => setUtcOffset(e.target.value)} placeholder="ex. 0" /></div>

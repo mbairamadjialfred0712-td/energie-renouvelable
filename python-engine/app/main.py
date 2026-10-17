@@ -18,8 +18,24 @@ app.add_exception_handler(EngineError, engine_error_handler)
 @app.middleware("http")
 async def limit_body(request: Request, call_next):
     size = request.headers.get("content-length")
-    if size and int(size) > get_settings().max_body_bytes:
-        return JSONResponse(error_body(ErrorCode.payload_too_large, "Requête trop volumineuse."), status_code=413)
+    limit = get_settings().max_body_bytes
+    if size:
+        try:
+            declared = int(size)
+        except ValueError:
+            return JSONResponse(error_body(ErrorCode.invalid_input, "Taille de requête invalide."), status_code=400)
+        if declared < 0:
+            return JSONResponse(error_body(ErrorCode.invalid_input, "Taille de requête invalide."), status_code=400)
+        if declared > limit:
+            return JSONResponse(error_body(ErrorCode.payload_too_large, "Requête trop volumineuse."), status_code=413)
+    chunks = []
+    received = 0
+    async for chunk in request.stream():
+        received += len(chunk)
+        if received > limit:
+            return JSONResponse(error_body(ErrorCode.payload_too_large, "Requête trop volumineuse."), status_code=413)
+        chunks.append(chunk)
+    request._body = b"".join(chunks)  # replay bounded body to the downstream parser
     return await call_next(request)
 
 

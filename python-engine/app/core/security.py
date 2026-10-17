@@ -25,9 +25,15 @@ async def verify_user_token(token: str) -> str:
                                  headers={"apikey": s.supabase_publishable_key, "Authorization": f"Bearer {token}"})
     except httpx.HTTPError:
         raise EngineError(ErrorCode.engine_unavailable, "Service d'identité injoignable.")
-    if r.status_code != 200 or not r.json().get("id"):
+    if r.status_code != 200:
         raise EngineError(ErrorCode.unauthorized, "Jeton utilisateur invalide ou expiré.")
-    return r.json()["id"]
+    try:
+        identity = r.json()
+    except ValueError:
+        raise EngineError(ErrorCode.engine_unavailable, "Réponse du service d'identité invalide.") from None
+    if not isinstance(identity, dict) or not isinstance(identity.get("id"), str) or not identity["id"]:
+        raise EngineError(ErrorCode.unauthorized, "Jeton utilisateur invalide ou expiré.")
+    return identity["id"]
 
 
 async def require_caller(x_engine_key: str = Header(default=""), authorization: str = Header(default="")) -> Caller:

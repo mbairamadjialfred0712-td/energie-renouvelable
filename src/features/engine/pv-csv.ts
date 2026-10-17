@@ -17,6 +17,7 @@ export function parsePvCsv(text: string): ParsedSeries {
   const head = lines[0] ?? "";
   const sep = head.includes(";") ? ";" : ",";
   const header = head.split(sep).map((h) => h.trim().toLowerCase());
+  if (new Set(header).size !== header.length) errors.push("Colonnes dupliquées refusées.");
   const ti = header.indexOf("timestamp");
   if (ti < 0) errors.push("Colonne « timestamp » manquante.");
   const cols: Record<string, number> = {};
@@ -31,10 +32,12 @@ export function parsePvCsv(text: string): ParsedSeries {
   const series: Record<string, (number | null)[]> = Object.fromEntries(Object.keys(cols).map((k) => [k, []]));
   for (const line of lines.slice(1)) {
     const cells = line.split(sep);
+    if (cells.length !== header.length) errors.push(`Ligne ${timestamps.length + 2} : nombre de colonnes incorrect.`);
     timestamps.push((cells[ti] ?? "").trim());
     for (const [k, i] of Object.entries(cols)) {
       const raw = (cells[i] ?? "").trim();
       const num = raw === "" ? null : Number(sep === ";" ? raw.replace(",", ".") : raw);
+      if (num === null || !Number.isFinite(num)) errors.push(`Ligne ${timestamps.length + 1} : ${k} manquant ou non numérique.`);
       series[k]?.push(num === null || Number.isFinite(num) ? num : null);
     }
   }
@@ -46,8 +49,10 @@ export function parsePvCsv(text: string): ParsedSeries {
 export function buildPvCsvTemplate(year = 2023): string {
   const rows = ["timestamp;ghi;dni;dhi;temp_air;wind_speed"];
   const start = Date.UTC(year, 0, 1);
-  for (let i = 0; i < 8760; i++) {
-    const d = new Date(start + i * 3600_000);
+  const end = Date.UTC(year + 1, 0, 1);
+  for (let time = start; time < end; time += 3600_000) {
+    const d = new Date(time);
+    if (d.getUTCMonth() === 1 && d.getUTCDate() === 29) continue;
     const h = d.getUTCHours();
     const s = Math.max(0, Math.sin((Math.PI * (h - 6)) / 12));
     const ghi = Math.round(800 * s), dni = Math.round(600 * s), dhi = Math.round(150 * s);
