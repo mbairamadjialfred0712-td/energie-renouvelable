@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { WorkspacePage } from "@/components/app/page";
 import { Button } from "@/components/ui/button";
-import { deleteDatasheet, getDatasheet, getStorageAccess } from "@/lib/storage.functions";
+import { deleteDatasheet, getDatasheet, getStorageAccess, setDatasheetStatus } from "@/lib/storage.functions";
 import { APPLICATIONS, CHEMISTRIES, FIELDS, GROUPS, METHODS, costPerKwh, energyCheck, sheetWarnings, usableEstimate } from "@/features/storage/battery-model";
 import { BatteryForm } from "@/features/storage/battery-form";
 import { StatusBadge, val } from "@/features/storage/battery-ui";
