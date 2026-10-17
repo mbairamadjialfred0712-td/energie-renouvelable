@@ -220,7 +220,7 @@ def test_json_serialization_preserves_battery_balances_not_database_persistence(
     response = SimulationResponse(simulation_id='synthetic-qa-only', status='completed', engine='battery',
                                   engine_version='1.1.0', created_at=datetime.now(timezone.utc),
                                   results=out.results, timeseries=out.timeseries,
-                                  calculation_metadata=out.calculation_metadata)
+                                  calculation_metadata=out.metadata)
     restored = SimulationResponse.model_validate_json(response.model_dump_json())
     assert restored.results == out.results
     assert restored.timeseries == out.timeseries
