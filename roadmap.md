@@ -1,12 +1,11 @@
 # Feuille de route
 
-## En cours
-1. Moteur batterie (réservoir + rendements) dans python-engine + tests
-2. Raccordement batterie à Simulations (contrat TS, client serveur, UI, persistance)
-3. Fiche projet : équipements, CAPEX, OPEX annuel, durée + LCOE affiché
-4. Page Analyse financière pré-remplie avec les hypothèses du projet
-5. Liaison LCOE ↔ simulation existante (production horaire PV)
+## Terminé (17/10/2026)
+- [x] Moteur batterie « réservoir + rendements » dans python-engine (39 tests, bilan énergétique contrôlé)
+- [x] Raccordement batterie à Simulations (contrat TS, runBatterySimulation, formulaire avec PV simulé + demande CSV)
+- [x] Fiche projet : hypothèses financières (CAPEX, OPEX, durée, taux, dégradation, remplacements) + LCOE affiché + historique
+- [x] Page Analyse financière pré-remplie avec les hypothèses du projet (?project=...)
+- [x] Liaison LCOE ↔ simulation existante (production année 1 = annual_ac_energy enregistrée, jamais recalculée)
 
-## Déjà fait
-- Fiches météo par site (imports CSV/Excel + NASA POWER, validation)
-- Calculateur LCOE déterministe (/finance)
+## En attente (bloquant externe)
+- Exécution E2E PV et batterie : le moteur Python n'est pas en ligne (Render + secrets SCIENTIFIC_ENGINE_URL/KEY). Tant qu'il n'est pas déployé, aucune simulation ne peut tourner et aucune simulation PV terminée n'existe pour tester la liaison production → LCOE.
