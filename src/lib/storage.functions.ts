@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { APPLICATIONS, CHEMISTRIES, FIELDS, METHODS, STATUSES, configErrors, sheetErrors, type Sheet } from "@/features/storage/battery-model";
+import { APPLICATIONS, CHEMISTRIES, FIELDS, METHODS, STATUSES, configErrors, sheetErrors, statusChangeErrors, type Sheet } from "@/features/storage/battery-model";
 
 async function access(sb: any, userId: string) {
   const { data } = await sb.from("user_roles").select("role").eq("user_id", userId);
