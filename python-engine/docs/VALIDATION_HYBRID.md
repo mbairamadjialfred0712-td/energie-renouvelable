@@ -37,7 +37,7 @@ Préparation testée : PV+batterie, éolien+batterie, PV+éolien+batterie, PV+bi
 
 | Niveau | État | Preuve et limite |
 |---|---|---|
-| A | Intégré ; brouillons incomplets sauvegardables | Création, modification, rechargement et cinq revisions observés dans l'aperçu authentifié |
+| A | Intégré ; brouillons incomplets sauvegardables | Création, modification, rechargement et six revisions observés dans l'aperçu authentifié |
 | B | Lecture/présentation implémentée | Tests sur fixtures synthétiques ; état sans résultat observé dans l'interface. Aucun vrai résultat individuel disponible pour vérifier une comparaison alimentée |
 | C | Indisponible | Bouton désactivé, sorties indisponibles, registre Python non implémenté et exécution refusée avec 503 |
 
