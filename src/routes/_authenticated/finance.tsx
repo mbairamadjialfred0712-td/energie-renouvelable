@@ -7,7 +7,7 @@ const title = "Analyse financière — Énergie Renouvelable";
 const description = "Calculateur déterministe du coût actualisé de l'énergie (LCOE) : CAPEX, OPEX, dégradation, remplacements et taux d'actualisation.";
 
 export const Route = createFileRoute("/_authenticated/finance")({
-  validateSearch: (s: Record<string, unknown>) => ({ project: typeof s.project === "string" ? s.project : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ project: typeof s["project"] === "string" ? (s["project"] as string) : undefined }),
   head: () => ({
     meta: [
       { title },

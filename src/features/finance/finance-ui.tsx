@@ -51,7 +51,7 @@ function Field({ label, unit, value, onChange }: { label: string; unit?: string;
   );
 }
 
-export function FinanceCalculator({ initial, initialReplacements }: { initial?: Partial<FieldState>; initialReplacements?: ReplacementRow[] }) {
+export function FinanceCalculator({ initial, initialReplacements }: { initial?: Partial<FieldState> | undefined; initialReplacements?: ReplacementRow[] | undefined }) {
   const [fields, setFields] = useState<FieldState>({ ...EMPTY, ...initial });
   const [replacements, setReplacements] = useState<ReplacementRow[]>(initialReplacements ?? []);
   const [result, setResult] = useState<FinanceResult | null>(null);
