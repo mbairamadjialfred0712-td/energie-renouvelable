@@ -149,3 +149,12 @@ def test_overflow_api_no_results(client):
 def test_incomplete_hour_refused():
     r=fixture("C");r["timeseries"]["timestamps"][1]="2024-02-29T01:30:00Z"
     with pytest.raises(ValueError): ENGINE.run(SimulationRequest(**r))
+
+def test_documented_cut_out_boundary():
+    r=fixture("C");d=r["input_data"]
+    d["curve_speeds"]["value"]=[0,5,10,15];d["curve_powers"]["value"]=[0,500,1000,0]
+    d["cut_out"]={"value":15,"unit":"m/s","nature":"assumption","source":"Arithmetic only"}
+    r["timeseries"]["series"]["wind_speed"]["values"]=[10,15]
+    out=ENGINE.run(SimulationRequest(**r))
+    assert out.timeseries["turbine_power"].values == [1000,0]
+    assert out.results["turbine_energy"].value == 1
