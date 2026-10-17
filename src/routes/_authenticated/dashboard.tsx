@@ -45,11 +45,27 @@ function Dashboard() {
         <section className="border border-border bg-background p-5">
           <div className="flex items-center justify-between"><h2 className="font-semibold">Demande énergétique</h2><Link to="/demand" className="text-sm text-primary">Ouvrir</Link></div>
           <p className="mt-1 text-xs text-muted-foreground">{v(d?.demands)} enregistrement(s) de demande</p>
+          {d && Object.keys(d.demandByStatus).length > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">{Object.entries(d.demandByStatus).map(([s, n]) => `${STATUS_LABELS[s] ?? s} : ${n}`).join(" · ")}</p>
+          )}
           {d && Object.keys(d.demandBySector).length === 0 ? <p className="mt-4 text-sm text-muted-foreground">Aucune demande enregistrée.</p> : (
             <ul className="mt-4 space-y-2 text-sm">
-              {Object.entries(d?.demandBySector ?? {}).map(([s, x]) => <li key={s} className="flex justify-between border-b border-border pb-2"><span>{s}</span><span className="tabular-nums">{x.withValue ? `${fmt(x.annualKwh)} kWh/an` : "—"} <span className="text-muted-foreground">({x.withValue}/{x.count} renseignés)</span></span></li>)}
+              {Object.entries(d?.demandBySector ?? {}).map(([s, x]) => (
+                <li key={s} className="border-b border-border pb-2">
+                  <div className="flex justify-between"><span>{s}</span><span className="text-muted-foreground tabular-nums">{x.count} demande(s)</span></div>
+                  <div className="mt-1 flex justify-between text-xs">
+                    <span className="text-muted-foreground">Mesuré{x.measuredSkipped ? ` (${x.measuredSkipped} exclu : mesures incohérentes)` : ""}</span>
+                    <span className="tabular-nums">{x.withMeasured ? `${fmt(Math.round(x.measuredKwh))} kWh (${x.withMeasured}/${x.count})` : "—"}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Estimé (inventaire, mois de 30 j)</span>
+                    <span className="tabular-nums">{x.withEstimate ? `${fmt(Math.round(x.estimatedMonthlyKwh))} kWh/mois (${x.withEstimate}/${x.count})` : "—"}</span>
+                  </div>
+                </li>
+              ))}
             </ul>
           )}
+          <p className="mt-3 text-xs text-muted-foreground">Valeurs mesurées issues des relevés enregistrés ; valeurs estimées calculées depuis l’inventaire d’équipements. Les deux ne sont jamais confondues ni additionnées.</p>
         </section>
         <section className="border border-border bg-background p-5">
           <div className="flex items-center justify-between"><h2 className="font-semibold">Projets</h2><Link to="/projects" className="text-sm text-primary">Ouvrir</Link></div>
