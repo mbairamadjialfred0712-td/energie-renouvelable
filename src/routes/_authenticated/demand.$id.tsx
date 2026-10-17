@@ -6,7 +6,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { WorkspacePage } from "@/components/app/page";
 import { Button } from "@/components/ui/button";
 import { deleteDemand, getDemand, getDemandAccess, setDemandStatus } from "@/lib/demand.functions";
-import { METHODS, PRIORITIES, STATUSES, SUPPLY_SOURCES, equipmentEnergy } from "@/features/demand/demand-engine";
+import { METHODS, PRIORITIES, STATUSES, SUPPLY_SOURCES, demandWarnings, equipmentEnergy } from "@/features/demand/demand-engine";
 import { ConsumptionSummary, DemandCharts, DemandStatusBadge, categoryText, fmt, periodText } from "@/features/demand/demand-ui";
 
 const META = "Fiche détaillée d’une demande énergétique : localisation, équipements, consommation, profil, sources, hypothèses et historique.";
@@ -38,6 +38,7 @@ function DemandDetail() {
       {canEdit && Object.entries(STATUSES).filter(([k]) => k !== d.status && (access!.canValidate || !["validated", "rejected"].includes(k))).map(([k, l]) => <Button key={k} size="sm" variant="outline" onClick={() => change(k as keyof typeof STATUSES)}>{k === "validated" ? "Valider" : k === "rejected" ? "Rejeter" : `→ ${l}`}</Button>)}
       {!canEdit && <span className="text-xs text-muted-foreground">Consultation seule</span>}</div>
     {msg && <p role="alert" className="mt-2 text-sm text-destructive">{msg}</p>}
+    {(() => { const w = demandWarnings(d); return w.length ? <ul className="mt-3 space-y-1 border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">{w.map((x) => <li key={x}>⚠ {x}</li>)}</ul> : null; })()}
     <H>Identité et localisation</H>
     <Dl items={[["Catégorie", categoryText(d)], ["Consommateur", d.consumer_name], ["Usagers / habitants", d.users_count?.toLocaleString("fr-FR")], ["Pays", d.country], ["Région", d.region], ["Département", d.department], ["Localité", <Link to="/geography/localities/$id" params={{ id: d.locality_id }} className="text-primary hover:underline">{d.locality_name}</Link>], ["Site", d.site_name], ["Description", d.description]]} />
     <H>Équipements ({d.equipment.length})</H>
