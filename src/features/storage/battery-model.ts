@@ -20,8 +20,8 @@ export const FIELDS: FieldDef[] = [
     { key: "max_discharge_a", label: "Courant max. de décharge", unit: "A", kind: "num", min: 0 }, { key: "voltage_min_v", label: "Tension minimale", unit: "V", kind: "num", min: 0 },
     { key: "voltage_max_v", label: "Tension maximale", unit: "V", kind: "num", min: 0 }]),
   ...g("Énergie utilisable et SOC", [
-    { key: "dod_pct", label: "Profondeur de décharge (DoD)", unit: "%", kind: "pct" }, { key: "soc_min_pct", label: "SOC minimum", unit: "%", kind: "pct" },
-    { key: "soc_max_pct", label: "SOC maximum", unit: "%", kind: "pct" }, { key: "usable_kwh", label: "Capacité utilisable déclarée", unit: "kWh", kind: "num" },
+    { key: "dod_pct", label: "Profondeur de décharge (DoD)", unit: "%", kind: "pct" }, { key: "soc_min_pct", label: "SOC minimum", unit: "%", kind: "pct", min: 0 },
+    { key: "soc_max_pct", label: "SOC maximum", unit: "%", kind: "pct", min: 0 }, { key: "usable_kwh", label: "Capacité utilisable déclarée", unit: "kWh", kind: "num" },
     { key: "warranty_limits", label: "Limites liées à la garantie", kind: "text" }]),
   ...g("Rendements et limites", [
     { key: "rte_pct", label: "Rendement aller-retour", unit: "%", kind: "pct" }, { key: "charge_eff_pct", label: "Rendement de charge", unit: "%", kind: "pct" },
@@ -31,7 +31,7 @@ export const FIELDS: FieldDef[] = [
   ...g("Durée de vie", [
     { key: "cycles", label: "Nombre de cycles annoncé", unit: "cycles", kind: "int" }, { key: "cycle_conditions", label: "Conditions des cycles (DoD, T°, régime)", kind: "text" },
     { key: "calendar_years", label: "Durée de vie calendaire", unit: "ans", kind: "num" }, { key: "eol_capacity_pct", label: "Capacité résiduelle garantie", unit: "%", kind: "pct" },
-    { key: "degradation_pct_year", label: "Dégradation annuelle documentée", unit: "%/an", kind: "pct" }, { key: "degradation_source", label: "Source de la dégradation", kind: "text" },
+    { key: "degradation_pct_year", label: "Dégradation annuelle documentée", unit: "%/an", kind: "pct", min: 0 }, { key: "degradation_source", label: "Source de la dégradation", kind: "text" },
     { key: "warranty", label: "Conditions de garantie", kind: "long" }]),
   ...g("Installation et sécurité", [
     { key: "mass_kg", label: "Masse", unit: "kg", kind: "num" }, { key: "length_mm", label: "Longueur", unit: "mm", kind: "num" }, { key: "width_mm", label: "Largeur", unit: "mm", kind: "num" },
@@ -54,16 +54,17 @@ const v = (s: Sheet, k: string): number | null => (s[k] == null || s[k] === "" ?
 
 export function sheetErrors(s: Sheet): string[] {
   const e: string[] = [];
-  if (!s.name?.trim()) e.push("Le nom commercial est obligatoire.");
+  if (!s.name?.trim() || s.name.trim().length < 2) e.push("Le nom commercial est obligatoire (2 caractères minimum).");
   if (!s.manufacturer?.trim()) e.push("Le fabricant est obligatoire.");
-  if (!s.source?.trim()) e.push("La source documentaire est obligatoire.");
+  if (!s.source?.trim() || s.source.trim().length < 2) e.push("La source documentaire est obligatoire (2 caractères minimum).");
   if (s.chemistry === "other" && !s.chemistry_detail?.trim()) e.push("Précisez la technologie pour « Autre ».");
   for (const f of NUMERIC) {
     const x = v(s, f.key); if (x == null) continue;
     if (!Number.isFinite(x)) e.push(`${f.label} : valeur numérique invalide.`);
     else if (f.kind === "pct" && (x < 0 || x > 100)) e.push(`${f.label} doit être compris entre 0 et 100 %.`);
+    else if (f.kind === "pct" && f.min !== 0 && x <= 0) e.push(`${f.label} doit être strictement positif.`);
     else if (f.kind === "int" && (!Number.isInteger(x) || x <= 0)) e.push(`${f.label} doit être un entier positif.`);
-    else if (!f.key.startsWith("temp_") && (f.min === 0 ? x < 0 : x <= 0)) e.push(`${f.label} doit être ${f.min === 0 ? "positif ou nul" : "strictement positif"}.`);
+    else if (f.kind !== "pct" && !f.key.startsWith("temp_") && (f.min === 0 ? x < 0 : x <= 0)) e.push(`${f.label} doit être ${f.min === 0 ? "positif ou nul" : "strictement positif"}.`);
   }
   const lo = v(s, "soc_min_pct"), hi = v(s, "soc_max_pct");
   if (lo != null && hi != null && lo >= hi) e.push("Le SOC minimum doit être strictement inférieur au SOC maximum.");
@@ -119,6 +120,24 @@ export function sheetWarnings(s: Sheet): string[] {
   if (v(s, "cycles") != null && !s.cycle_conditions?.trim()) w.push("Le nombre de cycles n’est pas accompagné de ses conditions (DoD, température, régime).");
   if (v(s, "degradation_pct_year") != null && !s.degradation_source?.trim()) w.push("La dégradation annuelle n’a pas de source : elle sera traitée comme une hypothèse.");
   return w;
+}
+
+/** Conditions supplémentaires pour passer une fiche au statut « validé » (battery-model/1.0.0). */
+export function validationGateErrors(s: Sheet): string[] {
+  const e: string[] = [];
+  if (!s.acquisition_method) e.push("La méthode d’obtention des caractéristiques est obligatoire pour valider une fiche.");
+  if (s["nominal_voltage_v"] == null && s["capacity_ah"] == null && s["energy_kwh"] == null) e.push("Valider exige au moins une caractéristique électrique documentée (tension, capacité ou énergie nominale).");
+  if (s.chemistry === "other" && !s.chemistry_detail?.trim()) e.push("Précisez la technologie pour « Autre » avant validation.");
+  return e;
+}
+/** Transitions de statut autorisées (hors contrôle de rôle, effectué côté serveur et base). */
+export function statusChangeErrors(s: Sheet, from: keyof typeof STATUSES, to: keyof typeof STATUSES): string[] {
+  if (from === to) return [];
+  if (to === "validated") return [...sheetErrors(s), ...validationGateErrors(s)];
+  if (from === "validated" || from === "rejected") {
+    if (to === "unverified") return ["Une fiche validée ou rejetée ne peut pas redevenir « Non vérifié » : utilisez « À examiner » ou « Archivé »."];
+  }
+  return [];
 }
 
 export type StorageConfig = { module_count: number | null; series_count: number | null; parallel_count: number | null; soc_min_pct: number | null; soc_max_pct: number | null; rte_pct: number | null; charge_eff_pct: number | null; discharge_eff_pct: number | null; usable_energy_limit_kwh: number | null; retained_cost: number | null; currency: string | null };

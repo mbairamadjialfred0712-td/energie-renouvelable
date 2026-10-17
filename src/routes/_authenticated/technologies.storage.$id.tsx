@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { WorkspacePage } from "@/components/app/page";
 import { Button } from "@/components/ui/button";
-import { deleteDatasheet, getDatasheet, getStorageAccess } from "@/lib/storage.functions";
+import { deleteDatasheet, getDatasheet, getStorageAccess, setDatasheetStatus } from "@/lib/storage.functions";
 import { APPLICATIONS, CHEMISTRIES, FIELDS, GROUPS, METHODS, costPerKwh, energyCheck, sheetWarnings, usableEstimate } from "@/features/storage/battery-model";
 import { BatteryForm } from "@/features/storage/battery-form";
 import { StatusBadge, val } from "@/features/storage/battery-ui";
@@ -21,7 +21,9 @@ function Detail() {
   const { data, isLoading } = useQuery({ queryKey: ["battery-sheet", id], queryFn: () => getDatasheet({ data: { id } }) });
   const { data: access } = useQuery({ queryKey: ["storage-access"], queryFn: () => getStorageAccess() });
   const del = useServerFn(deleteDatasheet);
+  const setStatus = useServerFn(setDatasheetStatus);
   const [editing, setEditing] = useState(false); const [msg, setMsg] = useState<string | null>(null);
+  const changeStatus = async (status: string) => { setMsg(null); try { await setStatus({ data: { id, status: status as never } }); qc.invalidateQueries(); } catch (e) { setMsg((e as Error).message); } };
   if (isLoading) return <WorkspacePage eyebrow="Technologies / Stockage" title="Fiche" description="Chargement…"><span /></WorkspacePage>;
   if (!data) return <WorkspacePage eyebrow="Technologies / Stockage" title="Fiche introuvable" description="Cette fiche n’existe pas."><Link to="/technologies/storage" className="text-primary">Retour</Link></WorkspacePage>;
   const s = data.item;
@@ -31,6 +33,13 @@ function Detail() {
   return <WorkspacePage eyebrow="Technologies / Stockage" title={s.name} description={`${s.manufacturer} · ${s.chemistry === "other" ? `Autre — ${s.chemistry_detail}` : CHEMISTRIES[s.chemistry]}${s.application ? ` · ${APPLICATIONS[s.application as keyof typeof APPLICATIONS]}` : ""}`}
     action={canEdit ? <div className="flex gap-2"><Button variant="outline" onClick={() => setEditing(true)}><Pencil />Modifier</Button><Button variant="ghost" aria-label="Supprimer" onClick={async () => { if (!confirm("Supprimer cette fiche ?")) return; try { await del({ data: { id } }); qc.invalidateQueries(); navigate({ to: "/technologies/storage" }); } catch (e) { setMsg((e as Error).message); } }}><Trash2 /></Button></div> : null}>
     <div className="flex flex-wrap items-center gap-2"><StatusBadge status={s.status} /><span className="text-xs text-muted-foreground">Source : {s.source}{s.acquisition_method ? ` · ${METHODS[s.acquisition_method as keyof typeof METHODS]}` : ""}</span>{!canEdit && <span className="text-xs text-muted-foreground">· Consultation seule</span>}</div>
+    {canEdit && <div className="mt-3 flex flex-wrap gap-2">
+      {s.status !== "validated" && s.status !== "archived" && <Button size="sm" variant="outline" onClick={() => changeStatus("validated")}>Valider la fiche</Button>}
+      {s.status !== "rejected" && s.status !== "archived" && <Button size="sm" variant="outline" onClick={() => changeStatus("rejected")}>Rejeter</Button>}
+      {s.status !== "in_review" && s.status !== "archived" && <Button size="sm" variant="ghost" onClick={() => changeStatus("in_review")}>Passer à examiner</Button>}
+      {s.status !== "archived" && <Button size="sm" variant="ghost" onClick={() => changeStatus("archived")}>Archiver</Button>}
+      {s.status === "archived" && <Button size="sm" variant="ghost" onClick={() => changeStatus("in_review")}>Désarchiver</Button>}
+    </div>}
     {msg && <p role="alert" className="mt-2 text-sm text-destructive">{msg}</p>}
     {s.status !== "validated" && <p className="mt-2 text-xs text-muted-foreground">Fiche non validée : les valeurs ne sont pas des caractéristiques officiellement confirmées.</p>}
     <section className="mt-6 grid gap-3 lg:grid-cols-3">

@@ -26,7 +26,7 @@ export function BatteryForm({ row, onSaved, onCancel }: { row: (Sheet & { id: st
     {GROUPS.map((gname) => <fieldset key={gname} className="border border-border bg-background p-4"><legend className="px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">{gname}</legend>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {gname === "Identification" && <>{txt("name", "Nom commercial / modèle *")}{txt("manufacturer", "Fabricant *")}{sel("chemistry", CHEMISTRIES, "Technologie électrochimique *")}{sel("application", APPLICATIONS, "Application", "Non précisée")}</>}
-        {gname === "Sources et validation" && <>{txt("source", "Source documentaire *")}{sel("acquisition_method", METHODS, "Méthode d’acquisition", "Non renseignée")}{sel("status", STATUSES, "Statut")}</>}
+        {gname === "Sources et validation" && <>{txt("source", "Source documentaire *")}{sel("acquisition_method", METHODS, "Méthode d’acquisition", "Non renseignée")}<p className="self-end text-xs text-muted-foreground">Statut actuel : {STATUSES[s.status]} — le changement de statut se fait depuis la fiche (action dédiée).</p></>}
         {FIELDS.filter((f) => f.group === gname).map((f) => {
           const label = `${f.label}${f.unit ? ` (${f.unit})` : ""}`;
           if (f.kind === "bool") return <label key={f.key} className="block text-sm"><span className="font-medium">{label}</span><select aria-label={label} className={`mt-1 ${inputCls}`} value={s[f.key] == null ? "" : String(s[f.key])} onChange={(e) => set(f.key, e.target.value === "" ? null : e.target.value === "true")}><option value="">Non renseigné</option><option value="true">Oui</option><option value="false">Non</option></select></label>;
