@@ -20,7 +20,7 @@
 - Persist project PV estimates through the authenticated estimate_project_solar RPC, which rechecks roles, ownership and solar validation under resource locks and atomically logs history; this prevents forged results and validation races.
 - Keep the annual PV formula in the versioned pure solar-pv-engine contract aligned with the authoritative database RPC; IA only reviews saved snapshots and never calculates production.
 - Store shared technical settings as immutable versions and snapshot the selected version through authorized calculation RPCs; historical estimates must not change when settings change.
-- Calculate wind from documented gross capacity factor and biomass from as-received mass and PCI in the annual-energy-engine contract aligned with the authoritative RPC; neither mean wind speed nor forest stock establishes annual electrical production.
+- Keep legacy annual wind/biomass estimates aligned with their RPC; isolate biomass primary energy from electricity and require explicit availability/conversion boundaries to prevent implicit conversions.
 - Assign or revoke only the engineer role through the admin-checked set_tester_engineer RPC with atomic audit history; this protects administrators and prevents privilege escalation.
 - Keep undated biomass forest-stock references separate from annual fuel resources, retaining native coordinates when the source omits its coordinate reference system; this prevents invented dates, map positions and energy availability.
 - Require a non-null authenticated subject for shared catalogue SELECT policies; catalogue sharing must not allow subjectless authenticated-role requests.
