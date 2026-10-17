@@ -78,12 +78,15 @@ async function assertCanRun(supabase: any, userId: string) {
   if (!data?.some((r: { role: string }) => r.role === "admin" || r.role === "engineer")) throw new Error("Seuls les administrateurs et ingénieurs peuvent lancer une simulation.");
 }
 
-export const runPvSimulation = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+const ENGINES: Record<string, string> = { photovoltaic: "Production photovoltaïque horaire", battery: "Stockage batterie horaire (réservoir + rendements)" };
+
+const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => runInput.parse(input))
   .handler(async ({ data, context }) => {
     const supabase = context.supabase as any;
     await assertCanRun(supabase, context.userId);
-    if (data.request.engine !== "photovoltaic") throw new Error("Seul le moteur photovoltaïque est disponible.");
+    const objective = ENGINES[data.request.engine];
+    if (!objective) throw new Error("Moteur non disponible.");
     const ts = data.request.timeseries;
     const { data: sim, error } = await supabase.from("simulations").insert({
       owner_id: context.userId, name: data.name, description: data.description ?? null,
