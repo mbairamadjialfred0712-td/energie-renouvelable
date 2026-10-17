@@ -27,6 +27,7 @@ export const hybridConfigSchema = z.object({
   }).strict()).max(5),
 }).strict().superRefine((c, ctx) => {
   if (new Set(c.components.map(x => x.technology)).size !== c.components.length) ctx.addIssue({ code: "custom", message: "Une seule association par technologie." });
+  c.components.forEach((x, i) => { if (x.powerUnit !== newComponent(x.technology).powerUnit) ctx.addIssue({ code: "custom", path: ["components", i, "powerUnit"], message: "Unité incompatible avec la technologie ; aucune conversion implicite." }); });
 });
 export type HybridConfig = z.infer<typeof hybridConfigSchema>;
 export const emptyConfig = (): HybridConfig => ({ id: null, name: "", projectId: null, siteId: null, demandId: null, description: "", assumptions: "", constraints: "", reviewRequested: false, components: [] });
@@ -52,6 +53,7 @@ export function checkHourlySeries(s: Pick<HybridSimulation, "timestamps" | "utcO
   if (s.utcOffset === null || !Number.isFinite(s.utcOffset)) errors.push("Fuseau horaire absent.");
   if (s.convention !== "period_start") errors.push("Convention de début de période absente ou incompatible.");
   if (!s.timestamps.length) errors.push("Horodatages absents.");
+  if (s.timestamps.length > 8784) errors.push("Série au-delà de la limite de 8784 pas.");
   if (new Set(s.timestamps).size !== s.timestamps.length) errors.push("Horodatages dupliqués.");
   const times = s.timestamps.map(t => Date.parse(/[zZ]|[+-]\d\d:\d\d$/.test(t) ? t : `${t}Z`));
   if (times.some(t => !Number.isFinite(t))) errors.push("Horodatage invalide.");
@@ -114,6 +116,9 @@ export function evaluateHybrid(config: HybridConfig, data: Pick<HybridData, "pro
       else blockers.push(`${label} : simulation ${sim.status}, sans résultats terminés disponibles.`);
       if (sim.siteId !== config.siteId) blockers.push(`${label} : site historique du résultat absent ou différent ; association de préparation uniquement.`);
       if (!sim.version) blockers.push(`${label} : version moteur absente.`);
+      if (!Array.isArray(sim.sources) || !sim.sources.length) blockers.push(`${label} : provenance du résultat absente.`);
+      if (component.technology === "wind" && !sim.series.some(s => s.key === "series_turbine_power" && s.unit === "W" && s.values.length > 0 && s.values.every(v => v !== null && Number.isFinite(v)))) blockers.push("Éolien : série de puissance électrique turbine documentée indisponible.");
+      if (component.technology === "csp" && !sim.series.some(s => s.key === "series_net_electric_power" && s.unit === "W" && s.values.length > 0 && s.values.every(v => v !== null && Number.isFinite(v)))) blockers.push("CSP : série électrique nette indisponible ; la chaleur n'est pas substituée.");
       if (sim.engine !== "biomass") blockers.push(...checkHourlySeries(sim).map(x => `${label} : ${x}`));
     }
     if (component.technology === "biomass") blockers.push("Biomasse : énergie primaire annuelle, mobilisation et conversion électrique non validées ; aucune contribution électrique.");
