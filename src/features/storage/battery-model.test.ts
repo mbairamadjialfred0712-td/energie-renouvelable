@@ -147,7 +147,7 @@ describe("instantané de configuration — buildConfigSnapshot / snapshotDiff", 
     expect(snap.meta.snapshot_at).toBe("2026-10-17T08:00:00.000Z");
     expect(snap.meta.source).toBe("Fiche fabricant 2024");
     expect(snap.meta.sheet_version).toBe("v3");
-    expect(snap.meta.units.energy_kwh).toBe("kWh");
+    expect(snap.meta.units["energy_kwh"]).toBe("kWh");
     expect(snap.sheet.energy_kwh).toBe(5);
     expect(snap.sheet.name).toBe("PowerWall X");
   });
