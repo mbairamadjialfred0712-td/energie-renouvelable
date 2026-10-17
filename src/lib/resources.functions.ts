@@ -112,7 +112,6 @@ export const saveResource = createServerFn({ method: "POST" })
       if (field.max !== undefined && value > field.max) throw new Error(`${field.label} doit être ≤ ${field.max}${field.unit ? ` ${field.unit}` : ""}.`);
       detail[field.key] = value;
     }
-    if (data.type === "biomass" && !detail["biomass_type"]) throw new Error("Le type de biomasse est obligatoire.");
     if (data.type === "waste" && !detail["waste_type"]) throw new Error("Le type de déchet est obligatoire.");
     if (data.type !== "solar") {
       detail["period_start"] = data.period_start ?? null;
