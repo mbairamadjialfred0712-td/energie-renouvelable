@@ -8,12 +8,7 @@ from dataclasses import dataclass, field
 from app.api.schemas.contract import EngineCapability, Issue, SimulationRequest, ResultValue, SeriesOut
 
 
-@dataclass
-class EngineOutput:
-    results: dict[str, ResultValue]
-    timeseries: dict[str, SeriesOut]
-    warnings: list[Issue] = field(default_factory=list)
-    metadata: dict = field(default_factory=dict)
+from app.engines.base import EngineOutput  # noqa: F401  (ré-exporté pour compatibilité)
 
 
 class Engine(Protocol):
