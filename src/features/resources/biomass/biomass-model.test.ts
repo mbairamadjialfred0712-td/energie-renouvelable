@@ -36,6 +36,11 @@ describe("biomassErrors — rejets de valeurs impossibles ou intraçables", () =
   it("refuse un niveau de disponibilité négatif", () => {
     expect(biomassErrors({ ...base, levels: { theoretical: -10 } })).toContain("Potentiel théorique doit être ≥ 0.");
   });
+  it("refuse un mois de saisonnalité hors 1–12", () => {
+    expect(biomassErrors({ ...base, seasonal: [0] })).toContain("Saisonnalité : mois invalides.");
+    expect(biomassErrors({ ...base, seasonal: [13] })).toContain("Saisonnalité : mois invalides.");
+    expect(biomassErrors({ ...base, seasonal: [3, 11] })).toEqual([]);
+  });
   it("accepte un jeu complet et cohérent", () => {
     expect(biomassErrors(base)).toEqual([]);
   });
