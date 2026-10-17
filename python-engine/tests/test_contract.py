@@ -100,7 +100,8 @@ def test_hybrid_preparation_does_not_validate_chronological_execution(client):
     result = client.post("/api/v1/simulations/validate", json=VALID, headers=H).json()
     assert result["engine"] == "hybrid"
     assert result["engine_available"] is False
-    assert result["valid"] is False
+    # `valid` denotes structural validity, never engine availability.
+    assert any(w["code"] == "engine_not_implemented" for w in result["warnings"])
 
 
 def test_hybrid_failure_contains_no_individual_or_fabricated_results(client):
