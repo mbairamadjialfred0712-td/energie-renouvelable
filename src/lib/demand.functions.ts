@@ -89,9 +89,13 @@ const saveSchema = z.object({
   users_count: z.number().int().min(0).nullable(), description: t(4000), period_start: date, period_end: date,
   equipment: z.array(equipmentSchema).max(500),
   measurements: z.array(z.object({ start: z.string(), end: z.string(), energy: z.number().finite(), unit: z.enum(["Wh", "kWh"]), peak_kw: n, notes: t(500) })).max(500),
-  measured_peak_kw: n, daily_profile: z.array(z.object({ start_hour: z.number(), end_hour: z.number(), power_kw: z.number(), nature: z.enum(["measured", "estimated"]) })).max(96),
-  weekday_variation: t(2000), seasonal_variation: t(2000), has_history: z.boolean().nullable(), criticality: t(200), growth_rate_pct: n, assumptions: t(4000),
-  supply: z.record(z.string(), z.any()), source: z.string().trim().min(2, "La source des données est obligatoire.").max(500), reference: t(500),
+  measured_peak_kw: z.number().finite().min(0, "La puissance maximale mesurée doit être positive ou nulle.").nullable(), daily_profile: z.array(z.object({ start_hour: z.number(), end_hour: z.number(), power_kw: z.number(), nature: z.enum(["measured", "estimated"]) })).max(96),
+  weekday_variation: t(2000), seasonal_variation: t(2000), has_history: z.boolean().nullable(), criticality: t(200), growth_rate_pct: z.number().finite().gt(-100).max(1000).nullable(), assumptions: t(4000),
+  supply: z.object({
+    current_source: z.enum(Object.keys(SUPPLY_SOURCES) as [keyof typeof SUPPLY_SOURCES]).nullable().optional(),
+    reliability: t(500), outage_hours: z.number().finite().min(0).max(24, "Les heures de coupure doivent être comprises entre 0 et 24.").nullable().optional(),
+    has_genset: z.boolean().nullable().optional(), existing_installation: t(500), autonomy: t(500), load_shedding: t(500), critical_loads: t(500), site_constraints: t(2000),
+  }).passthrough(), source: z.string().trim().min(2, "La source des données est obligatoire.").max(500), reference: t(500),
   acquisition_method: z.enum(Object.keys(METHODS) as [keyof typeof METHODS]).nullable(), data_time_basis: t(200), collected_by: t(200), comments: t(4000),
   status: z.enum(Object.keys(STATUSES) as [keyof typeof STATUSES]),
 });
