@@ -36,8 +36,7 @@ describe("demandsToCsv", () => {
     const csv = demandsToCsv([row({ measurements: [{ start: "2024-01-01", end: "2024-01-31", energy: 310, unit: "kWh", peak_kw: 5, notes: null }] })]);
     expect(csv).toContain(";mesure;mesure;");
     expect(csv).toContain("estimation (calculée)");
-    expect(csv).toContain(",1;"); // 310 kWh / 31 jours ≈ 10 kWh/j → « 10 » ; vérifie la moyenne mesurée
-    expect(csv).toContain("10");
+    expect(csv).toContain(";310;kWh;10;5;"); // 310 kWh ÷ 31 jours (inclusifs) = 10 kWh/j, pointe 5 kW
   });
 
   it("convertit Wh → kWh dans la moyenne mesurée", () => {
