@@ -182,3 +182,48 @@ def test_raw_peak_boolean_refused():
     body=req([0],[1],strategy='peak_shaving',peak=[1]).model_dump(mode='json')
     body['assumptions']['peak_hours']['value']=[True]
     with pytest.raises(ValueError):SimulationRequest.model_validate(body)
+
+
+def test_initially_full_refuses_charge_and_reports_surplus():
+    out = eng.run(req([10], [0], overrides={'initial_soc_pct': (90, '%')}))
+    assert out.timeseries['soc'].values == pytest.approx([9])
+    assert out.results['energy_charged'].value == 0
+    assert out.results['energy_not_distributed'].value == 10
+
+
+def test_initially_empty_reports_all_unserved_demand():
+    # Empty means minimum authorized SOC, not physical zero.
+    out = eng.run(req([0], [3], overrides={'initial_soc_pct': (10, '%')}))
+    assert out.timeseries['soc'].values == pytest.approx([1])
+    assert out.results['energy_served_by_battery'].value == 0
+    assert out.results['energy_not_served'].value == 3
+
+
+def test_charge_power_limit_with_remaining_storage_headroom():
+    out = eng.run(req([10], [0], overrides={'initial_soc_pct': (10, '%')}))
+    assert out.results['energy_charged'].value == 5
+    assert out.results['energy_not_distributed'].value == 5
+    assert out.timeseries['soc'].values == pytest.approx([5.75])
+
+
+def test_discharge_power_limit_with_remaining_stored_energy():
+    out = eng.run(req([0], [10], overrides={'initial_soc_pct': (90, '%')}))
+    assert out.results['energy_served_by_battery'].value == 5
+    assert out.results['energy_not_served'].value == 5
+    assert out.results['final_soc'].value == pytest.approx(9 - 5 / .95)
+
+
+def test_json_serialization_preserves_battery_balances_not_database_persistence():
+    from app.api.schemas.contract import SimulationResponse
+    from datetime import datetime, timezone
+    out = eng.run(req([10, 0, 0], [0, 10, 10], overrides={'initial_soc_pct': (10, '%')}))
+    response = SimulationResponse(simulation_id='synthetic-qa-only', status='completed', engine='battery',
+                                  engine_version='1.1.0', created_at=datetime.now(timezone.utc),
+                                  results=out.results, timeseries=out.timeseries,
+                                  calculation_metadata=out.metadata)
+    restored = SimulationResponse.model_validate_json(response.model_dump_json())
+    assert restored.results == out.results
+    assert restored.timeseries == out.timeseries
+    r = restored.results
+    assert r['pv_self_consumed_direct'].value + r['energy_served_by_battery'].value + r['energy_not_served'].value == pytest.approx(20)
+    assert r['final_soc'].value == pytest.approx(1 + r['energy_charged'].value * .95 - r['energy_served_by_battery'].value / .95)

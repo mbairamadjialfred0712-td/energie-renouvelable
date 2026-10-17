@@ -16,3 +16,14 @@ it('rejects missing SOC output',()=>{const o=reply();delete o.timeseries['soc'];
 it('rejects SOC outside bounds',()=>{const o=reply();const x=o.timeseries['soc'];if(x)x.values=[100];expect(()=>checkBatteryResponse(fixture(),o)).toThrow();});
 
 it('common persistence boundary rejects incomplete battery reply',()=>{const o=reply();delete o.timeseries['soc'];expect(()=>assertCompletedResponse(fixture(),o,'test')).toThrow();});
+
+it('JSON roundtrip preserves balances without claiming a database save',()=>{
+ const original=reply();const restored=JSON.parse(JSON.stringify(original));
+ expect(()=>assertCompletedResponse(fixture(),restored,'test')).not.toThrow();
+ expect(restored.results['demand_total_energy'].value).toBe(1);
+ expect(restored.timeseries['soc'].values).toEqual([4]);
+});
+it('rejects serialized SOC corruption even with correct aggregate energy',()=>{
+ const restored=JSON.parse(JSON.stringify(reply()));restored.timeseries.soc.values=[5];
+ expect(()=>assertCompletedResponse(fixture(),restored,'test')).toThrow();
+});
