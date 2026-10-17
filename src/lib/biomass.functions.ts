@@ -14,7 +14,7 @@ function flatten(r: any) {
   const loc = r.localities ?? {};
   const num = (x: any) => (x === null || x === undefined ? null : Number(x));
   return {
-    id: r.id as string, owner_id: r.owner_id as string, locality_id: r.locality_id as string,
+    id: r.id as string, biomass_id: b.id as string, owner_id: r.owner_id as string, locality_id: r.locality_id as string,
     locality_name: (loc.name ?? null) as string | null, department: (loc.departments?.name ?? null) as string | null,
     region: (loc.departments?.regions?.name ?? null) as string | null, country: (loc.departments?.regions?.countries?.name ?? null) as string | null,
     site_id: (b.site_id ?? null) as string | null, site_name: (b.study_sites?.name ?? null) as string | null,
