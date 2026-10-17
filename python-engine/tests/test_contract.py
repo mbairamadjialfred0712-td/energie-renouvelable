@@ -87,3 +87,25 @@ def test_chunked_body_limit(client, monkeypatch):
 def test_invalid_content_length(client):
     r = client.post("/api/v1/simulations/validate", content=b"{}", headers={**H, "Content-Length": "invalid"})
     assert r.status_code == 400
+
+
+def test_hybrid_capability_is_unavailable_even_with_individual_engines(client):
+    hybrid = next(e for e in client.get("/api/v1/capabilities").json()["engines"] if e["engine"] == "hybrid")
+    assert hybrid["status"] == "not_implemented"
+    assert hybrid["version"] is None
+
+
+def test_hybrid_preparation_does_not_validate_chronological_execution(client):
+    # Synthetic request used solely to test the unavailable API boundary.
+    result = client.post("/api/v1/simulations/validate", json=VALID, headers=H).json()
+    assert result["engine"] == "hybrid"
+    assert result["engine_available"] is False
+    assert result["valid"] is False
+
+
+def test_hybrid_failure_contains_no_individual_or_fabricated_results(client):
+    result = client.post("/api/v1/simulations", json=VALID, headers=H)
+    assert result.status_code == 503
+    assert result.json()["error"]["code"] == "engine_unavailable"
+    assert "results" not in result.json()
+    assert "timeseries" not in result.json()

@@ -1,0 +1,27 @@
+import { describe, expect, it } from "vitest";
+import { alignmentErrors, checkHourlySeries, decodeHybridEnvelope, emptyConfig, evaluateHybrid, hybridConfigSchema, HYBRID_VERSION, newComponent, type HybridData, type HybridSimulation, type Technology } from "./hybrid-model";
+
+const data = (): HybridData => ({ configs: [], projects: [{ id: "p", name: "QA", localityId: "l" }], sites: [{ id: "s", name: "QA", localityId: "l" }], demands: [], weather: [], equipment: [], simulations: [], canWrite: true });
+const simulation = (): HybridSimulation => ({ id: "sim", name: "SYNTHÉTIQUE QA", projectId: "p", siteId: "s", engine: "photovoltaic", version: "photovoltaic 1.0.1", status: "completed", periodStart: "2026-01-01", periodEnd: "2026-01-01", timestamps: ["2026-01-01T00:00:00", "2026-01-01T01:00:00"], utcOffset: 0, convention: "period_start", sources: [{ label: "QA synthétique" }], assumptions: {}, limits: "QA", results: [{ key: "energy", value: 2, unit: "kWh", method: "fixture" }], series: [{ key: "series_ac_energy", unit: "kWh", values: [1, 1] }] });
+
+describe("hybrid preparation — synthetic contract fixtures, no scientific calculations", () => {
+  it.each< Technology[]>([["photovoltaic", "battery"], ["wind", "battery"], ["photovoltaic", "wind", "battery"], ["photovoltaic", "biomass"], ["photovoltaic", "wind", "biomass", "battery"], ["csp", "photovoltaic"]])("accepts preparation combination %j without enabling C", (...technologies) => {
+    const c = { ...emptyConfig(), name: "SYNTHÉTIQUE QA", components: technologies.map(newComponent) };
+    expect(hybridConfigSchema.safeParse(c).success).toBe(true);
+    expect(evaluateHybrid(c, data()).levelC).toBe(false);
+  });
+  it("rejects duplicate technologies", () => expect(hybridConfigSchema.safeParse({ ...emptyConfig(), name: "QA config", components: [newComponent("battery"), newComponent("battery")] }).success).toBe(false));
+  it("identifies missing inputs, never supplies numeric zeros", () => { const e = evaluateHybrid(emptyConfig(), data()); expect(e.blockers.length).toBeGreaterThan(3); expect(e.comparisons).toEqual([]); expect(e.levelC).toBe(false); });
+  it("blocks mismatched site locality", () => { const d = data(); d.sites[0] = { id: "s", name: "QA", localityId: "other" }; expect(evaluateHybrid({ ...emptyConfig(), projectId: "p", siteId: "s" }, d).blockers.some(x => x.includes("incompatibles"))).toBe(true); });
+  it("checks one-hour continuity", () => expect(checkHourlySeries({ ...simulation(), timestamps: ["2026-01-01T00:00:00", "2026-01-01T02:00:00"] })).toContain("Pas non horaire, trou ou période discontinue."));
+  it("rejects duplicated timestamps", () => expect(checkHourlySeries({ ...simulation(), timestamps: ["2026-01-01T00:00:00", "2026-01-01T00:00:00"] })).toContain("Horodatages dupliqués."));
+  it("rejects missing numeric samples", () => expect(checkHourlySeries({ ...simulation(), series: [{ key: "energy", unit: "kWh", values: [1, null] }] })).toContain("Série incomplète : energy."));
+  it("rejects unknown UTC basis", () => expect(checkHourlySeries({ ...simulation(), utcOffset: null })).toContain("Fuseau horaire absent."));
+  it("does not automatically transform different offsets", () => expect(alignmentErrors(simulation(), { ...simulation(), utcOffset: 1 })).toContain("Fuseaux incompatibles : aucune conversion automatique."));
+  it("does not align different periods by position", () => expect(alignmentErrors(simulation(), { ...simulation(), timestamps: ["2026-02-01T00:00:00", "2026-02-01T01:00:00"] })).toContain("Périodes ou horodatages non alignés."));
+  it("keeps primary biomass outside electricity", () => expect(evaluateHybrid({ ...emptyConfig(), components: [newComponent("biomass")] }, data()).blockers.some(x => x.includes("aucune contribution électrique"))).toBe(true));
+  it("preserves individual results with no aggregation", () => { const d = data(); d.simulations = [simulation()]; const before = JSON.stringify(d.simulations); const c = { ...emptyConfig(), projectId: "p", siteId: "s", components: [{ ...newComponent("photovoltaic"), simulationId: "sim" }] }; expect(evaluateHybrid(c, d).comparisons[0]?.results[0]?.value).toBe(2); expect(JSON.stringify(d.simulations)).toBe(before); });
+  it("does not show failed simulation values", () => { const d = data(); d.simulations = [{ ...simulation(), status: "failed" }]; expect(evaluateHybrid({ ...emptyConfig(), projectId: "p", components: [{ ...newComponent("photovoltaic"), simulationId: "sim" }] }, d).comparisons).toEqual([]); });
+  it("does not overwrite legacy scenarios", () => expect(decodeHybridEnvelope({ objectives: ["cost"] })).toBeNull());
+  it("retains preparation revisions in the envelope", () => { const c = { ...emptyConfig(), name: "QA preparation" }; expect(decodeHybridEnvelope({ kind: "hybrid_preparation", modelVersion: HYBRID_VERSION, config: c, history: [{ at: "2026-10-17", actor: "QA", config: c }] })?.history).toHaveLength(1); });
+});
