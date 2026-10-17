@@ -156,10 +156,11 @@ def client(monkeypatch):
     get_settings.cache_clear()
 
 
-def test_api_declares_only_pv(client):
+def test_api_declares_only_implemented(client):
     engines = {e["engine"]: e for e in client.get("/api/v1/capabilities").json()["engines"]}
     assert engines["photovoltaic"]["status"] == "available"
-    assert all(e["status"] == "not_implemented" for n, e in engines.items() if n != "photovoltaic")
+    assert engines["battery"]["status"] == "available"
+    assert all(e["status"] == "not_implemented" for n, e in engines.items() if n not in ("photovoltaic", "battery"))
 
 
 def test_api_run_and_auth(client, base):

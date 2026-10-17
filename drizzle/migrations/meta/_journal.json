@@ -106,6 +106,27 @@
       "when": 1792190150301,
       "tag": "0014_site_weather_datasets",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792223479749,
+      "tag": "0015_project_finance_assumptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792223808840,
+      "tag": "0016_fix_project_finance_trigger",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792223819092,
+      "tag": "0017_fix_finance_trigger_after",
+      "breakpoints": true
     }
   ]
 }

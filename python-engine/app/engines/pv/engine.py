@@ -13,7 +13,7 @@ from importlib.metadata import version as pkg_version
 import PySAM.Pvwattsv8 as pvwatts
 
 from app.api.schemas.contract import Issue, ResultValue, SeriesOut, SimulationRequest
-from app.engines.registry import EngineOutput
+from app.engines.base import EngineOutput
 
 ENGINE_VERSION = "1.0.0"
 MODEL = "PVWatts v8 (NREL SAM, via PySAM Pvwattsv8)"

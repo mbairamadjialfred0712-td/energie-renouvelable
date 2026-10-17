@@ -8,12 +8,7 @@ from dataclasses import dataclass, field
 from app.api.schemas.contract import EngineCapability, Issue, SimulationRequest, ResultValue, SeriesOut
 
 
-@dataclass
-class EngineOutput:
-    results: dict[str, ResultValue]
-    timeseries: dict[str, SeriesOut]
-    warnings: list[Issue] = field(default_factory=list)
-    metadata: dict = field(default_factory=dict)
+from app.engines.base import EngineOutput  # noqa: F401  (ré-exporté pour compatibilité)
 
 
 class Engine(Protocol):
@@ -45,6 +40,8 @@ def _load() -> dict[str, Engine]:
         engines["photovoltaic"] = PVWattsV8Engine()
     except ImportError:
         pass
+    from app.engines.battery.engine import BatteryEngine  # moteur propre, aucune dépendance optionnelle
+    engines["battery"] = BatteryEngine()
     return engines
 
 

@@ -1284,6 +1284,119 @@ export type Database = {
           },
         ]
       }
+      project_finance_assumption_history: {
+        Row: {
+          action: string
+          assumption_id: string
+          changed_by: string
+          created_at: string
+          id: string
+          owner_id: string
+          project_id: string
+          snapshot: Json
+        }
+        Insert: {
+          action: string
+          assumption_id: string
+          changed_by: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          project_id: string
+          snapshot: Json
+        }
+        Update: {
+          action?: string
+          assumption_id?: string
+          changed_by?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          project_id?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_finance_assumption_history_assumption_id_fkey"
+            columns: ["assumption_id"]
+            isOneToOne: false
+            referencedRelation: "project_finance_assumptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_finance_assumptions: {
+        Row: {
+          annual_opex: number
+          capex: number
+          created_at: string
+          currency: string
+          degradation_pct_per_year: number
+          discount_rate_pct: number
+          id: string
+          lifetime_years: number
+          notes: string | null
+          owner_id: string
+          production_simulation_id: string | null
+          project_id: string
+          replacements: Json
+          updated_at: string
+          updated_by: string | null
+          year_one_production_kwh: number | null
+        }
+        Insert: {
+          annual_opex?: number
+          capex: number
+          created_at?: string
+          currency?: string
+          degradation_pct_per_year?: number
+          discount_rate_pct: number
+          id?: string
+          lifetime_years: number
+          notes?: string | null
+          owner_id: string
+          production_simulation_id?: string | null
+          project_id: string
+          replacements?: Json
+          updated_at?: string
+          updated_by?: string | null
+          year_one_production_kwh?: number | null
+        }
+        Update: {
+          annual_opex?: number
+          capex?: number
+          created_at?: string
+          currency?: string
+          degradation_pct_per_year?: number
+          discount_rate_pct?: number
+          id?: string
+          lifetime_years?: number
+          notes?: string | null
+          owner_id?: string
+          production_simulation_id?: string | null
+          project_id?: string
+          replacements?: Json
+          updated_at?: string
+          updated_by?: string | null
+          year_one_production_kwh?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_finance_assumptions_production_simulation_id_fkey"
+            columns: ["production_simulation_id"]
+            isOneToOne: false
+            referencedRelation: "simulations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_finance_assumptions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_pre_analyses: {
         Row: {
           completed_at: string | null
