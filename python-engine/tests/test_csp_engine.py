@@ -163,3 +163,8 @@ def test_engine_rejects_bool_even_if_model_constructed_without_validation():
     req = SimulationRequest(**fixture())
     req.timeseries.series["dni"].values[0] = True
     with pytest.raises(ValueError): ENGINE.run(req)
+
+def test_result_limits_disclose_documented_not_simulated_conditions():
+    out = ENGINE.run(SimulationRequest(**fixture()))
+    assert "Température et fluide enregistrés comme conditions, non simulés" in out.metadata["limits"]
+    assert "nuit incluse" in out.metadata["limits"]
