@@ -136,7 +136,7 @@ export const getSimulationSeries = createServerFn({ method: "GET" }).middleware(
     if (!t?.values?.length) return null;
     const { data: full } = await context.supabase.from("simulations").select("parameters").eq("id", data.id).single();
     const ts = (full?.parameters as { request?: { timeseries?: { timestamps?: string[]; utc_offset_hours?: number } } } | null)?.request?.timeseries;
-    return { name: sim.name as string, values: t.values, unit: row.unit as string, timestamps: ts?.timestamps ?? [], utcOffset: ts?.utc_offset_hours ?? null };
+    return { name: sim.name as string, values: t.values, unit: row!.unit as string, timestamps: ts?.timestamps ?? [], utcOffset: ts?.utc_offset_hours ?? null };
   });
 
 export const listSimulations = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
