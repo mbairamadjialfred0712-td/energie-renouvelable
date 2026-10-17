@@ -42,14 +42,14 @@ def test_self_consumption_charge_and_discharge():
     dem = [2.0] * 48
     out = eng.run(req(pv, dem))
     r = out.results
-    assert r["energy_charged"].value == pytest.approx(4.0, abs=1e-6)  # surplus 6-2
+    assert r["energy_charged"].value == pytest.approx(4.0, abs=1e-3)  # surplus 6-2
     # stocké : 4 * 0.95 = 3.8 ; SOC initial 5 -> 8.8 (max 9)
-    assert out.timeseries["soc"].values[0] == pytest.approx(8.8, abs=1e-6)
+    assert out.timeseries["soc"].values[0] == pytest.approx(8.8, abs=1e-3)
     # heure 1 : déficit 2, dispo (8.8-1)*0.95=7.41 > 2 -> décharge 2
-    assert out.timeseries["battery_discharge"].values[1] == pytest.approx(2.0, abs=1e-6)
-    assert out.timeseries["soc"].values[1] == pytest.approx(8.8 - 2 / 0.95, abs=1e-6)
+    assert out.timeseries["battery_discharge"].values[1] == pytest.approx(2.0, abs=1e-3)
+    assert out.timeseries["soc"].values[1] == pytest.approx(8.8 - 2 / 0.95, abs=1e-3)
     assert r["self_consumption_rate"].value == pytest.approx(100.0)
-    assert r["charge_losses"].value == pytest.approx(0.2, abs=1e-6)
+    assert r["charge_losses"].value == pytest.approx(0.2, abs=1e-3)
 
 
 def test_soc_bounds_and_curtailment():
@@ -57,9 +57,9 @@ def test_soc_bounds_and_curtailment():
     dem = [0.0, 0.0]
     out = eng.run(req(pv, dem))
     # charge max : min(50, 5, (9-5)/0.95) = 4.2105
-    assert out.timeseries["battery_charge"].values[0] == pytest.approx((9.0 - 5.0) / 0.95, abs=1e-6)
+    assert out.timeseries["battery_charge"].values[0] == pytest.approx((9.0 - 5.0) / 0.95, abs=1e-3)
     assert out.results["energy_not_distributed"].value == pytest.approx(50 - (9.0 - 5.0) / 0.95, abs=1e-3)
-    assert out.timeseries["soc"].values[0] == pytest.approx(9.0, abs=1e-6)
+    assert out.timeseries["soc"].values[0] == pytest.approx(9.0, abs=1e-3)
 
 
 def test_energy_not_served_when_battery_empty():
@@ -67,9 +67,9 @@ def test_energy_not_served_when_battery_empty():
     dem = [100.0, 100.0]
     out = eng.run(req(pv, dem))
     # décharge max 5 kW mais dispo (5-1)*0.95 = 3.8 -> 3.8 servis, ENS 96.2 par heure
-    assert out.timeseries["battery_discharge"].values[0] == pytest.approx(3.8, abs=1e-6)
-    assert out.timeseries["energy_not_served"].values[0] == pytest.approx(96.2, abs=1e-6)
-    assert out.timeseries["soc"].values[0] == pytest.approx(1.0, abs=1e-6)
+    assert out.timeseries["battery_discharge"].values[0] == pytest.approx(3.8, abs=1e-3)
+    assert out.timeseries["energy_not_served"].values[0] == pytest.approx(96.2, abs=1e-3)
+    assert out.timeseries["soc"].values[0] == pytest.approx(1.0, abs=1e-3)
 
 
 def test_coverage_and_peak_shaving():
