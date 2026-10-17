@@ -48,7 +48,9 @@ Ajouter le choix éolien à Simulations après accord des conventions. Sélectio
 - Avant implémentation : `/tmp/pv-audit-venv/bin/python -m pytest tests -q` depuis `python-engine` : **116 réussis, 1 avertissement de dépréciation Starlette/httpx**.
 - `bunx vitest run` : **175 réussis, 14 fichiers**.
 - **0 nouveau test de moteur éolien**, moteur non implémenté. Une première tentative avec Python système a échoué faute de pytest ; utilisation ensuite de l’environnement existant, sans modifier les dépendances.
-- Configuration URL/clé absente de l’environnement observé ; cela ne suffit pas à certifier l’état de Render. Aucun calcul éolien hébergé, aucune persistance réelle de résultat éolien, aucun test de nouveaux rôles éoliens : NON TESTÉ.
+- Lecture réelle du catalogue : **24 fiches éoliennes, 0 validée, 0 avec série enregistrée**. Aucun enregistrement n’a été modifié. Ce compte global ne constitue pas une liste de jeux accessibles au compte testé.
+- Navigateur connecté dans Simulations : service explicitement non configuré, lancement CSP désactivé, 0 erreur navigateur, 0 jeu météo validé proposé au compte testé. Vérification du service commun existant, pas d’un formulaire éolien encore absent. Vérification automatique : build OK.
+- Configuration URL/clé absente de l’environnement observé et service signalé non configuré dans l’interface ; cela ne suffit pas à certifier l’état de Render. Aucun calcul éolien hébergé, aucune persistance réelle de résultat éolien, aucun test de nouveaux rôles éoliens : NON TESTÉ.
 
 Tests à ajouter après accord : conversions explicites m/s, km/h, nœuds si retenus ; valeurs négatives/manquantes/non finies/booléennes et unités invalides ; hauteur/densité/surface ; refus d’extrapolation non justifiée ; courbe manquante/dupliquée/domaine/monotonie par segment ; timestamps UTC/ordre/doublons/pas ; couverture incomplète ; résultats et intégrales cohérents ; auth, autorisations, panne de service/sauvegarde sans faux succès. Cas purement arithmétiques identifiés comme tels, aucun résultat de référence de turbine réelle inventé.
 
