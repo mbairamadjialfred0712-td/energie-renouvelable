@@ -32,7 +32,7 @@ H = {"X-Engine-Key": KEY, "Authorization": "Bearer good"}
 def test_health_and_capabilities_declare_only_implemented(client):
     assert client.get("/api/v1/health").json()["auth_configured"] is True
     engines = client.get("/api/v1/capabilities").json()["engines"]
-    assert engines and all(e["status"] == "not_implemented" and e["version"] is None for e in engines if e["engine"] != "photovoltaic")
+    assert engines and all(e["status"] == "not_implemented" and e["version"] is None for e in engines if e["engine"] not in ("photovoltaic", "battery"))
 
 
 def test_auth_required(client):
