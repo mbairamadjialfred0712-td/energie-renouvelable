@@ -15,7 +15,7 @@ import math
 from datetime import datetime, timedelta
 
 from app.api.schemas.contract import Issue, ResultValue, SeriesOut, SimulationRequest
-from app.engines.registry import EngineOutput
+from app.engines.base import EngineOutput
 
 ENGINE_VERSION = "1.0.0"
 MODEL = "Réservoir + rendements (bilan horaire déterministe)"
