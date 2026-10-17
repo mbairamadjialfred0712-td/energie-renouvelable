@@ -47,10 +47,14 @@ export const saveDatasheet = createServerFn({ method: "POST" }).middleware([requ
     const errs = sheetErrors(data); if (errs.length) throw new Error(errs.join(" "));
     const { id, ...row } = data;
     if (id) {
+      const { data: existing, error: e0 } = await sb.from("battery_datasheets").select("status").eq("id", id).maybeSingle();
+      if (e0 || !existing) throw new Error("La fiche est introuvable ou inaccessible.");
+      if (row.status !== existing.status) throw new Error("Le statut ne se change pas depuis le formulaire : utilisez l’action de changement de statut de la fiche.");
       const { data: up, error } = await sb.from("battery_datasheets").update(row).eq("id", id).select("id");
       if (error || !up?.length) throw new Error("La fiche n’a pas pu être modifiée (droits insuffisants ?).");
       return { id: id as string };
     }
+    if (row.status !== "unverified") throw new Error("Une nouvelle fiche démarre au statut « Non vérifié » : la validation passe par l’action dédiée.");
     const { data: tech } = await sb.from("technologies").select("id").eq("code", "BATTERY").maybeSingle();
     const { data: ins, error } = await sb.from("battery_datasheets").insert({ ...row, owner_id: context.userId, technology_id: tech?.id ?? null }).select("id").single();
     if (error) throw new Error("La fiche n’a pas pu être enregistrée.");
