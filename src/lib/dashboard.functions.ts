@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { inventoryTotal, measurementDaily, measurementErrors, overlappingMeasurements, type Equipment, type Measurement } from "@/features/demand/demand-engine";
+import { summarizeDemands } from "@/features/dashboard/demand-summary";
 
 const countTable = async (client: any, table: string) => {
   const { count, error } = await client.from(table).select("id", { count: "exact", head: true });
@@ -18,7 +18,7 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
     ]);
     const [{ data: res }, { data: dem }, { data: proj }, { data: locs }, { data: sitePts }] = await Promise.all([
       sb.from("energy_resources").select("resource_type, validation_status, locality_id, source, solar_resources(solar_status)"),
-      sb.from("energy_demands").select("sector, consumer_category, demand_status, measured_peak_kw, measurements, energy_demand_equipment(name, category, quantity, unit_power, power_unit, hours_per_day, days_per_week, usage_factor, usage_factor_definition, usage_factor_source, priority, notes)"),
+      sb.from("energy_demands").select("sector, consumer_category, demand_status, measured_peak_kw, measurements, period_start, period_end, energy_demand_equipment(name, category, quantity, unit_power, power_unit, hours_per_day, days_per_week, usage_factor, usage_factor_definition, usage_factor_source, priority, notes)"),
       sb.from("projects").select("id, name, status, updated_at").order("updated_at", { ascending: false }),
       sb.from("localities").select("id, name, latitude, longitude, population").not("latitude", "is", null).not("longitude", "is", null).limit(2000),
       sb.from("study_sites").select("id, name, latitude, longitude, site_type").not("latitude", "is", null).not("longitude", "is", null),
@@ -43,27 +43,9 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
     const localitiesWithResources = new Set((res ?? []).map((r: any) => r.locality_id)).size;
 
     // Demande : valeurs mesurées (table measurements) et estimées (inventaire d'équipements)
-    // calculées ici avec le même moteur pur que le module Demande — jamais lues depuis les
+    // agrégées par le même moteur pur que le module Demande — jamais lues depuis les
     // champs historiques daily_demand_kwh / annual_demand_kwh, que le formulaire n'alimente plus.
-    const demandBySector: Record<string, { count: number; withMeasured: number; measuredKwh: number; measuredSkipped: number; withEstimate: number; estimatedMonthlyKwh: number }> = {};
-    const demandByStatus: Record<string, number> = {};
-    for (const d of dem ?? []) {
-      const s = (demandBySector[d.sector] ??= { count: 0, withMeasured: 0, measuredKwh: 0, measuredSkipped: 0, withEstimate: 0, estimatedMonthlyKwh: 0 });
-      s.count += 1;
-      demandByStatus[d.demand_status ?? "unverified"] = (demandByStatus[d.demand_status ?? "unverified"] ?? 0) + 1;
-      const measurements = (Array.isArray(d.measurements) ? d.measurements : []) as Measurement[];
-      if (measurements.length) {
-        if (measurementErrors(measurements).length || overlappingMeasurements(measurements)) {
-          s.measuredSkipped += 1; // mesures incohérentes ou chevauchantes : non sommées (risque de double comptage)
-        } else {
-          s.withMeasured += 1;
-          s.measuredKwh += measurements.reduce((sum, m) => sum + (measurementDaily(m)?.kwh ?? 0), 0);
-        }
-      }
-      const equipment = (Array.isArray(d.energy_demand_equipment) ? d.energy_demand_equipment : []) as Equipment[];
-      const inv = inventoryTotal(equipment);
-      if (inv.complete) { s.withEstimate += 1; s.estimatedMonthlyKwh += inv.monthlyKwh; }
-    }
+    const { demandBySector, demandByStatus } = summarizeDemands((dem ?? []) as any[]);
     const projectsByStatus: Record<string, number> = {};
     for (const p of proj ?? []) projectsByStatus[p.status] = (projectsByStatus[p.status] ?? 0) + 1;
     const population = (locs ?? []).reduce((sum: number, l: any) => sum + (l.population ? Number(l.population) : 0), 0);

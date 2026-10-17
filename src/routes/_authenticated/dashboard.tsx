@@ -55,7 +55,7 @@ function Dashboard() {
                 <li key={s} className="border-b border-border pb-2">
                   <div className="flex justify-between"><span>{s}</span><span className="text-muted-foreground tabular-nums">{x.count} demande(s)</span></div>
                   <div className="mt-1 flex justify-between text-xs">
-                    <span className="text-muted-foreground">Mesuré{x.measuredSkipped ? ` (${x.measuredSkipped} exclu : mesures incohérentes)` : ""}</span>
+                    <span className="text-muted-foreground">Mesuré{x.measuredSkipped ? ` (${x.measuredSkipped} exclu : mesures incohérentes)` : ""}{x.measuredOutOfPeriod ? ` (${x.measuredOutOfPeriod} exclu : hors période de référence)` : ""}</span>
                     <span className="tabular-nums">{x.withMeasured ? `${fmt(Math.round(x.measuredKwh))} kWh (${x.withMeasured}/${x.count})` : "—"}</span>
                   </div>
                   <div className="flex justify-between text-xs">
