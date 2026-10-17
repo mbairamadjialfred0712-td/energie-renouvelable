@@ -121,7 +121,12 @@ export const saveBiomass = createServerFn({ method: "POST" })
     };
     const { data: existing } = await sb.from("biomass_resources").select("id").eq("resource_id", id).maybeSingle();
     const { error: de } = existing ? await sb.from("biomass_resources").update(detail).eq("id", existing.id) : await sb.from("biomass_resources").insert(detail);
-    if (de) { console.error("biomass detail", de); throw new Error("Les caractéristiques de biomasse n’ont pas pu être enregistrées."); }
+    if (de) {
+      console.error("biomass detail", de);
+      // Compensation : ne pas laisser un parent créé sans ses caractéristiques.
+      if (!data.id) await sb.from("energy_resources").delete().eq("id", id);
+      throw new Error("Les caractéristiques de biomasse n’ont pas pu être enregistrées.");
+    }
     return { id };
   });
 
@@ -130,9 +135,21 @@ export const setBiomassStatus = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), status: z.enum(Object.keys(BIOMASS_STATUSES) as [keyof typeof BIOMASS_STATUSES]) }).parse(i))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as any;
+    if (data.status === "validated") {
+      const { data: row } = await sb.from("energy_resources").select(SELECT).eq("id", data.id).eq("resource_type", "biomass").maybeSingle();
+      const item = row ? flatten(row) : null;
+      if (!item) throw new Error("Le jeu de données est introuvable.");
+      const missing: string[] = [];
+      if (!item.source || item.source.trim().length < 2) missing.push("la source");
+      if (!item.period_start || !item.period_end) missing.push("la période des données (début et fin)");
+      if (item.quantity === null) missing.push("la quantité disponible");
+      if (item.lhv !== null && !item.lhv_basis) missing.push("la base de mesure du PCI");
+      if (missing.length) throw new Error(`Validation refusée : renseignez d’abord ${missing.join(", ")}. Une ressource ne peut pas être validée sans ces éléments.`);
+    }
     const { data: upd, error } = await sb.from("biomass_resources").update({ biomass_status: data.status }).eq("resource_id", data.id).select("id");
     if (error || !upd?.length) throw new Error("Changement de statut refusé (droits insuffisants).");
-    await sb.from("energy_resources").update({ validation_status: legacy(data.status) }).eq("id", data.id);
+    const { data: parent, error: pe } = await sb.from("energy_resources").update({ validation_status: legacy(data.status) }).eq("id", data.id).select("id");
+    if (pe || !parent?.length) throw new Error("Le statut de la ressource parente n’a pas pu être synchronisé.");
     return { ok: true };
   });
 

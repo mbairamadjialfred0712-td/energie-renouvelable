@@ -95,6 +95,7 @@ export const saveResource = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => saveSchema.parse(input))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as any;
+    if (data.type === "biomass") throw new Error("La biomasse s’enregistre via le module dédié (Ressources → Biomasse), qui applique ses validations complètes (unités, base du PCI, niveaux de disponibilité).");
     const config = RESOURCE_DETAILS[data.type];
     const { data: roles, error: roleError } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
     if (roleError || !roles?.some((r) => r.role === "admin" || r.role === "engineer")) throw new Error("Votre rôle ne permet pas de modifier les ressources.");
@@ -111,7 +112,6 @@ export const saveResource = createServerFn({ method: "POST" })
       if (field.max !== undefined && value > field.max) throw new Error(`${field.label} doit être ≤ ${field.max}${field.unit ? ` ${field.unit}` : ""}.`);
       detail[field.key] = value;
     }
-    if (data.type === "biomass" && !detail["biomass_type"]) throw new Error("Le type de biomasse est obligatoire.");
     if (data.type === "waste" && !detail["waste_type"]) throw new Error("Le type de déchet est obligatoire.");
     if (data.type !== "solar") {
       detail["period_start"] = data.period_start ?? null;

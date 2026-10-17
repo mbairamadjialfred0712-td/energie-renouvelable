@@ -35,7 +35,7 @@ export function biomassErrors(v: BiomassValues): string[] {
   if (v.potential !== null && !(v.potentialSource && v.potentialSource.trim().length >= 2)) e.push("Un potentiel énergétique doit citer la source qui le fournit.");
   if (v.periodStart && v.periodEnd && v.periodEnd < v.periodStart) e.push("La fin de période précède le début.");
   for (const [k, val] of Object.entries(v.levels)) if (val !== null && val !== undefined && val < 0) e.push(`${AVAILABILITY_LEVELS[k as AvailabilityKey]} doit être ≥ 0.`);
-  if (v.seasonal.some((m) => m < 0 || m > 12)) e.push("Saisonnalité : mois invalides.");
+  if (v.seasonal.some((m) => m < 1 || m > 12)) e.push("Saisonnalité : mois invalides.");
   return e;
 }
 
