@@ -12,10 +12,16 @@ export const windRequestSchema = simulationRequest.extend({ engine: z.literal("w
   const required = ["site_id", "measurement_height", "wind_basis", "period_start", "period_end", ...(level === "B" ? ["swept_area", "air_density"] : []), ...(level === "C" ? ["air_density", "hub_height", "rotor_diameter", "rated_power", "curve_density", "turbine_reference", "curve_conditions", "curve_speeds", "curve_powers"] : [])];
   for (const k of required) { const v = r.input_data[k]; if (!v || v.value === null || v.value === "" || !v.source?.trim()) fail(`${k} : valeur et source obligatoires.`); }
   for (const [k, unit] of Object.entries({ measurement_height: "m", air_density: "kg/m³", swept_area: "m²", hub_height: "m", rotor_diameter: "m", rated_power: "W", curve_density: "kg/m³", cut_in: "m/s", rated_speed: "m/s", cut_out: "m/s" })) {
-    const v = r.input_data[k]; if (v && (typeof v.value !== "number" || !Number.isFinite(v.value) || v.value <= 0 || v.unit !== unit)) fail(`${k} : nombre positif en ${unit} requis.`);
+    const v = r.input_data[k]; if (v && (typeof v.value !== "number" || !Number.isFinite(v.value) || (k === "cut_in" ? v.value < 0 : v.value <= 0) || v.unit !== unit)) fail(`${k} : nombre positif en ${unit} requis.`);
   }
   if (r.input_data["wind_basis"]?.value !== "period_mean") fail("Moyennes horaires à confirmer.");
+  if (level === "B" && typeof r.input_data["rotor_diameter"]?.value === "number") {
+    const area = Math.PI * (Number(r.input_data["rotor_diameter"].value) / 2) ** 2;
+    if (!Number.isFinite(area) || Math.abs(area - Number(r.input_data["swept_area"]?.value)) > 1e-9 * area) fail("Surface incompatible avec A = pi × (diamètre / 2)².");
+  }
   if (level === "C") {
+    const source = r.input_data["turbine_reference"]?.source;
+    if (!source?.trim() || ["curve_conditions", "curve_speeds", "curve_powers"].some((k) => r.input_data[k]?.source !== source)) fail("Turbine et courbe : même référence documentaire obligatoire.");
     if (r.input_data["measurement_height"]?.value !== r.input_data["hub_height"]?.value) fail("Hauteurs différentes : extrapolation non prise en charge.");
     if (r.input_data["air_density"]?.value !== r.input_data["curve_density"]?.value) fail("Densité incompatible : correction non prise en charge.");
     const xs = r.input_data["curve_speeds"]?.value, ys = r.input_data["curve_powers"]?.value;
@@ -51,7 +57,10 @@ export function parseWindCurve(text: string) {
   return { xs, ys };
 }
 export function checkWindResponse(request: SimulationRequest, out: { results: Record<string, { value: number | null; unit: string }>; timeseries: Record<string, { values: number[]; unit: string }>; calculation_metadata: Record<string, unknown> }) {
-  const n = request.timeseries?.timestamps.length, level = request.input_data["level"]?.value;
+  const ts = request.timeseries;
+  const n = ts?.timestamps.length, level = request.input_data["level"]?.value;
+  const close = (a: number, b: number) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a-b) <= 1e-9*Math.max(1,Math.abs(b));
+  if (!ts || ts.utc_offset_hours !== 0 || ts.leap_day_convention != null || ts.timestamps.some((t,i) => !/^\d{4}-\d{2}-\d{2}T\d{2}:00:00Z$/.test(t) || !Number.isFinite(Date.parse(t)) || new Date(t).toISOString().replace(".000Z","Z") !== t || (i > 0 && Date.parse(t)-Date.parse(ts.timestamps[i-1] ?? "") !== 3600000))) throw new Error("Durées éoliennes invalides.");
   if (!n || out.calculation_metadata["level"] !== level || out.calculation_metadata["time_standard"] !== "UTC" || out.calculation_metadata["scientific_validation"] !== "pending") throw new Error("Métadonnées éoliennes incohérentes.");
   for (const [k, unit] of Object.entries({ mean_wind_speed: "m/s", min_wind_speed: "m/s", max_wind_speed: "m/s", observed_hours: "h" })) if (out.results[k]?.value == null || out.results[k]?.unit !== unit) throw new Error("Statistiques éoliennes incomplètes.");
   if (out.results["observed_hours"]?.value !== n) throw new Error("Couverture éolienne incohérente.");
@@ -60,6 +69,27 @@ export function checkWindResponse(request: SimulationRequest, out: { results: Re
   const native = request.timeseries?.series["wind_speed"];
   const factor = native?.unit === "km/h" ? 1/3.6 : native?.unit === "kn" ? 1852/3600 : native?.unit === "m/s" ? 1 : null;
   if (!native || factor === null || native.values.some((v,i) => v === null || Math.abs(v*factor-(speeds.values[i] ?? NaN)) > 1e-9*Math.max(1,Math.abs(v*factor)))) throw new Error("Vent retourné différent des observations envoyées.");
+  for (const [k,expected] of Object.entries({mean_wind_speed:speeds.values.reduce((a,b)=>a+b/n,0),min_wind_speed:Math.min(...speeds.values),max_wind_speed:Math.max(...speeds.values)})) if (!close(Number(out.results[k]?.value),expected)) throw new Error("Statistiques différentes des observations.");
+  const keys = level === "B" ? ["observed_wind_speed","kinetic_power"] : level === "C" ? ["observed_wind_speed","turbine_power"] : ["observed_wind_speed"];
+  if (Object.keys(out.timeseries).length !== keys.length || Object.keys(out.timeseries).some((k)=>!keys.includes(k))) throw new Error("Séries incompatibles avec le niveau demandé.");
+  if (level === "B") {
+    const rho=Number(request.input_data["air_density"]?.value), area=Number(request.input_data["swept_area"]?.value);
+    if (out.timeseries["kinetic_power"]?.values.some((p,i)=>!close(p,0.5*rho*area*(speeds.values[i] ?? NaN)**3))) throw new Error("Flux différent des paramètres documentés.");
+    const expected=out.timeseries["kinetic_power"]?.values.reduce((a,b)=>a+b/n,0);
+    if (expected === undefined || out.results["mean_kinetic_power"]?.unit !== "W" || !close(Number(out.results["mean_kinetic_power"]?.value),expected)) throw new Error("Flux moyen incohérent.");
+  }
+  if (level === "C") {
+    const xs=request.input_data["curve_speeds"]?.value, ys=request.input_data["curve_powers"]?.value;
+    if (!Array.isArray(xs) || !Array.isArray(ys)) throw new Error("Courbe absente du snapshot.");
+    for (const [h,v] of speeds.values.entries()) {
+      if (v < (xs[0] ?? Infinity) || v > (xs.at(-1) ?? -Infinity)) throw new Error("Vitesse hors courbe.");
+      const i=Math.min(xs.findLastIndex((x)=>x<=v),xs.length-2), x=xs[i], next=xs[i+1], y=ys[i], ny=ys[i+1];
+      if (x === undefined || next === undefined || y === undefined || ny === undefined) throw new Error("Courbe incomplète.");
+      const w=(v-x)/(next-x), cutIn=request.input_data["cut_in"]?.value, cutOut=request.input_data["cut_out"]?.value;
+      const expected=(typeof cutIn === "number" && v<cutIn || typeof cutOut === "number" && v>=cutOut) ? 0 : (1-w)*y+w*ny;
+      if (!close(out.timeseries["turbine_power"]?.values[h] ?? NaN,expected)) throw new Error("Puissance différente de la courbe documentée.");
+    }
+  }
   const required = level === "B" ? "kinetic_power" : level === "C" ? "turbine_power" : null;
   if (required && !out.timeseries[required]) throw new Error("Puissance éolienne requise absente.");
   for (const [k,s] of Object.entries(out.timeseries)) if (k.endsWith("_power")) {
@@ -72,5 +102,7 @@ export function checkWindResponse(request: SimulationRequest, out: { results: Re
   if (level === "C") { const energy = out.results["turbine_energy"], cf = out.results["capacity_factor"], rated = request.input_data["rated_power"]?.value; if (energy?.unit !== "kWh" || cf?.unit !== "%" || energy.value === null || cf.value === null || typeof rated !== "number" || Math.abs(cf.value-energy.value*1000/(rated*n)*100) > 1e-9 || out.timeseries["turbine_power"]?.values.some((v) => v > rated)) throw new Error("Facteur de capacité ou puissance nominale incohérents."); }
   const annual = out.results["annual_turbine_energy"];
   const start = request.timeseries?.timestamps[0], last = request.timeseries?.timestamps.at(-1);
+  if (annual?.unit !== "kWh") throw new Error("Unité annuelle invalide.");
+  if (annual?.value !== null && !close(annual?.value ?? NaN,out.results["turbine_energy"]?.value ?? NaN)) throw new Error("Énergie annuelle différente de la période complète.");
   if (annual?.value !== null && (level !== "C" || !start?.endsWith("-01-01T00:00:00Z") || !last?.endsWith("-12-31T23:00:00Z") || start.slice(0,4) !== last.slice(0,4) || ![8760,8784].includes(n))) throw new Error("Annualisation éolienne interdite.");
 }
