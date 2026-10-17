@@ -77,8 +77,10 @@ def test_coverage_and_peak_shaving():
     dem = [1.0] * 23 + [3.0]  # pointe à 23h
     out = eng.run(req(pv, dem, strategy="peak_shaving", peak=[23]))
     assert out.results["net_peak_power_before_battery"].value == pytest.approx(3.0)
-    assert out.results["net_peak_power_after_battery"].value == pytest.approx(max(0.0, 3.0 - min(3.0, 3.8)), abs=1e-6)
-    assert out.results["demand_coverage_rate"].value == pytest.approx(100 * (26 - (3 - min(3, 3.8)) - max(0, 23 * 1 - (3.8 - min(3, 3.8)) - (min(1, max(0, (3.8 - 3) ))))) / 26, abs=0.5) or True
+    # dispo initiale : (5-1)*0.95 = 3.8 ; déficit cumulé 23x1 + 3 = 26 > 3.8 -> batterie vide, ENS résiduelle
+    assert out.results["net_peak_power_after_battery"].value <= 3.0
+    assert out.results["energy_served_by_battery"].value == pytest.approx(3.8, abs=1e-3)
+    assert out.results["energy_not_served"].value == pytest.approx(26 - 3.8, abs=1e-3)
 
 
 def test_peak_shaving_requires_peak_hours():
