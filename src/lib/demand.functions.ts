@@ -93,8 +93,8 @@ const saveSchema = z.object({
   weekday_variation: t(2000), seasonal_variation: t(2000), has_history: z.boolean().nullable(), criticality: t(200), growth_rate_pct: z.number().finite().gt(-100).max(1000).nullable(), assumptions: t(4000),
   supply: z.object({
     current_source: z.enum(Object.keys(SUPPLY_SOURCES) as [keyof typeof SUPPLY_SOURCES]).nullable().optional(),
-    reliability: t(500), outage_hours: z.number().finite().min(0).max(24, "Les heures de coupure doivent être comprises entre 0 et 24.").nullable().optional(),
-    has_genset: z.boolean().nullable().optional(), existing_installation: t(500), autonomy: t(500), load_shedding: t(500), critical_loads: t(500), site_constraints: t(2000),
+    reliability: t(500).optional(), outage_hours: z.number().finite().min(0).max(24, "Les heures de coupure doivent être comprises entre 0 et 24.").nullable().optional(),
+    has_genset: z.boolean().nullable().optional(), existing_installation: t(500).optional(), autonomy: t(500).optional(), load_shedding: t(500).optional(), critical_loads: t(500).optional(), site_constraints: t(2000).optional(),
   }).passthrough(), source: z.string().trim().min(2, "La source des données est obligatoire.").max(500), reference: t(500),
   acquisition_method: z.enum(Object.keys(METHODS) as [keyof typeof METHODS]).nullable(), data_time_basis: t(200), collected_by: t(200), comments: t(4000),
   status: z.enum(Object.keys(STATUSES) as [keyof typeof STATUSES]),
