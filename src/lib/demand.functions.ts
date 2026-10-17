@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { CATEGORIES, METHODS, PRIORITIES, STATUSES, equipmentErrors, measurementErrors, profileErrors } from "@/features/demand/demand-engine";
+import { CATEGORIES, METHODS, PRIORITIES, STATUSES, SUPPLY_SOURCES, equipmentErrors, measurementErrors, profileErrors } from "@/features/demand/demand-engine";
 import type { Equipment, Measurement, ProfileSlot, Supply } from "@/features/demand/demand-engine";
 
 const SELECT = `*, localities(id, name, departments(id, name, regions(id, name, countries(id, name)))), study_sites(id, name), energy_demand_equipment(*)`;
@@ -110,6 +110,11 @@ export const saveDemand = createServerFn({ method: "POST" }).middleware([require
     if (["validated", "rejected"].includes(data.status) && !a.canValidate) throw new Error("Seuls les administrateurs et ingénieurs peuvent valider ou rejeter.");
     if (data.category === "autre" && !data.consumer_detail) throw new Error("Précisez le type de consommateur pour « Autre ».");
     if (data.period_start && data.period_end && data.period_end < data.period_start) throw new Error("La fin de la période précède son début.");
+    if (data.site_id) {
+      const { data: site } = await sb.from("study_sites").select("locality_id").eq("id", data.site_id).maybeSingle();
+      if (!site) throw new Error("Le site d’étude sélectionné est introuvable.");
+      if (site.locality_id !== data.locality_id) throw new Error("Le site d’étude n’appartient pas à la localité sélectionnée.");
+    }
     const errs = [...data.equipment.flatMap((e, i) => equipmentErrors(e as Equipment, i)), ...measurementErrors(data.measurements as Measurement[]), ...profileErrors(data.daily_profile as ProfileSlot[])];
     if (data.growth_rate_pct != null && !data.assumptions) errs.push("Une croissance prévisionnelle doit être accompagnée de son hypothèse.");
     if (errs.length) throw new Error(errs.join(" "));
@@ -127,8 +132,9 @@ export const saveDemand = createServerFn({ method: "POST" }).middleware([require
       const { data: cur } = await sb.from("energy_demands").select("owner_id").eq("id", id).maybeSingle();
       if (!cur) throw new Error("Demande introuvable.");
       owner = cur.owner_id;
-      const { error } = await sb.from("energy_demands").update(row).eq("id", id);
+      const { data: upd, error } = await sb.from("energy_demands").update(row).eq("id", id).select("id");
       if (error) throw new Error(error.message.includes("valider") ? error.message : "La demande n’a pas pu être modifiée (droits insuffisants ?).");
+      if (!upd?.length) throw new Error("La demande n’a pas pu être modifiée (droits insuffisants ?).");
       const { error: de } = await sb.from("energy_demand_equipment").delete().eq("demand_id", id);
       if (de) throw new Error("Les équipements n’ont pas pu être mis à jour.");
     } else {
@@ -148,14 +154,16 @@ export const setDemandStatus = createServerFn({ method: "POST" }).middleware([re
   .handler(async ({ data, context }) => {
     const a = await access(context.supabase, context.userId);
     if (!a.canWrite || (["validated", "rejected"].includes(data.status) && !a.canValidate)) throw new Error("Votre rôle ne permet pas ce changement de statut.");
-    const { error } = await (context.supabase as any).from("energy_demands").update({ demand_status: data.status }).eq("id", data.id);
-    if (error) throw new Error("Le statut n’a pas pu être modifié.");
+    const { data: upd, error } = await (context.supabase as any).from("energy_demands").update({ demand_status: data.status }).eq("id", data.id).select("id");
+    if (error || !upd?.length) throw new Error("Le statut n’a pas pu être modifié (droits insuffisants ?).");
     return { ok: true };
   });
 
 export const deleteDemand = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
+    const a = await access(context.supabase, context.userId);
+    if (!a.canWrite) throw new Error("Votre rôle ne permet pas de supprimer des demandes.");
     const { data: del, error } = await (context.supabase as any).from("energy_demands").delete().eq("id", data.id).select("id");
     if (error || !del?.length) throw new Error("La demande n’a pas pu être supprimée (droits insuffisants ?).");
     return { ok: true };
