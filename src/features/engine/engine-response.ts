@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { ENGINE_SCHEMA_VERSION, simulationResponse, type SimulationRequest } from "./engine-contract";
+import { checkWindResponse } from "./wind-contract";
 
 /** Reject unrelated, partial or invalid replies before any success is persisted. */
 export function assertCompletedResponse(request: SimulationRequest, out: z.infer<typeof simulationResponse>, id: string) {
   if (out.status !== "completed" || out.simulation_id !== id || out.engine !== request.engine || out.schema_version !== ENGINE_SCHEMA_VERSION || !out.engine_version || !out.completed_at || out.validation_errors.length || !Object.keys(out.results).length) throw new Error("Réponse du moteur incomplète ou étrangère à cette simulation.");
   if (request.engine_version && request.engine_version !== out.engine_version) throw new Error("Version du moteur différente de la version demandée.");
+  if (request.engine === "wind") { checkWindResponse(request, out); return; }
   if (request.engine === "csp") {
     const n = request.timeseries?.timestamps.length;
     for (const k of ["incident", "captured", "thermal_loss", "thermal_balance"]) {

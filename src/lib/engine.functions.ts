@@ -7,6 +7,7 @@ import { capabilitiesResponse, healthResponse, simulationRequest, simulationResp
 import { assertCompletedResponse } from "@/features/engine/engine-response";
 import type { Json } from "@/integrations/supabase/types";
 import { cspRequestSchema } from "@/features/engine/csp-contract";
+import { windRequestSchema } from "@/features/engine/wind-contract";
 
 export const getEngineStatus = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async (): Promise<EngineStatus> => {
   const { callEngine, EngineCallError } = await import("./engine-http.server");
@@ -24,6 +25,7 @@ export const validateSimulationRequest = createServerFn({ method: "POST" }).midd
   .inputValidator((input: unknown) => {
     const raw = z.object({ engine: z.string() }).passthrough().parse(input);
     if (raw.engine === "csp") cspRequestSchema.parse(input);
+    if (raw.engine === "wind") windRequestSchema.parse(input);
     return simulationRequest.parse(input);
   })
   .handler(async ({ data }) => {
@@ -53,7 +55,7 @@ async function assertCanRun(supabase: any, userId: string) {
   if (!data?.some((r: { role: string }) => r.role === "admin" || r.role === "engineer")) throw new Error("Seuls les administrateurs et ingénieurs peuvent lancer une simulation.");
 }
 
-const ENGINES: Record<string, string> = { photovoltaic: "Production photovoltaïque horaire", battery: "Stockage batterie horaire (réservoir + rendements)", csp: "CSP cylindro-parabolique — bilan prescrit" };
+const ENGINES: Record<string, string> = { photovoltaic: "Production photovoltaïque horaire", battery: "Stockage batterie horaire (réservoir + rendements)", csp: "CSP cylindro-parabolique — bilan prescrit", wind: "Éolien — ressource / flux cinétique / courbe documentée" };
 
 const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => {
@@ -68,6 +70,13 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
     const objective = ENGINES[data.request.engine];
     if (!objective) throw new Error("Moteur non disponible.");
     let sourceSnapshot: Json = null;
+    if (data.request.engine === "wind") {
+      if (data.request.timeseries != null) throw new Error("Vent navigateur refusé : choisir un jeu enregistré.");
+      const { prepareWindSource } = await import("./wind-source.server");
+      const prepared = await prepareWindSource(context.supabase, data.request, data.weather_dataset_id, data.confirm_hourly_mean === true);
+      if (data.locality_id && data.locality_id !== prepared.localityId) throw new Error("Localité éolienne incohérente.");
+      data.locality_id = prepared.localityId; data.request = prepared.request; sourceSnapshot = prepared.provenance as Json;
+    }
     if (data.request.engine === "csp") {
       const { prepareCspSource } = await import("./csp-source.server");
       const prepared = await prepareCspSource(context.supabase, data.request, data.weather_dataset_id, data.confirm_radiation_conversion === true, data.confirm_hourly_mean === true);
@@ -127,6 +136,7 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
 export const runPvSimulation = runEngine;
 export const runBatterySimulation = runEngine;
 export const runCspSimulation = runEngine;
+export const runWindSimulation = runEngine;
 
 /** Séries horaires de résultats d'une simulation terminée (ex. ac_energy PV pour alimenter le moteur batterie). */
 export const getSimulationSeries = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
@@ -164,6 +174,8 @@ export const getSimulation = createServerFn({ method: "GET" }).middleware([requi
     return {
       simulation: { id: sim.data.id, name: sim.data.name, status: sim.data.status, engine_version: sim.data.engine_version, created_at: sim.data.created_at },
       inputs: params.request?.input_data ?? {},
+      windMetadata: (sim.data.parameters as { request?: { engine?: string } } | null)?.request?.engine === "wind" && sim.data.status === "completed" ? JSON.stringify({ metadata: (res.data?.[0]?.input_snapshot as { metadata?: Json } | null)?.metadata, source: (sim.data.parameters as { source_snapshot?: Json } | null)?.source_snapshot }, null, 2) : null,
+      windSeries: (sim.data.parameters as { request?: { engine?: string } } | null)?.request?.engine === "wind" && sim.data.status === "completed" ? (res.data ?? []).filter((r) => r.result_type.startsWith("series_")).map((r) => ({ key: r.result_type.slice(7), unit: r.unit, values: ((r.timeseries as { values?: number[] } | null)?.values ?? []), method: r.calculation_method })) : [],
       cspLimits: params.request?.input_data?.["technology"]?.value === "parabolic_trough" && sim.data.status === "completed" ? String((res.data?.[0]?.input_snapshot as { metadata?: { limits?: string } } | null)?.metadata?.limits ?? "Bilan prescrit ; température et fluide documentés, non simulés. Pertes constantes à chaque heure, nuit incluse ; validation scientifique en attente.") : null,
       cspSeries: params.request?.input_data?.["technology"]?.value === "parabolic_trough" && sim.data.status === "completed" ? (res.data ?? []).filter((r) => r.result_type.startsWith("series_")).map((r) => ({ key: r.result_type.slice(7), unit: r.unit, values: ((r.timeseries as { values?: number[] } | null)?.values ?? []), method: r.calculation_method })) : [],
       sourceSnapshot: params.request?.input_data?.["technology"]?.value === "parabolic_trough" ? JSON.stringify((sim.data.parameters as { source_snapshot?: Json } | null)?.source_snapshot ?? null, null, 2) : null,
