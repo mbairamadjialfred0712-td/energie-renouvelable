@@ -36,6 +36,7 @@ function Results() {
         )}
         {s.status === "completed" && <>
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">Valeurs calculées par {s.engine_version ?? "le moteur scientifique"}. Résultat indicatif : modèle et paramètres à valider par l’ingénieur.</p>
+          {data.cspLimits && <p className="border-l-2 border-primary pl-4 text-sm">{data.cspLimits}</p>}
           <div className="grid gap-4 sm:grid-cols-2">
             {scalars.map((r) => <div key={r.result_type} className="rounded-lg border p-4"><p className="text-xs text-muted-foreground">{CSP_LABELS[r.result_type] ?? LABELS[r.result_type] ?? r.result_type}</p><p className="mt-1 text-2xl font-semibold">{r.value === null ? "Indisponible" : r.value.toLocaleString("fr-FR")} <span className="text-base font-normal">{r.value === null ? "" : r.unit}</span></p><p className="mt-1 text-xs text-muted-foreground">{r.calculation_method}</p></div>)}
           </div>

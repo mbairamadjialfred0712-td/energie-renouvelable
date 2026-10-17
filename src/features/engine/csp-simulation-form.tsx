@@ -96,7 +96,7 @@ export function CspSimulationForm() {
     <div><Label htmlFor="csp-fluid">Fluide caloporteur</Label><Input id="csp-fluid" value={fluid} onChange={(e) => setFluid(e.target.value)} /></div>
     <div><Label htmlFor="csp-conditions">Conditions : températures, plages fabricant, frontières thermiques et validité des pertes/rendements</Label><Textarea id="csp-conditions" value={conditions} onChange={(e) => setConditions(e.target.value)} /></div>
     <div><Label htmlFor="csp-reference">Référence documentaire des conditions et du rendement effectif</Label><Input id="csp-reference" value={reference} onChange={(e) => setReference(e.target.value)} /></div>
-    <p className="text-sm text-muted-foreground">Pertes supérieures à la capture : bilan signé conservé, chaleur utile et conversion électrique indisponibles. Rendement de cycle absent : brut indisponible. Auxiliaires absents : net indisponible.</p>
+    <p className="text-sm text-muted-foreground">Température et fluide documentés, non simulés. Rendements constants ; pertes et auxiliaires prescrits à chaque heure, nuit incluse. Pertes supérieures à la capture : bilan signé conservé, chaleur utile et conversion électrique indisponibles. Rendement de cycle absent : brut indisponible. Auxiliaires absents : net indisponible.</p>
     {errors.length > 0 && <ul role="alert" className="list-disc pl-5 text-sm text-destructive">{errors.map((e, i) => <li key={i}>{e}</li>)}</ul>}
     <Button onClick={submit} disabled={busy || !online}>{busy ? "Calcul en cours…" : "Lancer le bilan CSP"}</Button>
   </div>;
