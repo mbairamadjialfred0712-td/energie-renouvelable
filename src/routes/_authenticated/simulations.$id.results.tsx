@@ -3,6 +3,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { WorkspacePage, EmptyState } from "@/components/app/page";
 import { getSimulation } from "@/lib/engine.functions";
+import { CSP_LABELS } from "@/features/engine/csp-contract";
 
 const opts = (id: string) => queryOptions({ queryKey: ["simulation", id], queryFn: () => getSimulation({ data: { id } }) });
 const STATUS: Record<string, string> = { draft: "Brouillon", queued: "En attente", running: "En cours", completed: "Terminée", failed: "Échouée" };
@@ -19,7 +20,7 @@ function Results() {
   const { data } = useSuspenseQuery(opts(id));
   if (!data) return <WorkspacePage eyebrow="Simulations" title="Simulation introuvable" description="Elle n’existe pas ou vous n’y avez pas accès."><EmptyState title="Aucune simulation" description="Aucun résultat n’est affiché." /></WorkspacePage>;
   const { simulation: s, results } = data;
-  const scalars = results.filter((r) => !r.result_type.startsWith("series_") && !r.result_type.startsWith("monthly_"));
+  const scalars = results.filter((r) => !r.result_type.startsWith("series_") && !r.result_type.startsWith("monthly_") && !r.result_type.startsWith("daily_"));
   const monthly = results.filter((r) => r.result_type.startsWith("monthly_ac_energy_")).sort((a, b) => a.result_type.localeCompare(b.result_type)).map((r) => ({ month: r.result_type.slice(-7), kWh: r.value }));
   const meta = { warnings: results[0]?.warnings ?? [] };
   return (
@@ -35,7 +36,7 @@ function Results() {
         {s.status === "completed" && <>
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">Valeurs calculées par {s.engine_version ?? "le moteur scientifique"}. Résultat indicatif : modèle et paramètres à valider par l’ingénieur.</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            {scalars.map((r) => <div key={r.result_type} className="rounded-lg border p-4"><p className="text-xs text-muted-foreground">{LABELS[r.result_type] ?? r.result_type}</p><p className="mt-1 text-2xl font-semibold">{r.value?.toLocaleString("fr-FR")} <span className="text-base font-normal">{r.unit}</span></p><p className="mt-1 text-xs text-muted-foreground">{r.calculation_method}</p></div>)}
+            {scalars.map((r) => <div key={r.result_type} className="rounded-lg border p-4"><p className="text-xs text-muted-foreground">{CSP_LABELS[r.result_type] ?? LABELS[r.result_type] ?? r.result_type}</p><p className="mt-1 text-2xl font-semibold">{r.value === null ? "Indisponible" : r.value.toLocaleString("fr-FR")} <span className="text-base font-normal">{r.value === null ? "" : r.unit}</span></p><p className="mt-1 text-xs text-muted-foreground">{r.calculation_method}</p></div>)}
           </div>
           {monthly.length > 0 && <section className="rounded-lg border p-4">
             <h2 className="mb-3 font-semibold">Énergie AC mensuelle (kWh, somme des heures)</h2>

@@ -1,6 +1,6 @@
 """Registre des moteurs. Un moteur n'est « available » que s'il possède une implémentation réelle.
 
-Aucun moteur scientifique n'est implémenté à cette étape (Prompt 8 : architecture uniquement).
+Disponibilité de code uniquement ; ni déploiement ni validation scientifique implicites.
 Pour ajouter un moteur : créer app/engines/<nom>.py exposant ENGINE (classe Engine) et l'enregistrer ici.
 """
 from typing import Protocol
@@ -42,6 +42,8 @@ def _load() -> dict[str, Engine]:
         pass
     from app.engines.battery.engine import BatteryEngine  # moteur propre, aucune dépendance optionnelle
     engines["battery"] = BatteryEngine()
+    from app.engines.csp.engine import CspBalanceEngine
+    engines["csp"] = CspBalanceEngine()
     return engines
 
 

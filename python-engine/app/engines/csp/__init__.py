@@ -1,0 +1,1 @@
+"""CSP limité : bilan prescrit, pas un modèle prédictif de centrale."""

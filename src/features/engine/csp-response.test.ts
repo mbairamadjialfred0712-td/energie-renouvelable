@@ -1,0 +1,14 @@
+import { expect, it } from "vitest";
+import { assertCompletedResponse } from "./engine-response";
+import { simulationResponse, type SimulationRequest } from "./engine-contract";
+const id = "00000000-0000-4000-8000-000000000001";
+const request: SimulationRequest = { engine: "csp", engine_version: "1.0.0", schema_version: "1.0", input_data: {}, assumptions: {}, source_references: [], timeseries: { timestamps: ["2024-02-29T00:00:00Z"], utc_offset_hours: 0, timestamp_convention: "period_start", series: {} } };
+function reply() {
+  const unavailable = ["useful_thermal_energy", "gross_electric_energy", "auxiliary_energy", "net_electric_energy"];
+  return simulationResponse.parse({ status: "completed", simulation_id: id, engine: "csp", engine_version: "1.0.0", schema_version: "1.0", created_at: "2026-10-17T00:00:00Z", completed_at: "2026-10-17T00:01:00Z", warnings: [], validation_errors: [], calculation_metadata: { time_standard: "UTC", scientific_validation: "pending", unavailable_reasons: Object.fromEntries(unavailable.map((k) => [k, "test unavailable reason"])) }, results: Object.fromEntries([...Object.entries({ incident_energy: 80, captured_energy: 40, thermal_loss_energy: 1, thermal_balance_energy: 39 }), ...unavailable.map((k) => [k, null])].map(([k,v]) => [k, { value: v, unit: "kWh", nature: "calculated", method: "Test only" }])), timeseries: Object.fromEntries(["incident", "captured", "thermal_loss", "thermal_balance"].map((k) => [k + "_power", { values: [1], unit: "W", method: "Test only" }])) });
+}
+it("accepts correlated short-period CSP with explicit null reasons", () => expect(() => assertCompletedResponse(request, reply(), id)).not.toThrow());
+it("rejects missing CSP series", () => { const out = reply(); delete out.timeseries["incident_power"]; expect(() => assertCompletedResponse(request, out, id)).toThrow(); });
+it("rejects CSP null without reason", () => { const out = reply(); out.calculation_metadata["unavailable_reasons"] = {}; expect(() => assertCompletedResponse(request, out, id)).toThrow(); });
+it("rejects CSP mismatched series length", () => { const out = reply(); out.timeseries["incident_power"]?.values.push(1); expect(() => assertCompletedResponse(request, out, id)).toThrow(); });
+it("rejects false scientific-validation claim", () => { const out = reply(); out.calculation_metadata["scientific_validation"] = "validated"; expect(() => assertCompletedResponse(request, out, id)).toThrow(); });
