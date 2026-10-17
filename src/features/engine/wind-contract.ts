@@ -6,6 +6,8 @@ export const WIND_LABELS: Record<string, string> = { mean_wind_speed: "Vitesse m
 export const windRequestSchema = simulationRequest.extend({ engine: z.literal("wind"), engine_version: z.literal(WIND_VERSION), project_id: z.string().uuid() }).superRefine((r, ctx) => {
   const fail = (message: string) => ctx.addIssue({ code: "custom", message });
   const level = r.input_data["level"]?.value;
+  const allowed = new Set(["level","site_id","measurement_height","wind_basis","period_start","period_end","air_density","swept_area","hub_height","rotor_diameter","rated_power","curve_density","cut_in","rated_speed","cut_out","turbine_reference","curve_conditions","curve_speeds","curve_powers"]);
+  if (Object.keys(r.assumptions).length || Object.keys(r.input_data).some((k) => !allowed.has(k))) fail("Paramètre non pris en charge : aucune extrapolation ou perte implicite.");
   if (!["A", "B", "C"].includes(String(level))) fail("Niveau A/B/C requis.");
   const required = ["site_id", "measurement_height", "wind_basis", "period_start", "period_end", ...(level === "B" ? ["swept_area", "air_density"] : []), ...(level === "C" ? ["air_density", "hub_height", "rotor_diameter", "rated_power", "curve_density", "turbine_reference", "curve_conditions", "curve_speeds", "curve_powers"] : [])];
   for (const k of required) { const v = r.input_data[k]; if (!v || v.value === null || v.value === "" || !v.source?.trim()) fail(`${k} : valeur et source obligatoires.`); }
@@ -18,6 +20,13 @@ export const windRequestSchema = simulationRequest.extend({ engine: z.literal("w
     if (r.input_data["air_density"]?.value !== r.input_data["curve_density"]?.value) fail("Densité incompatible : correction non prise en charge.");
     const xs = r.input_data["curve_speeds"]?.value, ys = r.input_data["curve_powers"]?.value;
     if (!Array.isArray(xs) || !Array.isArray(ys) || xs.length < 2 || xs.length > 1000 || xs.length !== ys.length || xs.some((x,i) => x < 0 || (i > 0 && x <= (xs[i-1] ?? x))) || ys.some((y) => y < 0 || y > Number(r.input_data["rated_power"]?.value))) fail("Courbe invalide : vitesses croissantes, puissances bornées, longueurs identiques requises.");
+    if (Array.isArray(xs) && Array.isArray(ys)) {
+      const cutIn = r.input_data["cut_in"]?.value, rated = r.input_data["rated_speed"]?.value, cutOut = r.input_data["cut_out"]?.value;
+      if (typeof cutIn === "number" && typeof cutOut === "number" && cutIn >= cutOut) fail("Vitesses de démarrage/arrêt incohérentes.");
+      if (typeof rated === "number" && ((typeof cutIn === "number" && rated < cutIn) || (typeof cutOut === "number" && rated >= cutOut))) fail("Vitesse nominale incohérente.");
+      if (xs.some((x,i) => (typeof cutIn === "number" && x < cutIn || typeof cutOut === "number" && x >= cutOut) && ys[i] !== 0)) fail("Courbe incompatible avec démarrage/arrêt documentés.");
+      if (typeof rated === "number") { const branch = ys.filter((_,i) => (xs[i] ?? Infinity) <= rated && (typeof cutIn !== "number" || (xs[i] ?? -Infinity) >= cutIn)); if (branch.some((y,i) => i > 0 && y < (branch[i-1] ?? y))) fail("Branche de montée non monotone."); }
+    }
   }
 });
 export function selectWindWeather(samples: unknown, mean: boolean) {
@@ -48,6 +57,9 @@ export function checkWindResponse(request: SimulationRequest, out: { results: Re
   if (out.results["observed_hours"]?.value !== n) throw new Error("Couverture éolienne incohérente.");
   const speeds = out.timeseries["observed_wind_speed"];
   if (!speeds || speeds.unit !== "m/s" || speeds.values.length !== n || speeds.values.some((v) => v < 0)) throw new Error("Observations éoliennes manquantes.");
+  const native = request.timeseries?.series["wind_speed"];
+  const factor = native?.unit === "km/h" ? 1/3.6 : native?.unit === "kn" ? 1852/3600 : native?.unit === "m/s" ? 1 : null;
+  if (!native || factor === null || native.values.some((v,i) => v === null || Math.abs(v*factor-(speeds.values[i] ?? NaN)) > 1e-9*Math.max(1,Math.abs(v*factor)))) throw new Error("Vent retourné différent des observations envoyées.");
   const required = level === "B" ? "kinetic_power" : level === "C" ? "turbine_power" : null;
   if (required && !out.timeseries[required]) throw new Error("Puissance éolienne requise absente.");
   for (const [k,s] of Object.entries(out.timeseries)) if (k.endsWith("_power")) {
@@ -57,6 +69,7 @@ export function checkWindResponse(request: SimulationRequest, out: { results: Re
   const reasons = out.calculation_metadata["unavailable_reasons"] as Record<string, unknown> | undefined;
   for (const k of ["turbine_energy", "capacity_factor", "annual_turbine_energy"]) { const r = out.results[k]; if (!r || (r.value === null && (typeof reasons?.[k] !== "string" || !String(reasons[k]).trim()))) throw new Error("Résultat éolien indisponible sans motif."); }
   if (level !== "C" && (out.results["turbine_energy"]?.value !== null || out.results["capacity_factor"]?.value !== null)) throw new Error("Flux cinétique assimilé à l’électricité.");
+  if (level === "C") { const energy = out.results["turbine_energy"], cf = out.results["capacity_factor"], rated = request.input_data["rated_power"]?.value; if (energy?.unit !== "kWh" || cf?.unit !== "%" || energy.value === null || cf.value === null || typeof rated !== "number" || Math.abs(cf.value-energy.value*1000/(rated*n)*100) > 1e-9 || out.timeseries["turbine_power"]?.values.some((v) => v > rated)) throw new Error("Facteur de capacité ou puissance nominale incohérents."); }
   const annual = out.results["annual_turbine_energy"];
   const start = request.timeseries?.timestamps[0], last = request.timeseries?.timestamps.at(-1);
   if (annual?.value !== null && (level !== "C" || !start?.endsWith("-01-01T00:00:00Z") || !last?.endsWith("-12-31T23:00:00Z") || start.slice(0,4) !== last.slice(0,4) || ![8760,8784].includes(n))) throw new Error("Annualisation éolienne interdite.");

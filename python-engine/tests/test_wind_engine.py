@@ -105,3 +105,20 @@ def test_complete_day_no_incomplete_month():
     r=fixture("C");r["timeseries"]["timestamps"]=[f"2024-02-29T{h:02}:00:00Z" for h in range(24)];r["timeseries"]["series"]["wind_speed"]["values"]=[5]*24;r["input_data"]["period_end"]["value"]="2024-03-01T00:00:00Z"
     out=ENGINE.run(SimulationRequest(**r));assert out.results["daily_turbine_energy_2024-02-29"].value==12
     assert not any(k.startswith("monthly_") for k in out.results)
+
+def test_complete_leap_year_not_extrapolated():
+    from datetime import datetime,timedelta
+    r=fixture("C"); start=datetime(2024,1,1); r["timeseries"]["timestamps"]=[(start+timedelta(hours=h)).strftime("%Y-%m-%dT%H:00:00Z") for h in range(8784)];r["timeseries"]["series"]["wind_speed"]["values"]=[5]*8784;r["input_data"]["period_start"]["value"]="2024-01-01T00:00:00Z";r["input_data"]["period_end"]["value"]="2025-01-01T00:00:00Z"
+    out=ENGINE.run(SimulationRequest(**r));assert out.results["annual_turbine_energy"].value==4392
+    assert out.metadata["representativeness"]=="not_established"
+    assert len([k for k in out.results if k.startswith("monthly_")])==12
+
+def test_wind_service_missing_key_no_results(client,monkeypatch):
+    from app.core.config import get_settings
+    monkeypatch.setenv("ENGINE_SHARED_KEY","");get_settings.cache_clear()
+    out=client.post("/api/v1/simulations",json=fixture(),headers=H)
+    assert out.status_code==503 and "results" not in out.json()
+
+def test_wind_wrong_key_no_results(client):
+    out=client.post("/api/v1/simulations",json=fixture(),headers={**H,"X-Engine-Key":"wrong"})
+    assert out.status_code==403 and "results" not in out.json()

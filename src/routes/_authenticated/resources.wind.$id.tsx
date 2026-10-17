@@ -56,6 +56,7 @@ function WindDetail() {
         {(r.data_nature === "estimate" || r.data_nature === "assumption") && <span className="text-xs font-medium">Valeur non mesurée.</span>}
         {r.status !== "validated" && <span className="text-xs text-muted-foreground">Donnée provisoire : non utilisée par les calculs de projet.</span>}
         <Link to="/geography/localities/$id" params={{ id: r.locality_id }} className="ml-auto text-sm text-primary hover:underline">Voir la localité →</Link>
+        <Button asChild variant="outline" size="sm"><Link to="/simulations/new">Calcul éolien A / B / C</Link></Button>
       </div>
       {msg && <p role="alert" className="mb-4 text-sm text-destructive">{msg}</p>}
       {editing ? (

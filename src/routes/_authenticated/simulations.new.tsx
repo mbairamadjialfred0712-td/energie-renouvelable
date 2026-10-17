@@ -8,7 +8,7 @@ import { WindSimulationForm } from "@/features/engine/wind-simulation-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/simulations/new")({
-  head: () => ({ meta: [{ title: "Nouvelle simulation horaire — Énergie Renouvelable" }, { name: "description", content: "Simulations horaires photovoltaïque, batterie et bilan CSP prescrit par le moteur scientifique Python." }, { property: "og:title", content: "Nouvelle simulation horaire" }, { property: "og:description", content: "Configuration traçable d’une simulation horaire PV, batterie ou CSP limité." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Nouvelle simulation horaire — Énergie Renouvelable" }, { name: "description", content: "Simulations horaires PV, batterie, CSP prescrit et éolien A/B/C avec paramètres documentés." }, { property: "og:title", content: "Nouvelle simulation horaire — Énergie Renouvelable" }, { property: "og:description", content: "Configuration traçable PV, batterie, CSP limité et éolien par courbe documentée." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: () => (
     <WorkspacePage eyebrow="Simulations / Nouvelle" title="Nouvelle simulation horaire" description="Moteur scientifique Python. Résultats indicatifs, à valider par l’ingénieur.">
       <div className="space-y-6"><EngineStatusCard />
