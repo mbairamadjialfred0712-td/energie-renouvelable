@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MONTH_DAYS, equipmentEnergy, equipmentErrors, inventoryTotal, measurementDaily, measurementErrors, overlappingMeasurements, profileErrors } from "./demand-engine";
+import { MONTH_DAYS, demandWarnings, equipmentEnergy, equipmentErrors, equipmentWarnings, inventoryTotal, measurementDaily, measurementErrors, measurementsOutsidePeriod, overlappingMeasurements, profileErrors } from "./demand-engine";
 import type { Equipment, Measurement, ProfileSlot } from "./demand-engine";
 
 const eq = (p: Partial<Equipment> = {}): Equipment => ({ name: "Lampe", category: null, quantity: 10, unit_power: 20, power_unit: "W", hours_per_day: 4, days_per_week: 7, usage_factor: null, usage_factor_definition: null, usage_factor_source: null, priority: "importante", notes: null, ...p });
@@ -92,4 +92,24 @@ describe("profileErrors", () => {
   });
   it("rejette une puissance négative", () => expect(profileErrors([s({ power_kw: -1 })]).join(" ")).toMatch(/négative/));
   it("rejette les créneaux chevauchants", () => expect(profileErrors([s(), s({ start_hour: 5, end_hour: 9 })]).join(" ")).toMatch(/chevauche/));
+});
+
+describe("avertissements non bloquants (A2.1)", () => {
+  it("signale une quantité fractionnaire sans la bloquer", () => {
+    expect(equipmentErrors(eq({ quantity: 2.5 }), 0)).toEqual([]);
+    expect(equipmentWarnings(eq({ quantity: 2.5 }), 0).join(" ")).toMatch(/fractionnaire/);
+    expect(equipmentWarnings(eq({ quantity: 3 }), 0)).toEqual([]);
+  });
+  it("détecte les mesures hors période de référence (même partiellement)", () => {
+    const inside = m({ start: "2024-03-01", end: "2024-03-31" });
+    const outside = m({ start: "2023-06-01", end: "2023-06-30" });
+    const partial = m({ start: "2023-12-15", end: "2024-01-15" });
+    expect(measurementsOutsidePeriod([inside, outside, partial], "2024-01-01", "2024-12-31")).toEqual([outside, partial]);
+    expect(measurementsOutsidePeriod([inside, outside], null, null)).toEqual([]);
+  });
+  it("demandWarnings consolide fractionnaires et hors période sans jamais bloquer", () => {
+    const w = demandWarnings({ equipment: [eq({ quantity: 1.5 })], measurements: [m({ start: "2022-01-01", end: "2022-01-31" })], period_start: "2024-01-01", period_end: "2024-12-31" });
+    expect(w.join(" ")).toMatch(/fractionnaire/);
+    expect(w.join(" ")).toMatch(/hors de la période/);
+  });
 });
