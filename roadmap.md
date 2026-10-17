@@ -11,7 +11,8 @@
 - Exécution E2E PV et batterie : le moteur Python n'est pas en ligne (Render + secrets SCIENTIFIC_ENGINE_URL/KEY). Tant qu'il n'est pas déployé, aucune simulation ne peut tourner et aucune simulation PV terminée n'existe pour tester la liaison production → LCOE.
 
 ## En cours
-- [ ] PROMPT 13 : auditer et finaliser stockage A/B/C, contrats, sécurité, interface, tests et VALIDATION_BATTERY.md sans reconstruire ni altérer les instantanés
+- [x] PROMPT 13 : audit et corrections sûres stockage A/C, contrats, sources serveur, snapshots conservés, interface SOC/ENS et VALIDATION_BATTERY.md ; 215 Python et 278 TypeScript réussis, service local authentifié et refus navigateur vérifiés
+- [ ] PROMPT 13 : parcours batterie réel hébergé sauvegarde/consultation et échecs (bloqué : service configuré, configuration validée, PV terminé et demande documentée du même projet nécessaires) ; autonomie et politique de pointe restent à valider par Joël
 - [x] PROMPT 12 : audit données/RPC/intégration et VALIDATION_BIOMASS.md ; 172 tests Python et 222 TypeScript existants réussis, aucune fiche biomasse en base, aucun moteur modifié
 - [x] PROMPT 12 : V1 primaire approuvée et intégrée (moteur isolé, sélection serveur, instantanés, formulaire/résultats, aucune fraction/conversion supposée) ; 201 Python et 248 TypeScript réussis, service local authentifié et navigateur connecté vérifiés, build OK
 - [ ] PROMPT 12 : premier bilan réel hébergé calcul → sauvegarde → consultation et échecs de persistance (bloqué : service configuré et vraie fiche biomasse documentée/validée à fournir ; validation physique Joël restante)

@@ -36,7 +36,7 @@ Sauvegarde commune simulations/results après identité, unités, longueurs, bor
 
 ## Vérifications et état réel
 - Avant : 201 Python, 248 TypeScript réussis.
-- Après : chiffres finaux renseignés après exécution ci-dessous ; tests nouveaux strict numbers/peak, initial SOC, microsecondes, précision/DC cycles, capacités et états invalides, sources/PV/projet, snapshot immuable et intégrité de réponse.
+- Après : **215 Python réussis, 0 échoué (201 existants + 14 nouveaux)** ; **278 TypeScript réussis, 0 échoué, 22 fichiers (248 existants + 30 nouveaux)** ; un avertissement Starlette/httpx. Tests nouveaux strict numbers/peak, initial SOC, microsecondes, précision/DC cycles, capacités et états invalides, sources/PV/projet, snapshot immuable et intégrité de réponse.
 - Service local réellement lancé avec identité Cloud authentifiée : health → validation → calcul v1.1.0 réussis ; appel anonyme 401 sans résultat. Jeu arithmétique synthétique utilisé uniquement en mémoire, aucun enregistrement de données météo/batterie de démonstration.
 - Navigateur authentifié, onglet batterie ordinateur/petit écran : calcul désactivé, zéro configuration validée/PV terminé accessible, absence d'erreur et débordement. Ce test d'indisponibilité NE vérifie PAS le succès de simulation.
 - Rôles admin/engineer vs analyst/viewer : tests communs existants réexécutés avec doublures, pas de nouveaux essais multi-comptes en base pour ce parcours. Aucune permission/migration modifiée.
