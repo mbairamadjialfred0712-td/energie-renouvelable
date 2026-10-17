@@ -113,6 +113,13 @@
       "when": 1792223479749,
       "tag": "0015_project_finance_assumptions",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792223808840,
+      "tag": "0016_fix_project_finance_trigger",
+      "breakpoints": true
     }
   ]
 }
