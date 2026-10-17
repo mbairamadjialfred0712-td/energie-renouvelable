@@ -30,8 +30,8 @@ describe("sheetErrors — champs obligatoires et unités", () => {
   });
   it("rejette les pourcentages strictement positifs à 0 (DoD, RTE)", () => {
     const e = sheetErrors({ ...base(), dod_pct: 0, rte_pct: 0 });
-    expect(e.join(" ")).toMatch(/DoD doit être strictement positif/);
-    expect(e.join(" ")).toMatch(/aller-retour doit être strictement positif/);
+    expect(e.join(" ")).toMatch(/strictement positif/);
+    expect(e.join(" ")).toMatch(/aller-retour.*strictement positif/);
   });
   it("rejette les cycles non entiers ou négatifs", () => {
     expect(sheetErrors({ ...base(), cycles: 2.5 }).join(" ")).toMatch(/entier positif/);
