@@ -121,6 +121,24 @@ export function sheetWarnings(s: Sheet): string[] {
   return w;
 }
 
+/** Conditions supplémentaires pour passer une fiche au statut « validé » (battery-model/1.0.0). */
+export function validationGateErrors(s: Sheet): string[] {
+  const e: string[] = [];
+  if (!s.acquisition_method) e.push("La méthode d’obtention des caractéristiques est obligatoire pour valider une fiche.");
+  if (s.nominal_voltage_v == null && s.capacity_ah == null && s.energy_kwh == null) e.push("Valider exige au moins une caractéristique électrique documentée (tension, capacité ou énergie nominale).");
+  if (s.chemistry === "other" && !s.chemistry_detail?.trim()) e.push("Précisez la technologie pour « Autre » avant validation.");
+  return e;
+}
+/** Transitions de statut autorisées (hors contrôle de rôle, effectué côté serveur et base). */
+export function statusChangeErrors(s: Sheet, from: keyof typeof STATUSES, to: keyof typeof STATUSES): string[] {
+  if (from === to) return [];
+  if (to === "validated") return [...sheetErrors(s), ...validationGateErrors(s)];
+  if (from === "validated" || from === "rejected") {
+    if (to === "unverified") return ["Une fiche validée ou rejetée ne peut pas redevenir « Non vérifié » : utilisez « À examiner » ou « Archivé »."];
+  }
+  return [];
+}
+
 export type StorageConfig = { module_count: number | null; series_count: number | null; parallel_count: number | null; soc_min_pct: number | null; soc_max_pct: number | null; rte_pct: number | null; charge_eff_pct: number | null; discharge_eff_pct: number | null; usable_energy_limit_kwh: number | null; retained_cost: number | null; currency: string | null };
 export function configErrors(c: StorageConfig): string[] {
   const e: string[] = [];
