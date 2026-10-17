@@ -129,9 +129,11 @@ export const saveDemand = createServerFn({ method: "POST" }).middleware([require
     };
     let id = data.id, owner = context.userId;
     if (id) {
-      const { data: cur } = await sb.from("energy_demands").select("owner_id").eq("id", id).maybeSingle();
+      const { data: cur } = await sb.from("energy_demands").select("owner_id, demand_status").eq("id", id).maybeSingle();
       if (!cur) throw new Error("Demande introuvable.");
       owner = cur.owner_id;
+      if (["validated", "rejected"].includes(cur.demand_status) && cur.demand_status !== data.status && !a.canValidate)
+        throw new Error("Seuls les administrateurs et ingénieurs peuvent modifier le statut d’une demande validée ou rejetée.");
       const { data: upd, error } = await sb.from("energy_demands").update(row).eq("id", id).select("id");
       if (error) throw new Error(error.message.includes("valider") ? error.message : "La demande n’a pas pu être modifiée (droits insuffisants ?).");
       if (!upd?.length) throw new Error("La demande n’a pas pu être modifiée (droits insuffisants ?).");
@@ -154,6 +156,10 @@ export const setDemandStatus = createServerFn({ method: "POST" }).middleware([re
   .handler(async ({ data, context }) => {
     const a = await access(context.supabase, context.userId);
     if (!a.canWrite || (["validated", "rejected"].includes(data.status) && !a.canValidate)) throw new Error("Votre rôle ne permet pas ce changement de statut.");
+    const { data: cur } = await (context.supabase as any).from("energy_demands").select("demand_status").eq("id", data.id).maybeSingle();
+    if (!cur) throw new Error("Demande introuvable.");
+    if (["validated", "rejected"].includes(cur.demand_status) && cur.demand_status !== data.status && !a.canValidate)
+      throw new Error("Seuls les administrateurs et ingénieurs peuvent modifier le statut d’une demande validée ou rejetée.");
     const { data: upd, error } = await (context.supabase as any).from("energy_demands").update({ demand_status: data.status }).eq("id", data.id).select("id");
     if (error || !upd?.length) throw new Error("Le statut n’a pas pu être modifié (droits insuffisants ?).");
     return { ok: true };
