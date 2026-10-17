@@ -23,7 +23,7 @@ export type Equipment = {
   hours_per_day: number | null; days_per_week: number | null; usage_factor: number | null;
   usage_factor_definition: string | null; usage_factor_source: string | null; priority: keyof typeof PRIORITIES; notes: string | null;
 };
-export type Supply = { current_source?: string | null; reliability?: string | null; outage_hours?: number | null; has_genset?: boolean | null; existing_installation?: string | null; autonomy?: string | null; load_shedding?: string | null; critical_loads?: string | null; site_constraints?: string | null };
+export type Supply = { current_source?: keyof typeof SUPPLY_SOURCES | null; reliability?: string | null; outage_hours?: number | null; has_genset?: boolean | null; existing_installation?: string | null; autonomy?: string | null; load_shedding?: string | null; critical_loads?: string | null; site_constraints?: string | null };
 export type Measurement = { start: string; end: string; energy: number; unit: "Wh" | "kWh"; peak_kw: number | null; notes: string | null };
 export type ProfileSlot = { start_hour: number; end_hour: number; power_kw: number; nature: "measured" | "estimated" };
 
