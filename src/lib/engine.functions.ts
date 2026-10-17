@@ -6,6 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { capabilitiesResponse, healthResponse, simulationRequest, simulationResponse, validationResponse, type EngineStatus } from "@/features/engine/engine-contract";
 import { assertCompletedResponse } from "@/features/engine/engine-response";
 import type { Json } from "@/integrations/supabase/types";
+import { cspRequestSchema } from "@/features/engine/csp-contract";
 
 export const getEngineStatus = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async (): Promise<EngineStatus> => {
   const { callEngine, EngineCallError } = await import("./engine-http.server");
@@ -20,7 +21,11 @@ export const getEngineStatus = createServerFn({ method: "GET" }).middleware([req
 });
 
 export const validateSimulationRequest = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => simulationRequest.parse(input))
+  .inputValidator((input: unknown) => {
+    const raw = z.object({ engine: z.string() }).passthrough().parse(input);
+    if (raw.engine === "csp") cspRequestSchema.parse(input);
+    return simulationRequest.parse(input);
+  })
   .handler(async ({ data }) => {
     const { callEngine, EngineCallError } = await import("./engine-http.server");
     try {
@@ -37,7 +42,10 @@ const runInput = z.object({
   project_id: z.string().uuid().nullable().optional(),
   locality_id: z.string().uuid().nullable().optional(),
   request: simulationRequest,
-});
+  weather_dataset_id: z.string().uuid().optional(),
+  confirm_hourly_mean: z.boolean().optional(),
+  confirm_radiation_conversion: z.boolean().optional(),
+}).strict();
 
 async function assertCanRun(supabase: any, userId: string) {
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
@@ -45,16 +53,29 @@ async function assertCanRun(supabase: any, userId: string) {
   if (!data?.some((r: { role: string }) => r.role === "admin" || r.role === "engineer")) throw new Error("Seuls les administrateurs et ingénieurs peuvent lancer une simulation.");
 }
 
-const ENGINES: Record<string, string> = { photovoltaic: "Production photovoltaïque horaire", battery: "Stockage batterie horaire (réservoir + rendements)" };
+const ENGINES: Record<string, string> = { photovoltaic: "Production photovoltaïque horaire", battery: "Stockage batterie horaire (réservoir + rendements)", csp: "CSP cylindro-parabolique — bilan prescrit" };
 
 const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => runInput.parse(input))
+  .inputValidator((input: unknown) => {
+    const raw = z.object({ request: z.object({ engine: z.string() }).passthrough() }).passthrough().parse(input);
+    if (raw.request.engine === "csp") cspRequestSchema.extend({ timeseries: z.null() }).parse(raw.request);
+    return runInput.parse(input);
+  })
   .handler(async ({ data, context }) => {
     const { callEngine } = await import("./engine-http.server");
     const supabase = context.supabase as any;
     await assertCanRun(supabase, context.userId);
     const objective = ENGINES[data.request.engine];
     if (!objective) throw new Error("Moteur non disponible.");
+    let sourceSnapshot: Json = null;
+    if (data.request.engine === "csp") {
+      const { prepareCspSource } = await import("./csp-source.server");
+      const prepared = await prepareCspSource(context.supabase, data.request, data.weather_dataset_id, data.confirm_radiation_conversion === true, data.confirm_hourly_mean === true);
+      if (data.locality_id && data.locality_id !== prepared.localityId) throw new Error("Localité CSP incohérente.");
+      data.locality_id = prepared.localityId;
+      data.request = prepared.request;
+      sourceSnapshot = prepared.provenance as Json;
+    }
     for (const [table, id] of [["projects", data.project_id], ["localities", data.locality_id]] as const) {
       if (id) {
         const { data: linked, error: accessError } = await supabase.from(table).select("id").eq("id", id).maybeSingle();
@@ -70,12 +91,12 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
       project_id: data.project_id ?? null, locality_id: data.locality_id ?? null,
       period_start: ts?.timestamps[0]?.slice(0, 10) ?? null, period_end: ts?.timestamps.at(-1)?.slice(0, 10) ?? null,
       objective, status: "running",
-      parameters: { request: data.request } as unknown as Json, assumptions: data.request.assumptions as unknown as Json,
+      parameters: { request: data.request, source_snapshot: sourceSnapshot } as unknown as Json, assumptions: data.request.assumptions as unknown as Json,
     }).select("id").single();
     if (error || !sim) throw new Error("La simulation n’a pas pu être créée.");
     type Detail = { field?: string | null; code: string; message: string };
     const fail = async (message: string, details: Detail[] = []) => {
-      const saved = await supabaseAdmin.from("simulations").update({ status: "failed", parameters: { request: data.request, error: { message, details } } as unknown as Json }).eq("id", sim.id).eq("owner_id", context.userId).select("id").single();
+      const saved = await supabaseAdmin.from("simulations").update({ status: "failed", parameters: { request: data.request, source_snapshot: sourceSnapshot, error: { message, details } } as unknown as Json }).eq("id", sim.id).eq("owner_id", context.userId).select("id").single();
       if (saved.error || !saved.data) throw new Error("Échec du calcul ; son statut n’a pas pu être enregistré. Aucun succès confirmé.");
       return { id: sim.id as string, status: "failed" as const, message, details };
     };
@@ -105,6 +126,7 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
 
 export const runPvSimulation = runEngine;
 export const runBatterySimulation = runEngine;
+export const runCspSimulation = runEngine;
 
 /** Séries horaires de résultats d'une simulation terminée (ex. ac_energy PV pour alimenter le moteur batterie). */
 export const getSimulationSeries = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
@@ -142,6 +164,8 @@ export const getSimulation = createServerFn({ method: "GET" }).middleware([requi
     return {
       simulation: { id: sim.data.id, name: sim.data.name, status: sim.data.status, engine_version: sim.data.engine_version, created_at: sim.data.created_at },
       inputs: params.request?.input_data ?? {},
+      cspSeries: params.request?.input_data?.["technology"]?.value === "parabolic_trough" && sim.data.status === "completed" ? (res.data ?? []).filter((r) => r.result_type.startsWith("series_")).map((r) => ({ key: r.result_type.slice(7), unit: r.unit, values: ((r.timeseries as { values?: number[] } | null)?.values ?? []), method: r.calculation_method })) : [],
+      sourceSnapshot: params.request?.input_data?.["technology"]?.value === "parabolic_trough" ? JSON.stringify((sim.data.parameters as { source_snapshot?: Json } | null)?.source_snapshot ?? null, null, 2) : null,
       seriesMeta: Object.fromEntries(Object.entries(series).map(([k, v]) => [k, { unit: v.unit, nature: v.nature, source: v.source ?? null }])),
       assumptions: Object.fromEntries(Object.entries((params.request as { assumptions?: Record<string, { value: Json; unit?: string; nature: string }> } | undefined)?.assumptions ?? {}).map(([k, v]) => [k, { value: String(v.value), unit: v.unit ?? null, nature: String(v.nature) }])),
       lastTimestamp: params.request?.timeseries?.timestamps?.at(-1) ?? null,

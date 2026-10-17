@@ -1,13 +1,13 @@
 # Dossier préalable de validation CSP — Joël
 
-Date : 17 octobre 2026. Statut : **CONCEPTION — À VALIDER PAR L’INGÉNIEUR**.
-Ce document propose un périmètre ; aucune équation CSP n’est encore implémentée, aucun résultat ni tolérance scientifique n’est validé.
+Date : 17 octobre 2026. Modèle `prescribed-trough-balance/1.0.0`. Statut : **IMPLÉMENTATION TECHNIQUE — À VALIDER PAR L’INGÉNIEUR**.
+Joël a retenu le bilan thermique limité. Ce choix n’est pas une validation scientifique des équations, coefficients ou références numériques. Le périmètre retenu est implémenté ; aucune validation de centrale réelle n’est acquise.
 
 ## 1. Diagnostic de l’existant
 
 - Réutilisable : API v1/schéma 1.0, registre de moteurs, validation/exécution authentifiées, client HTTP privé, contrôles admin/ingénieur, stockage des requêtes et résultats dans les tables existantes, RLS de lecture et écritures serveur protégées.
 - Routes déjà disponibles : `/api/v1/health`, `/api/v1/capabilities`, `/api/v1/simulations/validate`, `/api/v1/simulations`. Aucun endpoint CSP supplémentaire nécessaire pour la répartition par moteur.
-- CSP : capacité prévue `not_implemented`, aucun moteur physique enregistré, aucun formulaire CSP. PV et batterie conservés sans changement.
+- Au début de l’audit : CSP `not_implemented`, aucun moteur ni formulaire CSP. Après choix de Joël : bilan séparé enregistré, formulaire ajouté ; disponibilité de code uniquement. PV et batterie conservés (leurs tests de registre sont adaptés à la nouvelle capacité).
 - Données : ressources solaires agrégées DNI/GHI/DHI avec période, unité et provenance ; fiches météo horaires UTC avec DNI, température et vent. NASA POWER fournit ici les rayonnements en Wh/m² par intervalle horaire, pas une puissance instantanée W/m². Altitude et paramètres thermo/optiques documentés ne sont pas garantis.
 - Persistance : assurée par Lovable, pas par Python (`NoRepository`). Les GET Python de récupération ne constituent donc pas une récupération opérationnelle de simulations sauvegardées.
 - Disponibilité : lors de l’audit précédent immédiatement avant cette conception, URL/clé moteur non configurées ; aucun déploiement Render ni parcours hébergé réussi attesté. Pas de nouvelle preuve de disponibilité dans cette conception.
@@ -18,12 +18,12 @@ Ce document propose un périmètre ; aucune équation CSP n’est encore implém
 
 Modèle de bilan pédagogique/pré-étude, **non prédictif** : il utilise des performances et pertes documentées fournies par l’ingénieur. Pas de coefficients par défaut, ni comportement transféré à une tour, Fresnel ou dish.
 
-Équations proposées, non implémentées :
+Équations du bilan effectivement implémentées :
 
 1. Puissance directe de référence sur l’ouverture normale : `P_direct = DNI × A` (W).
 2. Puissance captée : `Q_captée = P_direct × eta_opt_effectif`. Le rendement effectif doit expliciter le traitement des angles, cosinus, ombrage, poursuite et pertes optiques ; une efficacité à incidence normale seule n’est pas suffisante pour une série temporelle.
-3. Bilan thermique signé : `Q_bilan = Q_captée − Q_pertes`. Les pertes sont fournies en W, par pas, avec source et conditions de température/fluide ; aucune corrélation de pertes inventée. Avant codage, définir le traitement des périodes où pertes > capture (arrêt, refroidissement, alimentation externe) : pas d’écrêtage silencieux à zéro.
-4. Conversion brute facultative : `P_brute = Q_cycle_entrée × eta_cycle`, uniquement si la frontière de chaleur livrée au cycle et un rendement applicable à ces conditions sont documentés.
+3. Bilan thermique signé : `Q_bilan = Q_captée − Q_pertes`. Pertes moyennes prescrites constantes en W, explicitement documentées et appliquées à chaque heure, sans prédiction HTF/température. Si un pas est négatif, la série signée est conservée mais chaleur utile et conversion électrique deviennent indisponibles sur la période : aucun arrêt, refroidissement ou chauffage externe n’est inventé, aucun écrêtage à zéro.
+4. Conversion brute facultative : `P_brute = Q_utile × eta_cycle`, sous hypothèse explicite que cette chaleur est livrée au cycle et que le rendement constant fourni est applicable ; indisponible si chaleur utile non déterminable ou rendement absent.
 5. Net : `P_nette = P_brute − P_aux`, seulement lorsque les consommations nécessaires et la convention d’import/export sont renseignées. Sans auxiliaires connus, net indisponible, pas égal au brut.
 6. Énergie de période : somme de puissances moyennes × durées ; des observations instantanées ne sont pas assimilées silencieusement à des moyennes.
 
@@ -38,7 +38,7 @@ Cette option est plus complète mais exige un dossier technique non fourni ici. 
 ## 3. Contrat temporel à approuver
 
 - Sélection obligatoire d’un site/projet accessible et d’un jeu DNI enregistré avec source, nature, qualité, statut et références figés dans la requête.
-- Proposition pour le bilan limité : pas horaire UTC, moyenne de période, bornes `[début, fin exclusive)`, intervalles complets et contigus, aucune heure manquante ni doublon. Années bissextiles conservées (8 784 heures si année entière), pas d’heure d’été en UTC. Pas d’exigence systématique de 8 760 heures pour une période courte.
+- Convention implémentée : pas horaire UTC, moyenne de période, bornes `[début, fin exclusive)`, intervalles complets et contigus, aucune heure manquante ni doublon. Années bissextiles conservées (8 784 heures si année entière), pas d’heure d’été en UTC. Pas d’exigence systématique de 8 760 heures pour une période courte. Seuls jours/mois complets sont agrégés ; couverture annuelle déclarée uniquement pour une année civile complète.
 - Si la donnée est une énergie Wh/m² sur un intervalle documenté, conversion vers moyenne W/m² = énergie / durée en heures, uniquement par transformation explicitement acceptée et journalisée ; pas de substitution GHI → DNI. Valeurs natives conservées.
 - Pas de total annuel annoncé pour une période partielle. Les limites de longueur et le format partagé de l’API ne constituent pas une validation de couverture CSP.
 
@@ -63,10 +63,31 @@ Ces références ne valident pas des coefficients absents ni un bilan réduit co
 
 ## 6. Décision et preuves
 
-- Choix du modèle : **EN ATTENTE**.
+- Choix du modèle : **TERMINÉ** — bilan thermique limité sélectionné par Joël le 17 octobre 2026.
 - Hypothèses/équations/coefficients : **À VALIDER PAR L’INGÉNIEUR**.
 - Cas de référence et tolérances : **NON FOURNIS**, à définir avec Joël ; aucun seuil scientifique arbitraire.
-- Tests CSP : **NON EXÉCUTÉS**, moteur non implémenté.
+- Tests CSP : cas arithmétiques construits, explicitement réservés aux tests. Exemple : DNI 800/600 W/m² sur deux heures, ouverture 100 m², capture 0,5 et pertes 1 000 W donnent 140 kWh de référence, 70 captés, 2 perdus, 68 de bilan. Ce n’est pas un jeu météo réel ni une calibration de centrale. Tolérances de comparaison flottante uniquement informatiques, pas critères scientifiques.
 - Intégration hébergée et persistance de résultats CSP : **NON TESTÉES**.
 - Décision de validation scientifique, date, auteur et version : **NON ACQUISES**.
 - Aucune finance CSP, autonomie, dimensionnement automatique, optimisation hybride ou modification des autres moteurs dans cette intervention.
+
+## 7. Intégration réellement réalisée et limites
+
+- API v1 réutilisée, aucun nouvel endpoint/table/migration ; `engine=csp`, version 1.0.0. GET Python par ID reste sans dépôt ; lecture des résultats via Lovable.
+- Validation CSP avant coercition des booléens/textes horaires ; paramètres inconnus et stockage refusés, unités et plages explicites. Contrat TypeScript strict avant passage au contrat partagé.
+- Onglet CSP dans Simulations : projet, site via jeu météo validé, paramètres sans défaut scientifique, nature et référence par paramètre, conditions et fluide documentés. Tour/Fresnel/dish non calculés.
+- Le serveur vérifie rôle admin/ingénieur et accès aux données, relit le jeu météo enregistré (le navigateur ne fournit pas une série faisant foi), vérifie site/localité/projet, puis fige provenance et conversion acceptée. Aucune réécriture du jeu natif.
+- Requête/instantané figés dans `simulations.parameters`, sorties selon `simulation_results` et écritures serveur déjà protégées. Courbes de puissances réellement retournées seulement ; valeurs non calculables `null` avec motif visible. Historique conservé.
+- Aucun jeu météo validé disponible dans le compte testé : aucun jeu fictif créé pour déverrouiller l’interface. Aucun résultat CSP de projet persisté ; intégration hébergée bloquée par service non configuré et données/paramètres réels à fournir.
+- Température et fluide sont des conditions documentées, pas des entrées d’un solveur thermodynamique ; aucune compatibilité fabricant calculée. Efficacité et pertes constantes doivent être justifiées pour toute la période. Nuit/refroidissement et comportement à charge partielle restent non simulés.
+
+## 8. Preuves exécutées le 17 octobre 2026
+
+- Python : **110/110 tests réussis**, dont **44 nouveaux cas CSP** et 66 existants réexécutés (deux assertions historiques de capacités adaptées à CSP). Un avertissement de dépréciation Starlette/httpx, aucun échec.
+- TypeScript : **171/171 tests réussis**, dont **24 nouveaux CSP** : données/conversion 8, contrat 7, réponses 5, contrôle serveur source 4. Les 147 tests existants passent.
+- API de laboratoire : validation, calcul, absence d’authentification, clé non configurée, champs inconnus et données invalides testés ; ces tests utilisent une identité simulée explicitement.
+- Service local Uvicorn : un parcours health → validation → calcul CSP avec jeton réel vérifié par Lovable Cloud, puis refus sans authentification. Données arithmétiques uniquement ; aucune simulation de projet enregistrée. Pas Render, pas une liaison hébergée Lovable → Python.
+- Navigateur connecté : onglet CSP visible, un projet accessible, zéro jeu météo validé ; service explicitement indisponible, lancement désactivé, zéro erreur navigateur. Aucun calcul réussi ni donnée de test créée dans la base.
+- Dernière vérification automatique de l’application : **build OK**, aucun diagnostic TypeScript. Aucun build/typecheck manuel supplémentaire exécuté.
+- Nouvelles vérifications RLS en base : **NON EXÉCUTÉES dans cette intervention** (aucun changement de politiques/table). Les protections serveur et les tests source sont exercés ; les preuves DB de l’audit PV précédent ne sont pas comptées comme nouveaux tests CSP.
+- Validation scientifique : **À VALIDER PAR L’INGÉNIEUR** ; coefficients réels, référentiel de pertes, validité du cycle et de ses frontières, cas de référence et critères d’acceptation toujours à fournir.

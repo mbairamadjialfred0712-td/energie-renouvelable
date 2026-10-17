@@ -2,7 +2,7 @@
 from datetime import datetime
 from enum import Enum
 from typing import Any, Literal
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.core.config import SCHEMA_VERSION
 
 
@@ -60,6 +60,18 @@ class SimulationRequest(BaseModel):
     assumptions: dict[str, InputValue] = Field(default_factory=dict, max_length=200)
     source_references: list[SourceReference] = Field(default_factory=list, max_length=200)
     timeseries: TimeSeriesIn | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def strict_csp_series(cls, raw):
+        # CSP-only guard before float coercion; preserve existing PV/battery contracts.
+        if isinstance(raw, dict) and raw.get("engine") == "csp":
+            ts = raw.get("timeseries")
+            if isinstance(ts, dict):
+                for series in ts.get("series", {}).values():
+                    if isinstance(series, dict) and any(isinstance(x, bool) or (x is not None and not isinstance(x, (int, float))) for x in series.get("values", [])):
+                        raise ValueError("CSP : valeurs horaires strictement numériques, ni booléens ni texte.")
+        return raw
 
 
 class SimulationStatus(str, Enum):
