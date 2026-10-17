@@ -21,7 +21,9 @@ function Detail() {
   const { data, isLoading } = useQuery({ queryKey: ["battery-sheet", id], queryFn: () => getDatasheet({ data: { id } }) });
   const { data: access } = useQuery({ queryKey: ["storage-access"], queryFn: () => getStorageAccess() });
   const del = useServerFn(deleteDatasheet);
+  const setStatus = useServerFn(setDatasheetStatus);
   const [editing, setEditing] = useState(false); const [msg, setMsg] = useState<string | null>(null);
+  const changeStatus = async (status: string) => { setMsg(null); try { await setStatus({ data: { id, status: status as never } }); qc.invalidateQueries(); } catch (e) { setMsg((e as Error).message); } };
   if (isLoading) return <WorkspacePage eyebrow="Technologies / Stockage" title="Fiche" description="Chargement…"><span /></WorkspacePage>;
   if (!data) return <WorkspacePage eyebrow="Technologies / Stockage" title="Fiche introuvable" description="Cette fiche n’existe pas."><Link to="/technologies/storage" className="text-primary">Retour</Link></WorkspacePage>;
   const s = data.item;
