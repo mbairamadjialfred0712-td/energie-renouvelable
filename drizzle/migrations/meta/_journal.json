@@ -155,6 +155,13 @@
       "when": 1792225990467,
       "tag": "0021_storage_config_snapshots_history_status",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792227619101,
+      "tag": "0022_trusted_simulation_results",
+      "breakpoints": true
     }
   ]
 }
