@@ -130,6 +130,17 @@ export const setBiomassStatus = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), status: z.enum(Object.keys(BIOMASS_STATUSES) as [keyof typeof BIOMASS_STATUSES]) }).parse(i))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as any;
+    if (data.status === "validated") {
+      const { data: row } = await sb.from("energy_resources").select(SELECT).eq("id", data.id).eq("resource_type", "biomass").maybeSingle();
+      const item = row ? flatten(row) : null;
+      if (!item) throw new Error("Le jeu de données est introuvable.");
+      const missing: string[] = [];
+      if (!item.source || item.source.trim().length < 2) missing.push("la source");
+      if (!item.period_start || !item.period_end) missing.push("la période des données (début et fin)");
+      if (item.quantity === null) missing.push("la quantité disponible");
+      if (item.lhv !== null && !item.lhv_basis) missing.push("la base de mesure du PCI");
+      if (missing.length) throw new Error(`Validation refusée : renseignez d’abord ${missing.join(", ")}. Une ressource ne peut pas être validée sans ces éléments.`);
+    }
     const { data: upd, error } = await sb.from("biomass_resources").update({ biomass_status: data.status }).eq("resource_id", data.id).select("id");
     if (error || !upd?.length) throw new Error("Changement de statut refusé (droits insuffisants).");
     await sb.from("energy_resources").update({ validation_status: legacy(data.status) }).eq("id", data.id);
