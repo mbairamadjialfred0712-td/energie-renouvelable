@@ -41,7 +41,7 @@ export function HybridWorkspace({ data }: { data: HybridData }) {
     catch (e) { setError(e instanceof Error ? e.message : "Enregistrement impossible."); }
     finally { setBusy(false); }
   };
-  return <WorkspacePage eyebrow="Études / Scénarios" title="Systèmes hybrides" description="Configurations de projet · résultats individuels · bilan chronologique" action={data.canWrite ? <Button size="sm" onClick={() => { setDraft(emptyConfig()); setTab("preparation"); setError(""); }}><Plus />Nouvelle configuration</Button> : undefined}>
+  return <div className="[&_header]:grid-cols-1 sm:[&_header]:grid-cols-[minmax(0,1fr)_auto] [&_header_h1]:whitespace-normal [&_header_h1]:overflow-visible [&_header_h1]:text-clip"><WorkspacePage eyebrow="Études / Scénarios" title="Systèmes hybrides" description="Configurations de projet · résultats individuels · bilan chronologique" action={data.canWrite ? <Button size="sm" onClick={() => { setDraft(emptyConfig()); setTab("preparation"); setError(""); }}><Plus />Nouvelle configuration</Button> : undefined}>
     <div className="grid min-w-0 gap-6 xl:grid-cols-[240px_minmax(0,1fr)]">
       <section className="min-w-0" aria-label="Configurations hybrides"><h2 className="mb-3 text-sm font-semibold">Configurations enregistrées</h2>
         {data.configs.length === 0 ? <div className="border border-dashed border-border p-5 text-sm text-muted-foreground">Aucune configuration hybride.</div> : <div className="space-y-2">{data.configs.map(r => <Button key={r.config.id} variant={selected === r.config.id && !draft ? "secondary" : "outline"} className="h-auto w-full justify-start whitespace-normal py-3 text-left" onClick={() => { setSelected(r.config.id); setDraft(null); setError(""); }}><GitMerge className="shrink-0" /><span className="min-w-0 break-words">{r.config.name}<span className="mt-1 block text-xs font-normal text-muted-foreground">{r.config.components.map(c => TECHNOLOGIES[c.technology]).join(" + ") || "Brouillon"}</span></span></Button>)}</div>}
@@ -83,5 +83,5 @@ export function HybridWorkspace({ data }: { data: HybridData }) {
         </>}
       </div>
     </div>
-  </WorkspacePage>;
+  </WorkspacePage></div>;
 }
