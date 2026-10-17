@@ -63,6 +63,25 @@ class SimulationRequest(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
+    def strict_battery_numbers(cls, raw):
+        if isinstance(raw, dict) and raw.get("engine") == "battery":
+            for key, item in (raw.get("input_data") or {}).items():
+                if key != "strategy" and isinstance(item, dict):
+                    value = item.get("value")
+                    if isinstance(value, bool) or not isinstance(value, (int, float)):
+                        raise ValueError("Batterie : paramètres strictement numériques requis.")
+            ts = raw.get("timeseries")
+            if isinstance(ts, dict):
+                for series in (ts.get("series") or {}).values():
+                    if isinstance(series, dict) and any(isinstance(v, bool) or (v is not None and not isinstance(v, (int, float))) for v in series.get("values", [])):
+                        raise ValueError("Batterie : valeurs horaires numériques sans coercition.")
+            peak = (raw.get("assumptions") or {}).get("peak_hours")
+            if isinstance(peak, dict) and isinstance(peak.get("value"), list) and any(isinstance(v, bool) or not isinstance(v, (int, float)) for v in peak["value"]):
+                raise ValueError("Batterie : heures numériques explicites requises.")
+        return raw
+
+    @model_validator(mode="before")
+    @classmethod
     def strict_biomass_numbers(cls, raw):
         if isinstance(raw, dict) and raw.get("engine") == "biomass":
             for key, item in (raw.get("input_data") or {}).items():

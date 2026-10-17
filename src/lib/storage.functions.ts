@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { APPLICATIONS, CHEMISTRIES, FIELDS, METHODS, STATUSES, buildConfigSnapshot, configErrors, configStatusChangeErrors, sheetErrors, statusChangeErrors, type ConfigSnapshot, type Sheet } from "@/features/storage/battery-model";
 
+import { snapshotForSave } from "@/features/storage/snapshot-policy";
+
 async function access(sb: any, userId: string) {
   const { data } = await sb.from("user_roles").select("role").eq("user_id", userId);
   const roles: string[] = (data ?? []).map((r: any) => r.role);
@@ -123,16 +125,18 @@ export const saveStorageConfig = createServerFn({ method: "POST" }).middleware([
     const { data: ds, error: eDs } = await sb.from("battery_datasheets").select("*").eq("id", data.datasheet_id).maybeSingle();
     if (eDs || !ds) throw new Error("La fiche technique sélectionnée est introuvable ou inaccessible.");
     const { id, ...row } = data;
+    let oldConfig: {datasheet_id:string;snapshot:ConfigSnapshot|null;snapshot_at:string|null} | null = null;
     if (id) {
-      const { data: existing, error: e0 } = await sb.from("project_storage_configs").select("status").eq("id", id).maybeSingle();
+      const { data: existing, error: e0 } = await sb.from("project_storage_configs").select("status,datasheet_id,snapshot,snapshot_at").eq("id", id).maybeSingle();
       if (e0 || !existing) throw new Error("La configuration est introuvable ou inaccessible.");
       if (row.status !== existing.status) throw new Error("Le statut ne se change pas depuis le formulaire : utilisez l’action de changement de statut de la configuration.");
+      oldConfig = existing;
     } else if (row.status !== "unverified") {
       throw new Error("Une nouvelle configuration démarre au statut « Non vérifié » : la validation passe par l’action dédiée.");
     }
     // Instantané figé des caractéristiques de la fiche au moment de l'enregistrement : toute modification ultérieure de la fiche ne change pas les valeurs historiques.
-    const snap = buildConfigSnapshot(norm(ds) as Sheet, data.datasheet_id, new Date().toISOString());
-    const payload = { ...row, snapshot: snap, snapshot_at: snap.meta.snapshot_at };
+    const frozen = snapshotForSave(oldConfig, norm(ds) as Sheet, data.datasheet_id, new Date().toISOString());
+    const payload = { ...row, ...frozen };
     const q = id ? sb.from("project_storage_configs").update(payload).eq("id", id).select("id") : sb.from("project_storage_configs").insert({ ...payload, owner_id: project.owner_id, created_by: context.userId }).select("id");
     const { data: r, error } = await q;
     if (error || !r?.length) throw new Error("La configuration n’a pas pu être enregistrée (droits insuffisants ?).");

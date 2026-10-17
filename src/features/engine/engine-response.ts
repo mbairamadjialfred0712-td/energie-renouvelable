@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ENGINE_SCHEMA_VERSION, simulationResponse, type SimulationRequest } from "./engine-contract";
 import { checkWindResponse } from "./wind-contract";
 import { checkBiomassResponse } from "./biomass-contract";
+import { checkBatteryResponse } from "./battery-contract";
 
 /** Reject unrelated, partial or invalid replies before any success is persisted. */
 export function assertCompletedResponse(request: SimulationRequest, out: z.infer<typeof simulationResponse>, id: string) {
@@ -9,6 +10,7 @@ export function assertCompletedResponse(request: SimulationRequest, out: z.infer
   if (request.engine_version && request.engine_version !== out.engine_version) throw new Error("Version du moteur différente de la version demandée.");
   if (request.engine === "wind") { checkWindResponse(request, out); return; }
   if (request.engine === "biomass") { checkBiomassResponse(request, out); return; }
+  if (request.engine === "battery") { checkBatteryResponse(request, out); return; }
   if (request.engine === "csp") {
     const n = request.timeseries?.timestamps.length;
     for (const k of ["incident", "captured", "thermal_loss", "thermal_balance"]) {

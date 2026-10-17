@@ -187,3 +187,16 @@ describe("configStatusChangeErrors — statut des configurations projet", () => 
     expect(configStatusChangeErrors(cfg, "unverified", "in_review")).toEqual([]);
   });
 });
+
+it('refuses invalid capacity estimates rather than returning invented energy',()=>{
+ expect(usableEstimate({...base(),energy_kwh:10,dod_pct:101})).toBeNull();
+ expect(usableEstimate({...base(),energy_kwh:Infinity,dod_pct:90})).toBeNull();
+ expect(energyCheck({...base(),nominal_voltage_v:Infinity,capacity_ah:100,energy_kwh:5})).toBeNull();
+});
+it('rejects nonfinite retained storage values',()=>{
+ const c={module_count:1,series_count:null,parallel_count:null,soc_min_pct:NaN,soc_max_pct:90,rte_pct:null,charge_eff_pct:null,discharge_eff_pct:null,usable_energy_limit_kwh:Infinity,retained_cost:null,currency:null};
+ expect(configErrors(c).length).toBe(2);
+});
+
+it('level A computes nominal V×Ah only without declared energy',async()=>{const {nominalCapacity}=await import('./battery-model');expect(nominalCapacity({...base(),nominal_voltage_v:48,capacity_ah:100})?.kwh).toBe(4.8);expect(nominalCapacity({...base(),nominal_voltage_v:48,capacity_ah:100,energy_kwh:6})).toMatchObject({kwh:6,basis:'declared'});});
+it('level A refuses missing or invalid nominal values',async()=>{const {nominalCapacity}=await import('./battery-model');expect(nominalCapacity(base())).toBeNull();expect(nominalCapacity({...base(),nominal_voltage_v:-48,capacity_ah:100})).toBeNull();expect(nominalCapacity({...base(),energy_kwh:NaN,nominal_voltage_v:48,capacity_ah:100})).toBeNull();});

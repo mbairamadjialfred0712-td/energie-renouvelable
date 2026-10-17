@@ -134,3 +134,51 @@ def test_energy_balance_no_warnings():
     r = out.results
     served = r["pv_self_consumed_direct"].value + r["energy_served_by_battery"].value
     assert served + r["energy_not_served"].value == pytest.approx(r["demand_total_energy"].value, abs=0.01)
+
+@pytest.mark.parametrize('value',[-1,101,float('nan'),float('inf')])
+def test_invalid_initial_soc_refused(value):
+    r=req([0],[1],overrides={'initial_soc_pct':(value,'%')})
+    assert eng.validate(r)[0]
+    with pytest.raises(ValueError):eng.run(r)
+
+@pytest.mark.parametrize('value',[0,100])
+def test_initial_soc_not_silently_clipped(value):
+    r=req([0],[1],overrides={'initial_soc_pct':(value,'%')})
+    assert any(e.code=='invalid_initial_soc' for e in eng.validate(r)[0])
+
+@pytest.mark.parametrize('value',[1.5,24])
+def test_peak_hours_integer_only(value):
+    r=req([0],[1],strategy='peak_shaving',peak=[value])
+    assert eng.validate(r)[0]
+
+@pytest.mark.parametrize('target',['parameter','series'])
+def test_raw_boolean_not_coerced(target):
+    body=req([1],[1]).model_dump(mode='json')
+    if target=='parameter':body['input_data']['usable_energy_kwh']['value']=True
+    else:body['timeseries']['series']['pv_energy']['values']=[True]
+    with pytest.raises(ValueError):SimulationRequest.model_validate(body)
+
+
+def test_fractional_hour_rejected():
+    r=req([0],[1]);r.timeseries.timestamps=['2024-01-01T00:00:00.000001']
+    assert eng.validate(r)[0]
+
+
+def test_unrounded_conservation_and_dc_cycles():
+    r=req([0.123456789,0],[0,0.032198765])
+    o=eng.run(r);c=o.results['energy_charged'].value;d=o.results['energy_served_by_battery'].value
+    assert o.results['final_soc'].value==pytest.approx(5+c*.95-d/.95,abs=1e-12)
+    assert o.results['equivalent_full_cycles'].value==pytest.approx(d/.95/8,abs=1e-12)
+    assert o.timeseries['battery_charge'].values[0]==0.123456789
+
+
+def test_peak_alias_documented_not_optimized():
+    r=req([0],[1],strategy='peak_shaving',peak=[23])
+    assert any(w.code=='strategy_alias' for w in eng.validate(r)[1])
+    assert eng.run(r).timeseries==eng.run(req([0],[1])).timeseries
+
+
+def test_raw_peak_boolean_refused():
+    body=req([0],[1],strategy='peak_shaving',peak=[1]).model_dump(mode='json')
+    body['assumptions']['peak_hours']['value']=[True]
+    with pytest.raises(ValueError):SimulationRequest.model_validate(body)
