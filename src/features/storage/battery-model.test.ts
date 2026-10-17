@@ -153,7 +153,7 @@ describe("instantané de configuration — buildConfigSnapshot / snapshotDiff", 
   });
   it("ne fabrique pas de valeurs : les champs absents de la fiche restent null", () => {
     const snap = buildConfigSnapshot(base(), "id", "2026-10-17T08:00:00.000Z");
-    expect(snap.sheet.energy_kwh).toBeNull();
+    expect(snap.sheet["energy_kwh"]).toBeNull();
     expect(snap.sheet.cycles).toBeUndefined();
   });
   it("les totaux calculés depuis l’instantané ne changent pas quand la fiche est modifiée ensuite", () => {

@@ -171,7 +171,7 @@ export function buildConfigSnapshot(s: Sheet, datasheetId: string, at: string): 
   const units: Record<string, string> = {};
   for (const f of FIELDS) if (f.unit) units[f.key] = f.unit;
   return {
-    meta: { datasheet_id: datasheetId, sheet_version: s.sheet_version ?? null, status: s.status, source: s.source, doc_url: s.doc_url ?? null, acquisition_method: s.acquisition_method ?? null, consulted_on: s.consulted_on ?? null, published_on: s.published_on ?? null, snapshot_at: at, units },
+    meta: { datasheet_id: datasheetId, sheet_version: s["sheet_version"] ?? null, status: s.status, source: s.source, doc_url: s["doc_url"] ?? null, acquisition_method: s["acquisition_method"] ?? null, consulted_on: s["consulted_on"] ?? null, published_on: s["published_on"] ?? null, snapshot_at: at, units },
     sheet,
   };
 }
