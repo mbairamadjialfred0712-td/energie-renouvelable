@@ -9,3 +9,6 @@
 
 ## En attente (bloquant externe)
 - Exécution E2E PV et batterie : le moteur Python n'est pas en ligne (Render + secrets SCIENTIFIC_ENGINE_URL/KEY). Tant qu'il n'est pas déployé, aucune simulation ne peut tourner et aucune simulation PV terminée n'existe pour tester la liaison production → LCOE.
+
+## En cours
+- [ ] PROMPT A1 : audit + finalisation du module Ressources biomasse (champs, potentiels, validations, RLS, tests)
