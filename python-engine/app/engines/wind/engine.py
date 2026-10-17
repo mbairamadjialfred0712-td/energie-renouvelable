@@ -22,6 +22,16 @@ def speed_ms(value, unit):
     raise ValueError("Unité vent non prise en charge : m/s, km/h ou kn requis.")
 
 
+def finite_sum(values):
+    try:
+        result = math.fsum(values)
+    except OverflowError as exc:
+        raise ValueError("Somme non finie ; vérifier les ordres de grandeur.") from exc
+    if not math.isfinite(result):
+        raise ValueError("Somme non finie.")
+    return result
+
+
 class WindEngine:
     name = "wind"
     version = "1.0.0"
@@ -50,8 +60,8 @@ class WindEngine:
             unit = self.numeric.get(k) or self.arrays.get(k) or "-"
             if item.unit != unit: err(k, f"Unité {unit} requise.")
             if k in self.numeric:
-                if isinstance(item.value, bool) or not isinstance(item.value, (int, float)) or not math.isfinite(item.value) or item.value <= 0:
-                    err(k, "Nombre fini strictement positif requis.")
+                if isinstance(item.value, bool) or not isinstance(item.value, (int, float)) or not math.isfinite(item.value) or (item.value < 0 if k == "cut_in" else item.value <= 0):
+                    err(k, "Nombre fini non négatif requis pour démarrage, strictement positif sinon.")
             elif k in self.arrays:
                 if not isinstance(item.value, list) or len(item.value) < 2 or len(item.value) > 1000 or any(isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(x) or x < 0 for x in item.value):
                     err(k, "Courbe : 2 à 1 000 nombres finis non négatifs requis.")
@@ -91,7 +101,16 @@ class WindEngine:
                 elif k == "wind_direction":
                     if s.unit != "°" or any(isinstance(x, bool) or not isinstance(x, (int,float)) or not math.isfinite(x) or not 0 <= x < 360 for x in s.values): raise ValueError("Directions en degrés dans [0,360[, sans valeurs manquantes.")
             except ValueError as e: err(k, str(e))
+        if level == "B" and not errors and val("rotor_diameter") is not None:
+            try:
+                area = math.pi * (val("rotor_diameter") / 2) ** 2
+                if not math.isfinite(area) or not math.isclose(area, val("swept_area"), rel_tol=1e-9):
+                    err("swept_area", "Surface incompatible avec A = pi × (diamètre / 2)².")
+            except OverflowError:
+                err("rotor_diameter", "Surface du rotor non finie.")
         if level == "C" and not errors:
+            if any(req.input_data[k].source != req.input_data["turbine_reference"].source for k in ("curve_conditions", "curve_speeds", "curve_powers")):
+                err("curve", "Courbe, conditions et turbine doivent partager la même référence documentaire.")
             if val("hub_height") != val("measurement_height"): err("hub_height", "Hauteurs différentes : extrapolation non prise en charge, aucune valeur alpha par défaut.")
             if val("air_density") != val("curve_density"): err("curve_density", "Densité incompatible avec la courbe ; correction non prise en charge.")
             xs, ys = val("curve_speeds"), val("curve_powers")
@@ -124,7 +143,7 @@ class WindEngine:
         def scalar(k,v,unit,method):
             if v is not None and not math.isfinite(v): raise ValueError("Résultat non fini.")
             results[k] = ResultValue(value=v, unit=unit, method=method)
-        scalar("mean_wind_speed", math.fsum(speeds)/len(speeds), "m/s", "Moyenne arithmétique des moyennes horaires, pas moyenne de v³")
+        scalar("mean_wind_speed", finite_sum(speeds)/len(speeds), "m/s", "Moyenne arithmétique des moyennes horaires, pas moyenne de v³")
         scalar("min_wind_speed", min(speeds), "m/s", "Minimum observé sur la période")
         scalar("max_wind_speed", max(speeds), "m/s", "Maximum observé sur la période")
         scalar("observed_hours", len(speeds), "h", "Nombre d’intervalles UTC continus de 1 h")
@@ -142,25 +161,27 @@ class WindEngine:
         def power(k, values, method):
             if any(not math.isfinite(x) for x in values): raise ValueError("Puissance non finie.")
             series[k] = SeriesOut(values=values, unit="W", method=method)
-            scalar(k.replace("_power","_energy"), math.fsum(values)/1000, "kWh", "Σ P_h × 1 h / 1000 ; "+method)
+            scalar(k.replace("_power","_energy"), finite_sum(values)/1000, "kWh", "Σ P_h × 1 h / 1000 ; "+method)
         level = val("level")
         if level == "B":
-            try: powers = [.5*val("air_density")*val("swept_area")*v**3 for v in speeds]
+            area = math.pi * (val("rotor_diameter") / 2) ** 2 if "rotor_diameter" in req.input_data else val("swept_area")
+            try: powers = [.5*val("air_density")*area*v**3 for v in speeds]
             except OverflowError: raise ValueError("Flux non fini.")
             power("kinetic_power", powers, "0,5 × rho × A × v³ ; FLUX CINÉTIQUE, PAS ÉLECTRIQUE")
-            scalar("mean_kinetic_power", math.fsum(powers)/len(powers), "W", "Moyenne de 0,5 rho A v³, jamais 0,5 rho A moyenne(v)³")
+            scalar("mean_kinetic_power", finite_sum(powers)/len(powers), "W", "Moyenne de 0,5 rho A v³, jamais 0,5 rho A moyenne(v)³")
         if level == "C":
             xs, ys = val("curve_speeds"), val("curve_powers")
             powers = []
             for v in speeds:
                 i = min(bisect_right(xs,v)-1, len(xs)-2)
-                p = ys[i] + (ys[i+1]-ys[i])*(v-xs[i])/(xs[i+1]-xs[i])
+                weight = (v-xs[i])/(xs[i+1]-xs[i])
+                p = (1-weight)*ys[i] + weight*ys[i+1]
                 # At documented cut-out, stop is explicit, not an extrapolated clamp.
                 if "cut_out" in req.input_data and v >= val("cut_out"): p = 0
                 if "cut_in" in req.input_data and v < val("cut_in"): p = 0
                 powers.append(p)
             power("turbine_power", powers, "Interpolation linéaire de la courbe fournie ; conditions compatibles ; brut sans pertes supposées")
-            scalar("capacity_factor", math.fsum(powers)/(val("rated_power")*len(powers))*100, "%", "100 × énergie brute / (puissance nominale × heures observées)")
+            scalar("capacity_factor", finite_sum(powers)/len(powers)/val("rated_power")*100, "%", "100 × énergie brute / (puissance nominale × heures observées)")
         else:
             reasons["turbine_energy"] = "Niveau C non demandé ; courbe et conditions de turbine non appliquées. Flux cinétique non électrique."
             scalar("turbine_energy", None, "kWh", reasons["turbine_energy"])
@@ -176,7 +197,7 @@ class WindEngine:
                 for t,p in zip(ts.timestamps,s.values): groups.setdefault(t[:length],[]).append(p)
                 for date,values in groups.items():
                     n = 24 if kind == "daily" else calendar.monthrange(int(date[:4]),int(date[5:7]))[1]*24
-                    if len(values) == n: scalar(f"{kind}_{key.replace('_power','_energy')}_{date}", math.fsum(values)/1000,"kWh","Somme des heures UTC complètes uniquement")
+                    if len(values) == n: scalar(f"{kind}_{key.replace('_power','_energy')}_{date}", finite_sum(values)/1000,"kWh","Somme des heures UTC complètes uniquement")
         if level == "C" and annual: scalar("annual_turbine_energy",results["turbine_energy"].value,"kWh","Année civile complète observée, aucune annualisation")
         else:
             scalar("annual_turbine_energy",None,"kWh","Indisponible : niveau C et année civile complète requis")
