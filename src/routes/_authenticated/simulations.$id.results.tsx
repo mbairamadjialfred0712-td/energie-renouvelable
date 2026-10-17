@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { WorkspacePage, EmptyState } from "@/components/app/page";
 import { getSimulation } from "@/lib/engine.functions";
 import { CSP_LABELS } from "@/features/engine/csp-contract";
+import { CspResults } from "@/features/engine/csp-results";
 
 const opts = (id: string) => queryOptions({ queryKey: ["simulation", id], queryFn: () => getSimulation({ data: { id } }) });
 const STATUS: Record<string, string> = { draft: "Brouillon", queued: "En attente", running: "En cours", completed: "Terminée", failed: "Échouée" };
@@ -42,6 +43,7 @@ function Results() {
             <h2 className="mb-3 font-semibold">Énergie AC mensuelle (kWh, somme des heures)</h2>
             <div className="h-64"><ResponsiveContainer><BarChart data={monthly}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} /><Tooltip /><Bar dataKey="kWh" fill="var(--color-primary)" /></BarChart></ResponsiveContainer></div>
           </section>}
+          {data.cspSeries.length > 0 && <CspResults series={data.cspSeries} start={data.firstTimestamp} source={data.sourceSnapshot} />}
           {meta.warnings && meta.warnings.length > 0 && <section className="rounded-lg border p-4 text-sm"><h2 className="font-semibold">Avertissements</h2><ul className="mt-2 list-disc pl-6">{meta.warnings.map((w, i) => <li key={i}>{w.message}</li>)}</ul></section>}
         </>}
         <section className="rounded-lg border p-4 text-sm">

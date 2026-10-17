@@ -160,6 +160,8 @@ export const getSimulation = createServerFn({ method: "GET" }).middleware([requi
     return {
       simulation: { id: sim.data.id, name: sim.data.name, status: sim.data.status, engine_version: sim.data.engine_version, created_at: sim.data.created_at },
       inputs: params.request?.input_data ?? {},
+      cspSeries: params.request?.input_data?.["technology"]?.value === "parabolic_trough" && sim.data.status === "completed" ? (res.data ?? []).filter((r) => r.result_type.startsWith("series_")).map((r) => ({ key: r.result_type.slice(7), unit: r.unit, values: ((r.timeseries as { values?: number[] } | null)?.values ?? []), method: r.calculation_method })) : [],
+      sourceSnapshot: params.request?.input_data?.["technology"]?.value === "parabolic_trough" ? JSON.stringify((sim.data.parameters as { source_snapshot?: Json } | null)?.source_snapshot ?? null, null, 2) : null,
       seriesMeta: Object.fromEntries(Object.entries(series).map(([k, v]) => [k, { unit: v.unit, nature: v.nature, source: v.source ?? null }])),
       assumptions: Object.fromEntries(Object.entries((params.request as { assumptions?: Record<string, { value: Json; unit?: string; nature: string }> } | undefined)?.assumptions ?? {}).map(([k, v]) => [k, { value: String(v.value), unit: v.unit ?? null, nature: String(v.nature) }])),
       lastTimestamp: params.request?.timeseries?.timestamps?.at(-1) ?? null,

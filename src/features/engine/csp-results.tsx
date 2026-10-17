@@ -1,0 +1,9 @@
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
+
+const labels: Record<string, string> = { incident_power: "Directe de référence", captured_power: "Thermique captée", thermal_loss_power: "Pertes thermiques", thermal_balance_power: "Bilan thermique signé", useful_thermal_power: "Thermique utile", gross_electric_power: "Électrique brute", auxiliary_power: "Auxiliaires", net_electric_power: "Électrique nette" };
+export function CspResults({ series, start, source }: { series: { key: string; unit: string | null; values: number[]; method: string | null }[]; start: string | null; source: string | null }) {
+  return <div className="space-y-6">
+    {series.map((s) => <section key={s.key} className="border-t pt-4"><h2 className="font-semibold">{labels[s.key] ?? s.key} ({s.unit})</h2><p className="text-xs text-muted-foreground">{s.method}</p><div className="mt-3 h-56"><ResponsiveContainer><LineChart data={s.values.map((v, i) => ({ value: v, timestamp: start ? new Date(Date.parse(start) + i * 3600000).toISOString().slice(0, 16) : String(i) }))}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="timestamp" minTickGap={70} fontSize={10} /><YAxis fontSize={11} /><Tooltip /><Line name={labels[s.key] ?? s.key} dataKey="value" stroke="var(--color-primary)" dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer></div></section>)}
+    {source && <details className="border-t pt-4"><summary className="cursor-pointer text-sm font-semibold">Provenance figée du jeu météo et transformation</summary><pre className="mt-3 overflow-auto whitespace-pre-wrap break-words text-xs text-muted-foreground">{source}</pre></details>}
+  </div>;
+}
