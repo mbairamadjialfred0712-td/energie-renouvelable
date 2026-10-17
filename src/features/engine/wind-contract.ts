@@ -83,7 +83,9 @@ export function checkWindResponse(request: SimulationRequest, out: { results: Re
     if (!Array.isArray(xs) || !Array.isArray(ys)) throw new Error("Courbe absente du snapshot.");
     for (const [h,v] of speeds.values.entries()) {
       if (v < (xs[0] ?? Infinity) || v > (xs.at(-1) ?? -Infinity)) throw new Error("Vitesse hors courbe.");
-      const i=Math.min(xs.findLastIndex((x)=>x<=v),xs.length-2), x=xs[i], next=xs[i+1], y=ys[i], ny=ys[i+1];
+      let i = 0;
+      while (i < xs.length-2 && (xs[i+1] ?? Infinity) <= v) i++;
+      const x=xs[i], next=xs[i+1], y=ys[i], ny=ys[i+1];
       if (x === undefined || next === undefined || y === undefined || ny === undefined) throw new Error("Courbe incomplète.");
       const w=(v-x)/(next-x), cutIn=request.input_data["cut_in"]?.value, cutOut=request.input_data["cut_out"]?.value;
       const expected=(typeof cutIn === "number" && v<cutIn || typeof cutOut === "number" && v>=cutOut) ? 0 : (1-w)*y+w*ny;
