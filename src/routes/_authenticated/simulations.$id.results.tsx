@@ -7,6 +7,7 @@ import { CSP_LABELS } from "@/features/engine/csp-contract";
 import { CspResults } from "@/features/engine/csp-results";
 import { WIND_LABELS } from "@/features/engine/wind-contract";
 import { WindResults } from "@/features/engine/wind-results";
+import { BIOMASS_LABELS, BIOMASS_INPUT_LABELS } from "@/features/engine/biomass-contract";
 
 const opts = (id: string) => queryOptions({ queryKey: ["simulation", id], queryFn: () => getSimulation({ data: { id } }) });
 const STATUS: Record<string, string> = { draft: "Brouillon", queued: "En attente", running: "En cours", completed: "Terminée", failed: "Échouée" };
@@ -40,7 +41,7 @@ function Results() {
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">Valeurs calculées par {s.engine_version ?? "le moteur scientifique"}. Résultat indicatif : modèle et paramètres à valider par l’ingénieur.</p>
           {data.cspLimits && <p className="border-l-2 border-primary pl-4 text-sm">{data.cspLimits}</p>}
           <div className="grid gap-4 sm:grid-cols-2">
-            {scalars.map((r) => <div key={r.result_type} className="rounded-lg border p-4"><p className="text-xs text-muted-foreground">{WIND_LABELS[r.result_type] ?? CSP_LABELS[r.result_type] ?? LABELS[r.result_type] ?? r.result_type}</p><p className="mt-1 text-2xl font-semibold">{r.value === null ? "Indisponible" : r.value.toLocaleString("fr-FR")} <span className="text-base font-normal">{r.value === null ? "" : r.unit}</span></p><p className="mt-1 text-xs text-muted-foreground">{r.calculation_method}</p></div>)}
+            {scalars.map((r) => <div key={r.result_type} className="rounded-lg border p-4"><p className="text-xs text-muted-foreground">{(data.biomassSource ? BIOMASS_LABELS[r.result_type] : undefined) ?? WIND_LABELS[r.result_type] ?? CSP_LABELS[r.result_type] ?? LABELS[r.result_type] ?? r.result_type}</p><p className="mt-1 text-2xl font-semibold">{r.value === null ? "Indisponible" : r.value.toLocaleString("fr-FR")} <span className="text-base font-normal">{r.value === null ? "" : r.unit}</span></p><p className="mt-1 text-xs text-muted-foreground">{r.calculation_method}</p></div>)}
           </div>
           {monthly.length > 0 && <section className="rounded-lg border p-4">
             <h2 className="mb-3 font-semibold">Énergie AC mensuelle (kWh, somme des heures)</h2>
@@ -52,10 +53,11 @@ function Results() {
         </>}
         <section className="rounded-lg border p-4 text-sm">
           <h2 className="font-semibold">Traçabilité des entrées</h2>
+          {data.biomassSource && <><p className="mt-2">Bilan non électrique · simulation {s.id} · {String(data.inputs["period_start"]?.value ?? "—")} → {String(data.inputs["period_end"]?.value ?? "—")}</p><details className="mt-3"><summary className="cursor-pointer font-medium">Instantané de la fiche, sources et déclarations</summary><pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs">{data.biomassSource}</pre></details></>}
           <p className="mt-1 text-muted-foreground">Première heure : {data.firstTimestamp ?? "—"} · UTC{data.utcOffset !== null && data.utcOffset >= 0 ? "+" : ""}{data.utcOffset ?? "?"} · début d’heure</p>
           <p className="mt-1 text-muted-foreground">Dernière heure : {data.lastTimestamp ?? "—"} · Calcul terminé : {data.calculatedAt ?? (s.status === "completed" ? "Non enregistré dans l’historique ancien" : "Non exécuté ou non terminé")}</p>
           <ul className="mt-2 grid gap-1 sm:grid-cols-2">{Object.entries(data.seriesMeta).map(([k, v]) => <li key={k}>{k} ({v.unit}) — {v.nature}{v.source ? ` · ${v.source}` : ""}</li>)}</ul>
-          <ul className="mt-2 grid gap-1 sm:grid-cols-2">{Object.entries(data.inputs).map(([k, v]) => <li key={k}>{k} = {String(v.value)} {v.unit} — {v.nature}</li>)}</ul>
+          <ul className="mt-2 grid gap-1 sm:grid-cols-2">{Object.entries(data.inputs).map(([k, v]) => <li key={k}>{(data.biomassSource ? BIOMASS_INPUT_LABELS[k] : undefined) ?? k} = {String(v.value)} {v.unit} — {v.nature}</li>)}</ul>
           <ul className="mt-2 grid gap-1 sm:grid-cols-2">{Object.entries(data.assumptions).map(([k, v]) => <li key={k}>{k} = {String(v.value)} {v.unit} — {v.nature}</li>)}</ul>
         </section>
       </div>
