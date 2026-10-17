@@ -1,6 +1,6 @@
 # Moteur éolien — audit et conception PROMPT 11
 
-Date : 17 octobre 2026. Audit TERMINÉ ; conventions V1 approuvées par Joël dans cette conversation ; moteur wind 1.0.0 enregistré et implémenté. Validation physique À VALIDER PAR L’INGNÉNIEUR ; intégration hébergée BLOQUÉE. Les sections d’audit ci-dessous décrivent l’état avant développement ; le bilan final figure en section 7.
+Date : 17 octobre 2026. Audit TERMINÉ ; conventions V1 approuvées par Joël dans cette conversation ; moteur wind 1.0.0 enregistré et implémenté. Validation physique À VALIDER PAR L’INGÉNIEUR ; intégration hébergée BLOQUÉE. Les sections d’audit ci-dessous décrivent l’état avant développement ; le bilan final figure en section 7.
 
 ## 1. Existant inspecté et réutilisable
 
@@ -84,7 +84,11 @@ Vent 5 et 10 m/s : moyenne 7,5 ; avec rho=1,2 et A=100, flux 7 500 et 60 000 W, 
 
 ### Vérifications et limites
 
-Tests finaux et contrôle local consignés après exécution. Interface connectée : A/B/C visibles, vérification d’entrées incomplètes affiche un refus, calcul désactivé sans service et sans jeu validé, 0 erreur navigateur. Aucun résultat ou jeu météo fictif sauvegardé.
+Tests finaux : **165 Python réussis** (116 existants + 49 nouveaux cas éoliens), 1 avertissement Starlette/httpx ; **204 TypeScript réussis, 16 fichiers** (175 existants + 29 nouveaux : 21 contrat/réponse/sélection, 8 préparation serveur). Commandes : `/tmp/pv-audit-venv/bin/python -m pytest tests -q` depuis `python-engine`, `bunx vitest run` depuis la racine. Tests de capacités existants mis à jour pour wind désormais disponible ; aucune assertion scientifique PV/CSP relâchée. Vérification automatique : build OK.
+
+Service local Uvicorn réellement démarré : health → validation → calcul C avec identité utilisateur vérifiée par Lovable Cloud réussi ; sans authentification, refus et aucune sortie de succès. Cas arithmétique uniquement, aucune sauvegarde en base ; ce n’est pas Render ni l’intégration hébergée Lovable–Python.
+
+Interface connectée : A/B/C visibles, vérification d’entrées incomplètes affiche un refus, calcul désactivé sans service et sans jeu validé, 0 erreur navigateur. Aucun résultat ou jeu météo fictif sauvegardé.
 
 Persistance réussie hébergée, injection réelle d’échecs de sauvegarde/finalisation, rôles différents en base sur un lancement éolien : NON TESTÉ. La préparation serveur est testée avec doublures d’accès, pas présentée comme un test réel RLS. Transport existant et contrôles communs conservés.
 
