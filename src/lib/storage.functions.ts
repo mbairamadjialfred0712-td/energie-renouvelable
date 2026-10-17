@@ -57,6 +57,22 @@ export const saveDatasheet = createServerFn({ method: "POST" }).middleware([requ
     return { id: ins.id as string };
   });
 
+const statusSchema = z.object({ id: z.string().uuid(), status: z.enum(Object.keys(STATUSES) as [keyof typeof STATUSES]) });
+/** Changement de statut dédié : réservé admin/ingénieur, « validé » exige la fiche complète (source + méthode + caractéristique électrique). */
+export const setDatasheetStatus = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => statusSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as any;
+    if (!(await access(sb, context.userId)).canWrite) throw new Error("Seuls les administrateurs et ingénieurs peuvent changer le statut d’une fiche.");
+    const { data: row, error } = await sb.from("battery_datasheets").select("*").eq("id", data.id).maybeSingle();
+    if (error || !row) throw new Error("La fiche est introuvable ou inaccessible.");
+    const errs = statusChangeErrors(norm(row), row.status, data.status);
+    if (errs.length) throw new Error(errs.join(" "));
+    const { data: up, error: e2 } = await sb.from("battery_datasheets").update({ status: data.status }).eq("id", data.id).select("id");
+    if (e2 || !up?.length) throw new Error(e2?.message || "Le statut n’a pas pu être modifié (droits insuffisants ?).");
+    return { ok: true };
+  });
+
 export const deleteDatasheet = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
