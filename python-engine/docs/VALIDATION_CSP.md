@@ -91,3 +91,41 @@ Ces références ne valident pas des coefficients absents ni un bilan réduit co
 - Dernière vérification automatique de l’application : **build OK**, aucun diagnostic TypeScript. Aucun build/typecheck manuel supplémentaire exécuté.
 - Nouvelles vérifications RLS en base : **NON EXÉCUTÉES dans cette intervention** (aucun changement de politiques/table). Les protections serveur et les tests source sont exercés ; les preuves DB de l’audit PV précédent ne sont pas comptées comme nouveaux tests CSP.
 - Validation scientifique : **À VALIDER PAR L’INGÉNIEUR** ; coefficients réels, référentiel de pertes, validité du cycle et de ses frontières, cas de référence et critères d’acceptation toujours à fournir.
+
+## 9. Contrôle de conformité PROMPT 10.1 — 17 octobre 2026
+
+### TERMINÉ — unités et modèle
+
+DNI requis en W/m² moyen horaire, surface en m², séries de puissance en W ; intégration horaire en kWh = Σ W × 1 h / 1000. Wh/m² natif accepté uniquement par division explicite par l'intervalle documenté de 1 h ; kWh/m² non pris en charge, jamais accepté comme puissance. Aucun GHI substitué. Rendement optique effectif et rendement de cycle dans ]0,1], pertes/auxiliaires non négatifs en W, aucune valeur par défaut. Bilan négatif conservé signé ; net négatif signifie import, pas production positive. Agrégations seulement sur jours/mois complets UTC, aucune extrapolation annuelle.
+
+### TERMINÉ — défauts prouvés et corrections
+
+- Avant correction, quatre formes malformées de `timeseries.series` (null, liste, `values` null ou scalaire) provoquaient AttributeError/TypeError plutôt qu'un refus 422. Quatre nouveaux tests API reproduisent les erreurs puis passent avec une validation de structure CSP préalable.
+- Avant correction, une série construite/mutée hors validation Pydantic contenant un booléen était acceptée par le moteur, assimilant True à 1 W/m². Un nouveau test démontre le défaut puis passe ; le moteur lui-même rejette booléens et non-numériques.
+- Avant correction, la garde de réponse acceptait un motif vide, une énergie électrique numérique sans série horaire associée, ou une énergie incompatible avec sa série. Trois nouveaux tests échouaient puis passent ; vérification avant insertion des résultats renforcée exclusivement CSP. Tolérance relative de 1e-9 réservée à l'intégrité flottante, jamais à l'acceptation d'une centrale.
+- Les conditions température/fluide et l'application constante des pertes/auxiliaires à toutes les heures étaient documentées dans le dossier, mais insuffisamment visibles dans les résultats. Métadonnées et affichage précisent désormais « documentés, non simulés » et « nuit incluse » ; un test vérifie ce contrat de limites.
+- Un test ajouté pour un site déplacé vers une autre localité confirme que le contrôle existant le refuse déjà ; pas de correction inutile du contrôle de rattachement.
+
+### TERMINÉ — fichiers inspectés
+
+Python : `app/engines/csp/engine.py`, `app/api/schemas/contract.py`, `app/services/validation.py`, `app/api/routes/v1.py`, `app/core/security.py`, `app/repositories/simulations.py` (par audit délégué), `tests/test_csp_engine.py`, `tests/test_contract.py` (par audit délégué), présent dossier.
+
+Application : `src/lib/engine.functions.ts`, `src/lib/engine-http.server.ts`, `src/lib/csp-source.server.ts`, `src/start.ts`, `src/features/engine/engine-contract.ts`, `engine-response.ts`, `csp-contract.ts`, `csp-weather.ts`, `csp-simulation-form.tsx`, `csp-results.tsx`, `src/features/weather/weather-model.ts` (audit délégué), routes de nouvelle simulation/résultats et accueil (métadonnées), tests CSP/source et tests transport/réponses (audit délégué). `AGENTS.md`, mémoires CSP/météo/calcul et `roadmap.md` relus.
+
+### TERMINÉ — nouveaux résultats exécutés (ne pas confondre avec section 8 historique)
+
+- Reproduction avant correctifs : Python CSP 5 échecs / 44 réussis ; garde TS CSP 3 échecs / 5 réussis.
+- Après correctifs : **116/116 Python**, dont 6 nouveaux tests et 110 préexistants réexécutés ; **175/175 TypeScript sur 14 fichiers**, dont 4 nouveaux tests et 171 préexistants réexécutés. Un avertissement Starlette/httpx de dépréciation, aucun échec.
+- Vérification automatique de l'application : **build OK** (17 octobre 2026, 09:23:27 UTC), aucun build/typecheck manuel. Les suites PV/batterie passent sans modification des moteurs, RLS ou autres règles métier.
+- Service Python local réexécuté avec identité réelle vérifiée : health → validation → bilan CSP réussi (68 kWh thermique sur cas arithmétique), appel sans auth refusé. Aucune donnée de projet fictive ni résultat sauvegardé en base.
+- Navigateur connecté réexécuté : `/simulations/new`, onglet CSP visible, service non configuré, lancement désactivé, un projet et zéro jeu météo validé, zéro erreur navigateur. Capture inspectée.
+
+### PARTIEL / BLOQUÉ / NON TESTÉ — sécurité, stockage, Render
+
+Inspection : contrôle rôle admin/ingénieur avant accès privilégié, lecture utilisateur/RLS du projet/site/météo, partage clé+jeton uniquement côté serveur, refus des redirects et masquage des secrets dans les erreurs. Échec de validation/API/enregistrement ne retourne pas un succès ; résultats masqués dans la lecture si statut non completed. Requête complète, source et version conservées selon mécanisme existant.
+
+Ces inspections/tests de garde ne prouvent pas une transaction de persistance hébergée complète : nouveaux essais DB par rôle, panne au moment de l'insertion/finalisation, lecture réelle d'un CSP enregistré et affichage de résultats réels **NON TESTÉS**. Render **NON TESTÉ**, liaison Lovable → Python **BLOQUÉE** par configuration absente dans l'aperçu ; aucune URL Render devinée ni déploiement déclaré réussi. Les champs de période de la table restent des dates de couverture ; les bornes horaires exactes début/fin exclusive sont dans la requête enregistrée, sans changement de schéma.
+
+### À VALIDER PAR L'INGÉNIEUR
+
+La vérification 140 → 70 − 2 = 68 kWh, puis 68 × 0,4 − 1 = 26,2 kWh électrique nette, établit uniquement l'arithmétique et les unités. M. Joël doit encore approuver applicabilité des rendements constants/incidence, pertes sur toutes les heures, conditions/fluide, frontières thermiques du cycle, auxiliaires, cas techniques de référence et tolérances scientifiques. Aucune nouvelle technologie ou certification scientifique.

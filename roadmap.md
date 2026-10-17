@@ -11,7 +11,7 @@
 - Exécution E2E PV et batterie : le moteur Python n'est pas en ligne (Render + secrets SCIENTIFIC_ENGINE_URL/KEY). Tant qu'il n'est pas déployé, aucune simulation ne peut tourner et aucune simulation PV terminée n'existe pour tester la liaison production → LCOE.
 
 ## En cours
-- [ ] PROMPT 10.1 : contrôler conformité scientifique, données, autorisations et sauvegarde CSP ; corriger les défauts prouvés et réexécuter les tests sans données fictives en base
+- [x] PROMPT 10.1 : conformité CSP contrôlée, défauts de séries/réponses corrigés et limites affichées ; 116 tests Python + 175 TypeScript et service local/navigateur réexécutés, aucune donnée fictive en base ; Render/persistance hébergée restent bloqués comme PROMPT 10
 - [x] PROMPT 10 : audit, choix Joël bilan thermique limité, moteur/contrat séparés, onglet CSP, provenance figée et tests exécutés ; dossier de validation complété
 - [ ] PROMPT 10 : parcours CSP hébergé avec persistance réelle (bloqué : service Python non configuré, aucun jeu météo validé disponible ; paramètres et validation scientifique Joël à fournir)
 - [x] PROMPT 9 : audit PV, corrections dates/payload/réponses/persistance et écritures directes ; 66 tests Python + 147 frontend, service local authentifié et aperçu en échec honnête vérifiés ; documentation de mise en service complétée
