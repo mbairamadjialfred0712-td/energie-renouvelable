@@ -99,7 +99,7 @@ export const getProjectStorage = createServerFn({ method: "GET" }).middleware([r
     const configs = ((cfgs ?? []) as any[]).map((c) => ({ config: { ...norm(c), snapshot: (c.snapshot ?? null) as ConfigSnapshot | null, snapshot_at: c.snapshot_at ?? null }, sheet: norm(c.battery_datasheets) }));
     const ids = configs.map((c) => (c.config as any).id);
     const { data: hist } = ids.length ? await sb.from("project_storage_config_history").select("id, config_id, action, changes, created_at").in("config_id", ids).order("created_at", { ascending: false }).limit(100) : { data: [] };
-    return { project: project as { id: string; name: string; owner_id: string }, configs, history: (hist ?? []) as { id: string; config_id: string; action: string; changes: Record<string, { old: unknown; new: unknown }> | null; created_at: string }[] };
+    return { project: project as { id: string; name: string; owner_id: string }, configs, history: (hist ?? []) as { id: string; config_id: string; action: string; changes: Record<string, { old: any; new: any }> | null; created_at: string }[] };
   });
 
 const n = z.number().finite().nullable();
