@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { APPLICATIONS, CHEMISTRIES, FIELDS, METHODS, STATUSES, configErrors, sheetErrors, statusChangeErrors, type Sheet } from "@/features/storage/battery-model";
+import { APPLICATIONS, CHEMISTRIES, FIELDS, METHODS, STATUSES, buildConfigSnapshot, configErrors, configStatusChangeErrors, sheetErrors, statusChangeErrors, type ConfigSnapshot, type Sheet } from "@/features/storage/battery-model";
 
 async function access(sb: any, userId: string) {
   const { data } = await sb.from("user_roles").select("role").eq("user_id", userId);
@@ -96,7 +96,10 @@ export const getProjectStorage = createServerFn({ method: "GET" }).middleware([r
     ]);
     if (error) throw new Error("Les configurations n’ont pas pu être chargées.");
     if (!project) return null;
-    return { project: project as { id: string; name: string; owner_id: string }, configs: ((cfgs ?? []) as any[]).map((c) => ({ config: norm(c), sheet: norm(c.battery_datasheets) })) };
+    const configs = ((cfgs ?? []) as any[]).map((c) => ({ config: { ...norm(c), snapshot: (c.snapshot ?? null) as ConfigSnapshot | null, snapshot_at: c.snapshot_at ?? null }, sheet: norm(c.battery_datasheets) }));
+    const ids = configs.map((c) => (c.config as any).id);
+    const { data: hist } = ids.length ? await sb.from("project_storage_config_history").select("id, config_id, action, changes, created_at").in("config_id", ids).order("created_at", { ascending: false }).limit(100) : { data: [] };
+    return { project: project as { id: string; name: string; owner_id: string }, configs, history: (hist ?? []) as { id: string; config_id: string; action: string; changes: Record<string, { old: any; new: any }> | null; created_at: string }[] };
   });
 
 const n = z.number().finite().nullable();
@@ -117,11 +120,52 @@ export const saveStorageConfig = createServerFn({ method: "POST" }).middleware([
     if (errs.length) throw new Error(errs.join(" "));
     const { data: project } = await sb.from("projects").select("owner_id").eq("id", data.project_id).maybeSingle();
     if (!project) throw new Error("Projet introuvable.");
+    const { data: ds, error: eDs } = await sb.from("battery_datasheets").select("*").eq("id", data.datasheet_id).maybeSingle();
+    if (eDs || !ds) throw new Error("La fiche technique sélectionnée est introuvable ou inaccessible.");
     const { id, ...row } = data;
-    const q = id ? sb.from("project_storage_configs").update(row).eq("id", id).select("id") : sb.from("project_storage_configs").insert({ ...row, owner_id: project.owner_id, created_by: context.userId }).select("id");
+    if (id) {
+      const { data: existing, error: e0 } = await sb.from("project_storage_configs").select("status").eq("id", id).maybeSingle();
+      if (e0 || !existing) throw new Error("La configuration est introuvable ou inaccessible.");
+      if (row.status !== existing.status) throw new Error("Le statut ne se change pas depuis le formulaire : utilisez l’action de changement de statut de la configuration.");
+    } else if (row.status !== "unverified") {
+      throw new Error("Une nouvelle configuration démarre au statut « Non vérifié » : la validation passe par l’action dédiée.");
+    }
+    // Instantané figé des caractéristiques de la fiche au moment de l'enregistrement : toute modification ultérieure de la fiche ne change pas les valeurs historiques.
+    const snap = buildConfigSnapshot(norm(ds) as Sheet, data.datasheet_id, new Date().toISOString());
+    const payload = { ...row, snapshot: snap, snapshot_at: snap.meta.snapshot_at };
+    const q = id ? sb.from("project_storage_configs").update(payload).eq("id", id).select("id") : sb.from("project_storage_configs").insert({ ...payload, owner_id: project.owner_id, created_by: context.userId }).select("id");
     const { data: r, error } = await q;
     if (error || !r?.length) throw new Error("La configuration n’a pas pu être enregistrée (droits insuffisants ?).");
     return { id: r[0].id as string };
+  });
+/** Changement de statut dédié d'une configuration projet : réservé admin/ingénieur ; distinct du statut de la fiche fabricant. */
+export const setStorageConfigStatus = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => statusSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as any;
+    if (!(await access(sb, context.userId)).canWrite) throw new Error("Seuls les administrateurs et ingénieurs peuvent changer le statut d’une configuration.");
+    const { data: row, error } = await sb.from("project_storage_configs").select("*").eq("id", data.id).maybeSingle();
+    if (error || !row) throw new Error("La configuration est introuvable ou inaccessible.");
+    const errs = configStatusChangeErrors(row as any, row.status, data.status);
+    if (errs.length) throw new Error(errs.join(" "));
+    const { data: up, error: e2 } = await sb.from("project_storage_configs").update({ status: data.status }).eq("id", data.id).select("id");
+    if (e2 || !up?.length) throw new Error(e2?.message || "Le statut n’a pas pu être modifié (droits insuffisants ?).");
+    return { ok: true };
+  });
+/** Actualisation explicite et tracée de l'instantané : reconstruit les valeurs figées depuis la fiche actuelle. Ne remplace jamais les valeurs retenues et justifiées par l'ingénieur. */
+export const refreshStorageConfigSnapshot = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as any;
+    if (!(await access(sb, context.userId)).canWrite) throw new Error("Seuls les administrateurs et ingénieurs peuvent actualiser un instantané.");
+    const { data: cfg, error } = await sb.from("project_storage_configs").select("datasheet_id").eq("id", data.id).maybeSingle();
+    if (error || !cfg) throw new Error("La configuration est introuvable ou inaccessible.");
+    const { data: ds, error: eDs } = await sb.from("battery_datasheets").select("*").eq("id", cfg.datasheet_id).maybeSingle();
+    if (eDs || !ds) throw new Error("La fiche technique liée est introuvable ou inaccessible.");
+    const snap = buildConfigSnapshot(norm(ds) as Sheet, cfg.datasheet_id, new Date().toISOString());
+    const { data: up, error: e2 } = await sb.from("project_storage_configs").update({ snapshot: snap, snapshot_at: snap.meta.snapshot_at }).eq("id", data.id).select("id");
+    if (e2 || !up?.length) throw new Error(e2?.message || "L’instantané n’a pas pu être actualisé (droits insuffisants ?).");
+    return { ok: true };
   });
 export const deleteStorageConfig = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))

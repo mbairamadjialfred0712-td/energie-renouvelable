@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           action: string
           actor_id: string | null
+          changes: Json | null
           created_at: string
           datasheet_id: string
           fields: string[]
@@ -26,6 +27,7 @@ export type Database = {
         Insert: {
           action: string
           actor_id?: string | null
+          changes?: Json | null
           created_at?: string
           datasheet_id: string
           fields?: string[]
@@ -34,6 +36,7 @@ export type Database = {
         Update: {
           action?: string
           actor_id?: string | null
+          changes?: Json | null
           created_at?: string
           datasheet_id?: string
           fields?: string[]
@@ -1516,6 +1519,41 @@ export type Database = {
           },
         ]
       }
+      project_storage_config_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          changes: Json | null
+          config_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          changes?: Json | null
+          config_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          changes?: Json | null
+          config_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_storage_config_history_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "project_storage_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_storage_configs: {
         Row: {
           aging_assumption: string | null
@@ -1535,6 +1573,8 @@ export type Database = {
           retained_cost: number | null
           rte_pct: number | null
           series_count: number | null
+          snapshot: Json | null
+          snapshot_at: string | null
           soc_max_pct: number | null
           soc_min_pct: number | null
           status: Database["public"]["Enums"]["solar_status"]
@@ -1559,6 +1599,8 @@ export type Database = {
           retained_cost?: number | null
           rte_pct?: number | null
           series_count?: number | null
+          snapshot?: Json | null
+          snapshot_at?: string | null
           soc_max_pct?: number | null
           soc_min_pct?: number | null
           status?: Database["public"]["Enums"]["solar_status"]
@@ -1583,6 +1625,8 @@ export type Database = {
           retained_cost?: number | null
           rte_pct?: number | null
           series_count?: number | null
+          snapshot?: Json | null
+          snapshot_at?: string | null
           soc_max_pct?: number | null
           soc_min_pct?: number | null
           status?: Database["public"]["Enums"]["solar_status"]

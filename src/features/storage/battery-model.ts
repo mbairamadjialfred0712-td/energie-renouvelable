@@ -157,3 +157,43 @@ export function configTotals(c: StorageConfig, s: Sheet) {
   const n = c.module_count ?? 0, E = v(s, "energy_kwh"), Pc = v(s, "max_charge_kw"), Pd = v(s, "max_discharge_kw");
   return { energyKwh: E != null && n ? n * E : null, chargeKw: Pc != null && n ? n * Pc : null, dischargeKw: Pd != null && n ? n * Pd : null };
 }
+
+/** Caractéristiques de la fiche figées dans l'instantané d'une configuration projet (battery-model/1.1.0). */
+export const SNAPSHOT_SHEET_KEYS = ["name", "manufacturer", "product_ref", "chemistry", "chemistry_detail", "nominal_voltage_v", "capacity_ah", "energy_kwh", "max_charge_kw", "max_discharge_kw", "soc_min_pct", "soc_max_pct", "rte_pct", "charge_eff_pct", "discharge_eff_pct", "usable_kwh", "price", "currency"] as const;
+export type ConfigSnapshot = {
+  meta: { datasheet_id: string; sheet_version: string | null; status: keyof typeof STATUSES; source: string; doc_url: string | null; acquisition_method: string | null; consulted_on: string | null; published_on: string | null; snapshot_at: string; units: Record<string, string> };
+  sheet: Partial<Sheet>;
+};
+/** Instantané des valeurs de la fiche réellement utilisées par une configuration. `at` est fourni par l'appelant (traçabilité). */
+export function buildConfigSnapshot(s: Sheet, datasheetId: string, at: string): ConfigSnapshot {
+  const sheet: Partial<Sheet> = {};
+  for (const k of SNAPSHOT_SHEET_KEYS) sheet[k] = s[k] ?? null;
+  const units: Record<string, string> = {};
+  for (const f of FIELDS) if (f.unit) units[f.key] = f.unit;
+  return {
+    meta: { datasheet_id: datasheetId, sheet_version: s["sheet_version"] ?? null, status: s.status, source: s.source, doc_url: s["doc_url"] ?? null, acquisition_method: s["acquisition_method"] ?? null, consulted_on: s["consulted_on"] ?? null, published_on: s["published_on"] ?? null, snapshot_at: at, units },
+    sheet,
+  };
+}
+/** Différences entre un instantané et la fiche actuelle, pour affichage avant toute actualisation explicite. Jamais de fusion automatique. */
+export function snapshotDiff(snap: ConfigSnapshot, current: Sheet): { key: string; label: string; unit: string | null; oldVal: unknown; newVal: unknown }[] {
+  const labels: Record<string, string> = { name: "Nom commercial", manufacturer: "Fabricant", product_ref: "Référence produit", chemistry: "Technologie", chemistry_detail: "Précision de la technologie" };
+  for (const f of FIELDS) labels[f.key] = f.label;
+  const out: { key: string; label: string; unit: string | null; oldVal: unknown; newVal: unknown }[] = [];
+  for (const k of SNAPSHOT_SHEET_KEYS) {
+    const a = snap.sheet[k] ?? null, b = current[k] ?? null;
+    if (String(a) !== String(b)) out.push({ key: k, label: labels[k] ?? k, unit: snap.meta.units[k] ?? null, oldVal: a, newVal: b });
+  }
+  return out;
+}
+/** Transitions de statut des configurations projet : distinctes du statut de la fiche fabricant (une fiche validée ne valide pas sa configuration). */
+export function configStatusChangeErrors(c: StorageConfig & { justification?: string | null }, from: keyof typeof STATUSES, to: keyof typeof STATUSES): string[] {
+  if (from === to) return [];
+  if (to === "validated") {
+    const e = configErrors(c);
+    if (!c.justification?.trim()) e.push("La validation d’une configuration exige une justification documentée des choix retenus.");
+    return e;
+  }
+  if ((from === "validated" || from === "rejected") && to === "unverified") return ["Une configuration validée ou rejetée ne peut pas redevenir « Non vérifié » : utilisez « À examiner » ou « Archivé »."];
+  return [];
+}

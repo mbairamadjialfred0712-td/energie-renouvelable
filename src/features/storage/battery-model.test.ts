@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { configErrors, configTotals, energyCheck, sheetErrors, sheetWarnings, statusChangeErrors, usableEstimate, validationGateErrors, type Sheet } from "./battery-model";
+import { buildConfigSnapshot, configErrors, configStatusChangeErrors, configTotals, energyCheck, sheetErrors, sheetWarnings, snapshotDiff, statusChangeErrors, usableEstimate, validationGateErrors, type ConfigSnapshot, type Sheet } from "./battery-model";
 
 const base = (): Sheet => ({ name: "PowerWall X", manufacturer: "ACME", chemistry: "lfp", source: "Fiche fabricant 2024", status: "unverified", application: null, acquisition_method: "fiche_technique" });
 
@@ -136,5 +136,54 @@ describe("configErrors / configTotals — configurations projet", () => {
   });
   it("renvoie null quand la fiche ne documente pas la valeur", () => {
     expect(configTotals(cfg, base())).toEqual({ energyKwh: null, chargeKw: null, dischargeKw: null });
+  });
+});
+
+describe("instantané de configuration — buildConfigSnapshot / snapshotDiff", () => {
+  const sheet = (): Sheet => ({ ...base(), sheet_version: "v3", energy_kwh: 5, max_charge_kw: 2.5, max_discharge_kw: 2.5, soc_min_pct: 10, soc_max_pct: 95, rte_pct: 90, price: 3000, currency: "EUR", doc_url: "https://exemple.fr/fiche.pdf", consulted_on: "2026-01-10" });
+  it("fige l’identité, les caractéristiques utilisées, les unités, la source et la date", () => {
+    const snap = buildConfigSnapshot(sheet(), "11111111-1111-1111-1111-111111111111", "2026-10-17T08:00:00.000Z");
+    expect(snap.meta.datasheet_id).toBe("11111111-1111-1111-1111-111111111111");
+    expect(snap.meta.snapshot_at).toBe("2026-10-17T08:00:00.000Z");
+    expect(snap.meta.source).toBe("Fiche fabricant 2024");
+    expect(snap.meta.sheet_version).toBe("v3");
+    expect(snap.meta.units["energy_kwh"]).toBe("kWh");
+    expect(snap.sheet.energy_kwh).toBe(5);
+    expect(snap.sheet.name).toBe("PowerWall X");
+  });
+  it("ne fabrique pas de valeurs : les champs absents de la fiche restent null", () => {
+    const snap = buildConfigSnapshot(base(), "id", "2026-10-17T08:00:00.000Z");
+    expect(snap.sheet["energy_kwh"]).toBeNull();
+    expect(snap.sheet.cycles).toBeUndefined();
+  });
+  it("les totaux calculés depuis l’instantané ne changent pas quand la fiche est modifiée ensuite", () => {
+    const cfg = { module_count: 4, series_count: 2, parallel_count: 2, soc_min_pct: null, soc_max_pct: null, rte_pct: null, charge_eff_pct: null, discharge_eff_pct: null, usable_energy_limit_kwh: null, retained_cost: null, currency: null };
+    const snap = buildConfigSnapshot(sheet(), "id", "2026-10-17T08:00:00.000Z");
+    const modified = { ...sheet(), energy_kwh: 9 };
+    expect(configTotals(cfg, snap.sheet as Sheet)).toEqual({ energyKwh: 20, chargeKw: 10, dischargeKw: 10 });
+    expect(configTotals(cfg, modified)).toEqual({ energyKwh: 36, chargeKw: 10, dischargeKw: 10 });
+  });
+  it("snapshotDiff signale chaque changement avec ancienne et nouvelle valeur, et reste vide sans changement", () => {
+    const snap = buildConfigSnapshot(sheet(), "id", "2026-10-17T08:00:00.000Z");
+    expect(snapshotDiff(snap, sheet())).toEqual([]);
+    const d = snapshotDiff(snap, { ...sheet(), energy_kwh: 9, rte_pct: null });
+    expect(d.map((x) => x.key).sort()).toEqual(["energy_kwh", "rte_pct"]);
+    expect(d.find((x) => x.key === "energy_kwh")).toMatchObject({ oldVal: 5, newVal: 9, unit: "kWh" });
+  });
+});
+
+describe("configStatusChangeErrors — statut des configurations projet", () => {
+  const cfg = { module_count: 4, series_count: null, parallel_count: null, soc_min_pct: null, soc_max_pct: null, rte_pct: null, charge_eff_pct: null, discharge_eff_pct: null, usable_energy_limit_kwh: null, retained_cost: null, currency: null, justification: "Choix documenté, note du 2026-10-01" };
+  it("exige une justification documentée pour valider", () => {
+    expect(configStatusChangeErrors({ ...cfg, justification: null }, "in_review", "validated").join(" ")).toMatch(/justification/);
+    expect(configStatusChangeErrors(cfg, "in_review", "validated")).toEqual([]);
+  });
+  it("interdit le retour d’une configuration validée ou rejetée à « Non vérifié »", () => {
+    expect(configStatusChangeErrors(cfg, "validated", "unverified").join(" ")).toMatch(/À examiner/);
+    expect(configStatusChangeErrors(cfg, "rejected", "unverified").join(" ")).toMatch(/À examiner/);
+    expect(configStatusChangeErrors(cfg, "validated", "in_review")).toEqual([]);
+  });
+  it("la validation d’une fiche fabricant ne valide pas sa configuration (règles séparées)", () => {
+    expect(configStatusChangeErrors(cfg, "unverified", "in_review")).toEqual([]);
   });
 });

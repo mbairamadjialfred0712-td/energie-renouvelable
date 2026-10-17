@@ -5,8 +5,8 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { WorkspacePage } from "@/components/app/page";
 import { Button } from "@/components/ui/button";
-import { deleteStorageConfig, getProjectStorage, getStorageAccess, listDatasheets, saveStorageConfig } from "@/lib/storage.functions";
-import { STATUSES, configErrors, configTotals, type Sheet, type StorageConfig } from "@/features/storage/battery-model";
+import { deleteStorageConfig, getProjectStorage, getStorageAccess, listDatasheets, refreshStorageConfigSnapshot, saveStorageConfig, setStorageConfigStatus } from "@/lib/storage.functions";
+import { STATUSES, configErrors, configTotals, snapshotDiff, type ConfigSnapshot, type Sheet, type StorageConfig } from "@/features/storage/battery-model";
 import { StatusBadge, val } from "@/features/storage/battery-ui";
 import { inputCls } from "@/features/storage/battery-form";
 
@@ -27,6 +27,16 @@ function ProjectStorage() {
   const { data: sheets = [] } = useQuery({ queryKey: ["battery-sheets"], queryFn: () => listDatasheets() });
   const { data: access } = useQuery({ queryKey: ["storage-access"], queryFn: () => getStorageAccess() });
   const save = useServerFn(saveStorageConfig); const del = useServerFn(deleteStorageConfig);
+  const setStatus = useServerFn(setStorageConfigStatus); const refreshSnap = useServerFn(refreshStorageConfigSnapshot);
+  const changeStatus = async (id: string, status: keyof typeof STATUSES) => { try { await setStatus({ data: { id, status } }); qc.invalidateQueries(); } catch (x) { alert((x as Error).message); } };
+  const refresh = async (id: string, snap: ConfigSnapshot | null, current: Sheet) => {
+    const d = snap ? snapshotDiff(snap, current) : [];
+    const msg = snap
+      ? d.length ? `L’instantané sera reconstruit depuis la fiche actuelle. Changements détectés :\n${d.map((x) => `• ${x.label} : ${x.oldVal ?? "—"} → ${x.newVal ?? "—"}${x.unit ? " " + x.unit : ""}`).join("\n")}\n\nLes valeurs retenues et justifiées pour le projet ne sont jamais remplacées. Confirmer ?` : "Aucun changement détecté entre l’instantané et la fiche actuelle. Reconstituer quand même ?"
+      : "Aucun instantané n’existe pour cette configuration historique. Un instantané sera constitué à partir de la fiche actuelle (sans fabriquer de valeurs passées). Confirmer ?";
+    if (!confirm(msg)) return;
+    try { await refreshSnap({ data: { id } }); qc.invalidateQueries(); } catch (x) { alert((x as Error).message); }
+  };
   const [form, setForm] = useState<Cfg | null>(null); const [errors, setErrors] = useState<string[]>([]);
   if (isLoading) return <WorkspacePage eyebrow="Projets / Stockage" title="Stockage" description="Chargement…"><span /></WorkspacePage>;
   if (!data) return <WorkspacePage eyebrow="Projets / Stockage" title="Projet inaccessible" description="Ce projet n’existe pas ou vous n’y avez pas accès."><Link to="/projects" className="text-primary">Retour</Link></WorkspacePage>;
@@ -46,21 +56,38 @@ function ProjectStorage() {
       {!sheets.length && <p className="text-sm text-muted-foreground">Aucune fiche dans la bibliothèque. <Link to="/technologies/storage/new" className="text-primary">Créer une fiche</Link>.</p>}
       <div className="grid gap-3 sm:grid-cols-3">{NUMS.map(([k, l]) => <label key={k} className="block text-sm"><span className="font-medium">{l}</span><input aria-label={l} type="number" step="any" className={`mt-1 ${inputCls}`} value={(form[k] as number | null) ?? ""} onChange={(e) => setForm({ ...form, [k]: e.target.value === "" ? null : Number(e.target.value) })} /></label>)}
         <label className="block text-sm"><span className="font-medium">Devise</span><input aria-label="Devise" className={`mt-1 ${inputCls}`} value={form.currency ?? ""} onChange={(e) => setForm({ ...form, currency: e.target.value || null })} /></label>
-        <label className="block text-sm"><span className="font-medium">Statut</span><select aria-label="Statut" className={`mt-1 ${inputCls}`} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Cfg["status"] })}>{Object.entries(STATUSES).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label></div>
+        <div className="text-sm"><span className="font-medium">Statut : </span><StatusBadge status={form.status} /><span className="ml-2 text-xs text-muted-foreground">le changement de statut se fait depuis la configuration (action dédiée, réservée aux rôles autorisés).</span></div></div>
       <label className="block text-sm"><span className="font-medium">Hypothèses de vieillissement</span><textarea aria-label="Hypothèses de vieillissement" className={`mt-1 ${inputCls} h-14 py-2`} value={form.aging_assumption ?? ""} onChange={(e) => setForm({ ...form, aging_assumption: e.target.value || null })} /></label>
       <label className="block text-sm"><span className="font-medium">Source et justification des paramètres modifiés</span><textarea aria-label="Justification" className={`mt-1 ${inputCls} h-14 py-2`} value={form.justification ?? ""} onChange={(e) => setForm({ ...form, justification: e.target.value || null })} /></label>
       {sheet && <p className="text-sm">Totaux nominaux (modules × fiche) : énergie {val(configTotals(form, sheet).energyKwh, "kWh")} · charge {val(configTotals(form, sheet).chargeKw, "kW")} · décharge {val(configTotals(form, sheet).dischargeKw, "kW")}</p>}
       {errors.length > 0 && <ul role="alert" className="list-disc space-y-1 border border-destructive/40 bg-destructive/5 p-3 pl-7 text-sm text-destructive">{errors.map((e) => <li key={e}>{e}</li>)}</ul>}
       <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setForm(null)}>Annuler</Button><Button onClick={submit}>Enregistrer la configuration</Button></div>
     </div>}
-    {!data.configs.length ? <p className="text-sm text-muted-foreground">Aucune configuration de stockage pour ce projet.</p> : data.configs.map(({ config: c0, sheet: s }) => { const c = c0 as any; const t = configTotals(c, s as Sheet); return <section key={c.id} className="mb-6 border border-border bg-background p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold"><Link to="/technologies/storage/$id" params={{ id: s.id }} className="text-primary hover:underline">{s.name}</Link> · {s.manufacturer} · {c.module_count} module(s){c.series_count && c.parallel_count ? ` (${c.series_count}S × ${c.parallel_count}P)` : ""}</h2>
-        <div className="flex items-center gap-2"><StatusBadge status={c.status as any} />{canWrite && <><Button size="sm" variant="outline" onClick={() => { setErrors([]); setForm({ ...blank(), ...(c as any) }); }}>Modifier</Button><Button size="sm" variant="ghost" aria-label="Supprimer la configuration" onClick={async () => { if (confirm("Supprimer cette configuration ?")) { await del({ data: { id: c.id } }); qc.invalidateQueries(); } }}><Trash2 /></Button></>}</div></div>
-      <p className="mt-2 text-sm">Totaux nominaux : énergie {val(t.energyKwh, "kWh")} · charge {val(t.chargeKw, "kW")} · décharge {val(t.dischargeKw, "kW")} <span className="text-xs text-muted-foreground">(modules × valeurs fabricant ; puissance seulement si la limite par module est connue)</span></p>
-      <div className="mt-3 overflow-x-auto"><table className="w-full text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="p-2">Paramètre</th><th className="p-2">Valeur fabricant</th><th className="p-2">Valeur retenue pour le projet</th></tr></thead>
-        <tbody className="divide-y divide-border">{ROWS.map(([l, sk, ck]) => <tr key={l}><td className="p-2">{l}</td><td className="p-2">{val(s[sk], "")}</td><td className="p-2">{ck ? val(c[ck], "") : "—"}</td></tr>)}</tbody></table></div>
+    {!data.configs.length ? <p className="text-sm text-muted-foreground">Aucune configuration de stockage pour ce projet.</p> : data.configs.map(({ config: c0, sheet: s }) => {
+      const c = c0 as any; const snap = (c.snapshot ?? null) as ConfigSnapshot | null;
+      // Valeurs fabricant figées : instantané si disponible, sinon fiche actuelle (signalé, jamais de valeurs fabriquées).
+      const ref = (snap?.sheet ?? s) as Sheet; const t = configTotals(c, ref);
+      const hist = (data.history ?? []).filter((h) => h.config_id === c.id);
+      return <section key={c.id} className="mb-6 border border-border bg-background p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold"><Link to="/technologies/storage/$id" params={{ id: s.id }} className="text-primary hover:underline">{ref.name ?? s.name}</Link> · {ref.manufacturer ?? s.manufacturer} · {c.module_count} module(s){c.series_count && c.parallel_count ? ` (${c.series_count}S × ${c.parallel_count}P)` : ""}</h2>
+        <div className="flex flex-wrap items-center gap-2"><StatusBadge status={c.status as any} />{canWrite && <>
+          {c.status !== "validated" && <Button size="sm" variant="outline" onClick={() => changeStatus(c.id, "validated")}>Valider</Button>}
+          {c.status !== "rejected" && c.status !== "validated" && <Button size="sm" variant="outline" onClick={() => changeStatus(c.id, "rejected")}>Rejeter</Button>}
+          {(c.status === "validated" || c.status === "rejected") && <Button size="sm" variant="outline" onClick={() => changeStatus(c.id, "in_review")}>Passer à examiner</Button>}
+          {c.status !== "archived" && <Button size="sm" variant="outline" onClick={() => changeStatus(c.id, "archived")}>Archiver</Button>}
+          {c.status === "archived" && <Button size="sm" variant="outline" onClick={() => changeStatus(c.id, "in_review")}>Désarchiver</Button>}
+          <Button size="sm" variant="outline" onClick={() => { setErrors([]); setForm({ ...blank(), ...(c as any) }); }}>Modifier</Button>
+          <Button size="sm" variant="outline" onClick={() => refresh(c.id, snap, s as Sheet)}>{snap ? "Actualiser l’instantané" : "Constituer l’instantané"}</Button>
+          <Button size="sm" variant="ghost" aria-label="Supprimer la configuration" onClick={async () => { if (confirm("Supprimer cette configuration ?")) { await del({ data: { id: c.id } }); qc.invalidateQueries(); } }}><Trash2 /></Button></>}</div></div>
+      {snap
+        ? <p className="mt-2 text-xs text-muted-foreground">Instantané figé constitué le {new Date(c.snapshot_at).toLocaleString("fr-FR")} — source : {snap.meta.source}{snap.meta.sheet_version ? ` · fiche version ${snap.meta.sheet_version}` : ""} · statut de la fiche à cet instant : {STATUSES[snap.meta.status]}. Toute modification ultérieure de la fiche ne change pas ces valeurs.</p>
+        : <p className="mt-2 text-xs text-muted-foreground">Configuration historique sans instantané : les valeurs fabricant affichées sont celles de la fiche actuelle et peuvent avoir changé depuis la création. Aucune valeur passée n’est reconstituée.</p>}
+      <p className="mt-2 text-sm">Totaux nominaux : énergie {val(t.energyKwh, "kWh")} · charge {val(t.chargeKw, "kW")} · décharge {val(t.dischargeKw, "kW")} <span className="text-xs text-muted-foreground">(modules × valeurs fabricant {snap ? "figées dans l’instantané" : "de la fiche actuelle"} ; puissance seulement si la limite par module est connue)</span></p>
+      <div className="mt-3 overflow-x-auto"><table className="w-full text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="p-2">Paramètre</th><th className="p-2">Valeur fabricant{snap ? " (instantané)" : " (fiche actuelle)"}</th><th className="p-2">Valeur retenue pour le projet</th></tr></thead>
+        <tbody className="divide-y divide-border">{ROWS.map(([l, sk, ck]) => <tr key={l}><td className="p-2">{l}</td><td className="p-2">{val(ref[sk], "")}</td><td className="p-2">{ck ? val(c[ck], "") : "—"}</td></tr>)}</tbody></table></div>
       <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2"><p><span className="text-muted-foreground">Hypothèses de vieillissement : </span>{c.aging_assumption ?? "—"}</p><p><span className="text-muted-foreground">Justification : </span>{c.justification ?? "—"}</p><p><span className="text-muted-foreground">Température de référence : </span>{val(c.reference_temp_c, "°C")}</p><p><span className="text-muted-foreground">Coût retenu : </span>{val(c.retained_cost, String(c.currency ?? ""))}</p></div>
+      {hist.length > 0 && <details className="mt-3 text-xs text-muted-foreground"><summary className="cursor-pointer">Historique des modifications ({hist.length})</summary><ul className="mt-1 list-disc space-y-1 pl-5">{hist.map((h) => <li key={h.id}>{new Date(h.created_at).toLocaleString("fr-FR")} — {{ created: "création", updated: "modification", status: "changement de statut", snapshot_refresh: "actualisation de l’instantané" }[h.action as string] ?? h.action}{h.changes ? ` : ${Object.entries(h.changes).map(([k, ch]) => `${k} (${JSON.stringify(ch.old)} → ${JSON.stringify(ch.new)})`).join(", ")}` : ""}</li>)}</ul></details>}
     </section>; })}
-    <p className="text-xs text-muted-foreground">Aucune simulation de charge, autonomie ni dimensionnement n’est réalisée à cette étape. La fiche fabricant n’est jamais modifiée par la configuration projet.</p>
+    <p className="text-xs text-muted-foreground">Aucune simulation de charge, autonomie ni dimensionnement n’est réalisée à cette étape. La fiche fabricant n’est jamais modifiée par la configuration projet, et les valeurs figées d’un instantané ne sont jamais remplacées automatiquement.</p>
   </WorkspacePage>;
 }
