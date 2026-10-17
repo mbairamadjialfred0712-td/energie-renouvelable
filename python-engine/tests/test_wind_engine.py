@@ -121,4 +121,4 @@ def test_wind_service_missing_key_no_results(client,monkeypatch):
 
 def test_wind_wrong_key_no_results(client):
     out=client.post("/api/v1/simulations",json=fixture(),headers={**H,"X-Engine-Key":"wrong"})
-    assert out.status_code==403 and "results" not in out.json()
+    assert out.status_code==401 and "results" not in out.json()
