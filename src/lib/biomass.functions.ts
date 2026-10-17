@@ -148,7 +148,8 @@ export const setBiomassStatus = createServerFn({ method: "POST" })
     }
     const { data: upd, error } = await sb.from("biomass_resources").update({ biomass_status: data.status }).eq("resource_id", data.id).select("id");
     if (error || !upd?.length) throw new Error("Changement de statut refusé (droits insuffisants).");
-    await sb.from("energy_resources").update({ validation_status: legacy(data.status) }).eq("id", data.id);
+    const { data: parent, error: pe } = await sb.from("energy_resources").update({ validation_status: legacy(data.status) }).eq("id", data.id).select("id");
+    if (pe || !parent?.length) throw new Error("Le statut de la ressource parente n’a pas pu être synchronisé.");
     return { ok: true };
   });
 
