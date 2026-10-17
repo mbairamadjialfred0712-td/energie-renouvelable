@@ -103,6 +103,30 @@ export function profileErrors(p: ProfileSlot[]): string[] {
   return out;
 }
 
+/** Avertissements non bloquants (aucune valeur n'est refusée ni corrigée automatiquement). */
+export function equipmentWarnings(e: Equipment, i: number): string[] {
+  const p = `Équipement ${i + 1}${e.name ? ` (${e.name})` : ""}`;
+  const out: string[] = [];
+  if (e.quantity != null && e.quantity > 0 && !Number.isInteger(e.quantity))
+    out.push(`${p} : quantité fractionnaire (${e.quantity}) — pertinente seulement si elle représente une moyenne documentée, à confirmer par l’ingénieur.`);
+  return out;
+}
+
+/** Mesures situées, même partiellement, hors de la période de référence de la demande. */
+export function measurementsOutsidePeriod(measurements: Measurement[], periodStart: string | null, periodEnd: string | null): Measurement[] {
+  if (!periodStart && !periodEnd) return [];
+  return measurements.filter((m) => (periodStart && m.start < periodStart) || (periodEnd && m.end > periodEnd));
+}
+
+/** Avertissements consolidés d'une fiche : jamais bloquants, toujours explicites. */
+export function demandWarnings(d: { equipment: Equipment[]; measurements: Measurement[]; period_start: string | null; period_end: string | null }): string[] {
+  const out = d.equipment.flatMap((e, i) => equipmentWarnings(e, i));
+  const outside = measurementsOutsidePeriod(d.measurements, d.period_start, d.period_end);
+  if (outside.length)
+    out.push(`${outside.length} mesure(s) hors de la période de référence (${d.period_start ?? "…"} → ${d.period_end ?? "…"}) : exclues de tout calcul portant sur cette période tant que l’ingénieur n’a pas arbitré.`);
+  return out;
+}
+
 /** Contrat d'entrée préparé pour le futur moteur Python (aucun appel n'est effectué). */
 export function buildEngineInput(d: { id: string; locality_id: string; site_id: string | null; period_start: string | null; period_end: string | null; status: string; equipment: Equipment[]; measurements: Measurement[]; daily_profile: ProfileSlot[]; assumptions: string | null; data_time_basis: string | null }) {
   return {
