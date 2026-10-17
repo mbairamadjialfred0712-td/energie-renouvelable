@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { FinanceCalculator } from "@/features/finance/finance-ui";
+import { getProjectFinance } from "@/lib/finance.functions";
 
 const title = "Analyse financière — Énergie Renouvelable";
 const description = "Calculateur déterministe du coût actualisé de l'énergie (LCOE) : CAPEX, OPEX, dégradation, remplacements et taux d'actualisation.";
