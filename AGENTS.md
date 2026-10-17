@@ -34,3 +34,4 @@
 - Compute LCOE only in the pure finance-engine contract; project finance assumptions persist versioned (history trigger) and a linked completed simulation's stored annual production overrides any manual year-1 value, never the reverse.
 - Keep CSP isolated with prescribed signed balances, unavailable outputs and server-selected validated DNI; preserve conversion/provenance to avoid fabricated dispatch or PV-rule reuse.
 - Keep wind A/B/C isolated with documented curves in request snapshots and server-selected validated hourly weather; check response integrity before existing authenticated persistence so kinetic flux never becomes electricity.
+- Isolate engine role checks and series reads in engine-access.server for testable, user-scoped access.

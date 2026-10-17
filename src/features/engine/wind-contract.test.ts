@@ -23,3 +23,13 @@ it("rejects mismatched diameter and area",()=>expect(()=>windRequestSchema.parse
 it("accepts geometric rotor area",()=>expect(()=>windRequestSchema.parse({...request,input_data:{...request.input_data,swept_area:iv(25*Math.PI,"m²"),rotor_diameter:iv(10,"m")}})).not.toThrow());
 it("rejects incomplete real durations even when scalar hours agree",()=>{const r=structuredClone(request);if(r.timeseries)r.timeseries.timestamps[1]="2024-01-01T03:00:00Z";expect(()=>checkWindResponse(r,reply())).toThrow();});
 it("rejects nonfinite power without falling through NaN comparisons",()=>{const out=reply();out.timeseries.kinetic_power.values[0]=NaN;expect(()=>checkWindResponse(request,out)).toThrow();});
+function turbineRequest(): SimulationRequest {
+  return {...request,input_data:{...request.input_data,level:iv("C"),hub_height:iv(10,"m"),rotor_diameter:iv(10,"m"),rated_power:iv(1000,"W"),curve_density:iv(1.2,"kg/m³"),turbine_reference:iv("Arithmetic only"),curve_conditions:iv("Arithmetic only"),curve_speeds:{value:[0,5,10],unit:"m/s",nature:"external",source:"test"},curve_powers:{value:[0,500,1000],unit:"W",nature:"external",source:"test"}}};
+}
+function turbineReply() {
+  const b=reply();return {...b,results:{...b.results,turbine_energy:{value:1.5,unit:"kWh"},capacity_factor:{value:75,unit:"%"}},timeseries:{observed_wind_speed:{values:[5,10],unit:"m/s"},turbine_power:{values:[500,1000],unit:"W"}},calculation_metadata:{...b.calculation_metadata,level:"C"}};
+}
+it("accepts documented arithmetic turbine interpolation",()=>expect(()=>checkWindResponse(turbineRequest(),turbineReply())).not.toThrow());
+it("rejects self-consistent electricity unrelated to documented curve",()=>{const out=turbineReply();out.timeseries.turbine_power.values=[100,100];out.results.turbine_energy.value=.2;out.results.capacity_factor.value=10;expect(()=>checkWindResponse(turbineRequest(),out)).toThrow();});
+it("rejects a curve sourced to a different turbine document",()=>{const r=turbineRequest();const points=r.input_data["curve_powers"];if(points)points.source="other turbine";expect(()=>windRequestSchema.parse(r)).toThrow();});
+it("allows explicitly documented zero cut-in",()=>{const r=turbineRequest();r.input_data["cut_in"]=iv(0,"m/s");expect(()=>windRequestSchema.parse(r)).not.toThrow();});
