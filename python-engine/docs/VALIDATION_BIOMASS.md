@@ -2,7 +2,7 @@
 
 ## 1. Statut au 17 octobre 2026
 
-**Audit terminé ; moteur Python biomasse NON IMPLÉMENTÉ.** Version proposée `biomass-primary/1.0.0`, non enregistrée. Conventions et références physiques **À VALIDER PAR L’INGÉNIEUR**. Aucun moteur PV/CSP/éolien modifié, aucune donnée ajoutée/supprimée.
+**V1 primaire implémentée après approbation du plan par Joël.** Moteur `biomass`, version `1.0.0`, enregistré ; disponibilité du code seulement. Références physiques **À VALIDER PAR L’INGÉNIEUR**. Aucun moteur PV/CSP/éolien modifié, aucune donnée ajoutée/supprimée. Le test PV des capacités a été adapté au nouveau registre, sans toucher au modèle PV.
 
 ## 2. Données réellement disponibles
 
@@ -28,15 +28,15 @@ Le RPC `estimate_project_energy` et le contrat annuel utilisent :
 
 Période exigée : `fin = début + 1 an − 1 jour`, pas nécessairement année civile. Technologie et frontières des deux rendements non structurées ; niveaux ignorés ; humidité non corrigée. Clause de partage des fiches biomasse dans le RPC distincte de la confidentialité des pages. Ne pas utiliser cette voie comme remplacement silencieux du moteur primaire. Comportement actuel conservé pendant cet audit.
 
-## 4. V1 proposée, non implémentée
+## 4. V1 approuvée et implémentée
 
 `E_primaire(MWh/an) = M(t/an) × PCI_reçu(MJ/kg) / 3,6`.
 
 1 t = 1000 kg ; 1 GJ = 1000 MJ ; 1 MWh = 3,6 GJ = 3600 MJ = 1000 kWh. Le produit t × MJ/kg correspond numériquement à GJ.
 
-Entrées proposées : une seule fiche validée, source, qualité/nature, douze mois complets datés, masse annuelle positive sur matière reçue explicitement confirmée, PCI reçu positif avec méthode/source documentées. Conserver les natures estimées ou supposées sans les présenter comme mesures.
+Entrées requises : une seule fiche validée liée à un site et un projet de même localité, source, qualité/nature, douze mois complets datés, masse annuelle positive sur matière reçue explicitement confirmée, PCI reçu positif avec méthode/source documentées. Les natures estimées ou supposées sont conservées sans les présenter comme mesures. Le serveur reconstruit les valeurs depuis la fiche sous les droits utilisateur et ignore les valeurs du catalogue envoyées par le navigateur.
 
-Humidité : exiger une valeur et une convention documentées, confirmées dans les hypothèses du calcul ; ne pas déduire la convention du pourcentage. Aucune conversion sèche/reçue automatique. Refuser matière sèche, volume et quantité mensuelle dans cette V1 ; toute extension requiert un modèle validé séparément.
+Humidité : valeur et convention documentées, confirmées dans les déclarations d'entrée du calcul ; convention jamais déduite du pourcentage. Choix base humide (eau/masse totale) ou sèche (eau/masse sèche), plage catalogue 0–100 % conservée. Aucune conversion sèche/reçue automatique. Matière sèche, volume et quantité mensuelle refusés ; toute extension requiert un modèle validé séparément.
 
 Calcul limité à l'énergie de la **quantité recensée**, jamais à une mobilisation supposée. Afficher séparément les niveaux enregistrés. Ne multiplier aucune fraction, ne soustraire aucun usage concurrent et ne calculer aucun total mobilisable sans méthode approuvée.
 
@@ -44,7 +44,7 @@ Chaleur utile et électricité brute/nette : indisponibles avec motifs, aucun re
 
 ## 5. Double comptage
 
-`safeTotal` refuse unités/bases/périodes différentes et types répétés ; ce n'est pas une preuve de disjonction physique. Deux catégories peuvent couvrir les mêmes matières. V1 proposée : un bilan par fiche, aucun cumul entre fiches ni entre versions de simulations. Pas de lot physique identifié dans le catalogue ; agrégation future conditionnée à une preuve de disjonction. Le RPC annuel peut enregistrer plusieurs estimations d'une même fiche : ne pas additionner ces exécutions.
+`safeTotal` refuse unités/bases/périodes différentes et types répétés ; ce n'est pas une preuve de disjonction physique. Deux catégories peuvent couvrir les mêmes matières. V1 : un bilan par fiche, aucun cumul entre fiches ni entre versions de simulations. Référence unique et période concordante imposées. Pas de lot physique identifié dans le catalogue ; agrégation future conditionnée à une preuve de disjonction. Le RPC annuel peut enregistrer plusieurs estimations d'une même fiche : ne pas additionner ces exécutions.
 
 ## 6. API, interface et sauvegarde
 
@@ -58,12 +58,27 @@ URL/clé absentes de l'environnement inspecté. Service hébergé et parcours ca
 
 ## 7. Tests et cas à valider
 
-Tests existants exécutés : **172 Python réussis**, un avertissement de dépréciation Starlette/httpx ; **222 TypeScript réussis dans 17 fichiers**, dont **21 tests du modèle biomasse**. Aucun nouveau test de moteur primaire, aucune validation physique ou hébergée.
+Avant modification : **172 Python et 222 TypeScript réussis**, dont 21 modèle biomasse. Après intégration : **201 Python (29 nouveaux) et 248 TypeScript (26 nouveaux), 19 fichiers TypeScript**, tous réussis. Un avertissement de dépréciation Starlette/httpx. Tests de sources avec doublures : reconstruction des valeurs, refus de lecture, sites/projets incompatibles, déclaration absente. Tests de rôles existants réexécutés, pas de nouveaux comptes de rôle modifiés en base.
 
-Cas arithmétiques proposés, jamais des données terrain ni des insertions : 3,6 t/an × 10 MJ/kg / 3,6 = 10 MWh/an ; 1 t/an × 3,6 MJ/kg / 3,6 = 1 MWh/an = 1000 kWh/an. Une fraction de 50 % ne modifie pas le bilan recensé. Tolérances numériques à préciser lors de l'implémentation, distinctes des incertitudes physiques à valider.
+Cas arithmétiques testés, jamais des données terrain ni des insertions : 3,6 t/an × 10 MJ/kg / 3,6 = 10 MWh/an ; 1 t/an × 3,6 MJ/kg / 3,6 = 1 MWh/an = 1000 kWh/an. Une fraction de 50 % ne modifie pas le bilan recensé. Tolérance d'intégrité relative 1e-9 avec plancher 1 sur le PCI reconstruit par le bilan, distincte des incertitudes physiques à valider ; valeurs non finies ou sous-flux nul refusés.
 
-Tests futurs : unités/périodes/bases incompatibles, humidité ou convention manquante/hors plage, quantité négative, fraction hors plage, PCI manquant/non positif, source absente, fiche non validée, conversions indisponibles, absence de cumul, réponse étrangère/incomplète, échec service/enregistrement, authentification/rôles et absence de faux résultats.
+Tests exécutés : unités/périodes/bases incompatibles, humidité/convention manquante/hors plage, quantité négative, fraction hors plage, PCI non positif, source absente, fiche non validée, conversions indisponibles, cumul refusé, réponse étrangère/incohérente au point de contrôle avant persistance, typage strict sans coercition, dépassement numérique. Service local réellement lancé avec identité Cloud authentifiée : health → validation → calcul primaire réussis ; appel anonyme refusé sans sortie. Cas arithmétique uniquement, jamais sauvegardé. Navigateur connecté : onglet, erreurs et lancement désactivé sans service/données confirmés, aucun résultat fictif ; ordinateur et petit écran sans débordement, aucune erreur navigateur. Build OK.
 
-## 8. Décisions attendues de Joël
+Encore NON TESTÉS : parcours hébergé avec vraie fiche, sauvegarde/consultation biomasse réussie et pannes réelles de finalisation ; contrôles de plusieurs rôles en base pour ce nouveau parcours. Impossible sans service configuré et données réelles validées. Les contrôles communs restent réutilisés, sans nouvelle permission ni migration.
 
-Confirmer la V1 primaire recensée seulement, tonnes annuelles reçues/PCI reçu sans fraction ; convention d'humidité documentée sans correction ; douze mois datés et une seule fiche ; mobilisation et conversions reportées jusqu'à validation des méthodes et sources. L'approbation du périmètre ne constitue pas une validation scientifique de procédé.
+## 8. Validation restante
+
+Périmètre V1 approuvé : primaire recensée, tonnes annuelles reçues/PCI reçu sans fraction, convention documentée sans correction, douze mois et une fiche. Restent à Joël : vérification de la compatibilité réelle masse/PCI/humidité, qualité de l'échantillonnage et cas physiques/tolérances. Mobilisation et conversion demandent méthodes, procédés et sources validés séparément. L'approbation du périmètre ne constitue pas une validation scientifique de procédé.
+
+## 9. Rapport final en dix points
+
+1. **TERMINÉ — Réutilisation :** catalogue, sites/localités/projets, validation, API/transport/authentification, simulations/results et consultation existants ; aucune nouvelle table/migration/route API.
+2. **TERMINÉ — Fichiers :** créés moteur Python biomasse/tests, `biomass-contract.ts`/tests, `biomass-input.ts`, `biomass-source.server.ts`/tests et formulaire ; modifiés registre, schéma commun (garde biomasse uniquement), tests de capacités, fonctions biomasse/engine, contrôle de réponse, pages simulation nouvelle/résultats/fiche, documentation/règles/feuille de route.
+3. **TERMINÉ / PARTIEL — Niveaux :** énergie primaire recensée calculée ; niveaux de disponibilité enregistrés affichés ; mobilisation, chaleur utile et électricité indisponibles avec motifs.
+4. **TERMINÉ — Équation/unités :** t/an × MJ/kg / 3,6 → MWh/an ; masse/PCI reçus exclusivement ; humidité documentée sans correction ni fraction appliquée.
+5. **TERMINÉ / BLOQUÉ — Prérequis :** site/projet/localité cohérents, fiche validée, source/qualité/méthode PCI/période/bases requis ; aucune vraie fiche actuellement en base.
+6. **PARTIEL — API/service :** endpoints communs réutilisés ; service local authentifié testé ; Render et liaison hébergée NON TESTÉS, configuration absente de l'environnement inspecté.
+7. **TERMINÉ — Tests :** 201 Python = 172 existants + 29 nouveaux ; 248 TypeScript = 222 existants + 26 nouveaux, un avertissement Python ; build OK. Cas arithmétiques, pas validation de procédé.
+8. **PARTIEL — Interface/persistance :** onglet connecté/refus/service absent vérifiés ; lectures côté serveur et instantanés reliés aux sauvegardes communes ; calcul → sauvegarde → consultation hébergés BLOQUÉS, pannes de persistance NON TESTÉES.
+9. **À VALIDER PAR L’INGÉNIEUR — Science :** compatibilité physique, qualité, incertitudes et cas réels ; aucune preuve de durabilité, logistique ou conversion.
+10. **PARTIEL — Régressions/suite :** moteurs PV/CSP/éolien inchangés, suites réussies ; fournir vraie fiche documentée/validée et configurer le service, puis contrôler calcul, sauvegarde, consultation et échecs réels. Ancien estimateur électrique conservé et distinct ; aucun branchement primaire au LCOE.
