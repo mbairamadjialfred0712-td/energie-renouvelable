@@ -162,6 +162,13 @@
       "when": 1792227619101,
       "tag": "0022_trusted_simulation_results",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792235666789,
+      "tag": "0023_hybrid_preparation_role_guard",
+      "breakpoints": true
     }
   ]
 }

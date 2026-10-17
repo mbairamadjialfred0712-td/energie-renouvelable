@@ -1,3 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ModulePage } from "@/components/app/module-page";
-export const Route=createFileRoute("/_authenticated/scenarios")({head:()=>({meta:[{title:"Scénarios — Énergie Renouvelable"},{name:"description",content:"Préparez et comparez les configurations sans désigner automatiquement un scénario comme meilleur."},{property:"og:title",content:"Scénarios — Énergie Renouvelable"},{property:"og:description",content:"Préparez et comparez les configurations sans désigner automatiquement un scénario comme meilleur."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:()=> <ModulePage eyebrow="Études / Scénarios" title="Scénarios" description="Préparez et comparez les configurations sans désigner automatiquement un scénario comme meilleur." fields={[{ label: 'Nom', required: true }, { label: 'Simulation liée' }, { label: 'Objectif' }, { label: 'Contraintes' }, { label: 'Hypothèses' }]} />});
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { HybridWorkspace } from "@/features/hybrid/hybrid-workspace";
+import { getHybridWorkspace } from "@/lib/hybrid.functions";
+const options = queryOptions({ queryKey: ["hybrid-workspace"], queryFn: () => getHybridWorkspace() });
+export const Route = createFileRoute("/_authenticated/scenarios")({
+  head: () => ({ meta: [{ title: "Systèmes hybrides — Énergie Renouvelable" }, { name: "description", content: "Configuration des systèmes hybrides et comparaison des résultats individuels traçables." }, { property: "og:title", content: "Systèmes hybrides — Énergie Renouvelable" }, { property: "og:description", content: "Préparation sans simulation hybride fictive ni conversion énergétique implicite." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(options),
+  component: Page,
+});
+function Page() { const { data } = useSuspenseQuery(options); return <HybridWorkspace data={data} />; }

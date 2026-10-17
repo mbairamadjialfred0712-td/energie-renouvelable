@@ -1,0 +1,12 @@
+import { expect, it } from "vitest";
+import { assertHybridReferences, assertHybridWriter } from "./hybrid-access.server";
+import { emptyConfig, newComponent, type HybridData } from "@/features/hybrid/hybrid-model";
+const refs = (): HybridData => ({ configs: [], projects: [{ id: "p", name: "QA", localityId: "l" }], sites: [{ id: "s", name: "QA", localityId: "l" }], demands: [], weather: [], equipment: [], simulations: [], canWrite: false });
+it.each(["viewer", "analyst"])("%s cannot save hybrid configurations", role => expect(() => assertHybridWriter([role], "a")).toThrow());
+it("engineer cannot modify another owner's configuration", () => expect(() => assertHybridWriter(["engineer"], "a", "b")).toThrow());
+it("owner engineer can save preparation", () => expect(() => assertHybridWriter(["engineer"], "a", "a")).not.toThrow());
+it("admin can save accessible configuration", () => expect(() => assertHybridWriter(["admin"], "a", "b")).not.toThrow());
+it("cannot forge inaccessible project reference", () => expect(() => assertHybridReferences({ ...emptyConfig(), projectId: "foreign" }, refs())).toThrow("Projet inaccessible"));
+it("cannot reference mismatched site locality", () => { const d = refs(); d.sites[0] = { id: "s", name: "QA", localityId: "different" }; expect(() => assertHybridReferences({ ...emptyConfig(), projectId: "p", siteId: "s" }, d)).toThrow("localités différentes"); });
+it("cannot attach inaccessible simulation", () => expect(() => assertHybridReferences({ ...emptyConfig(), projectId: "p", components: [{ ...newComponent("wind"), simulationId: "foreign" }] }, refs())).toThrow("Simulation inaccessible"));
+it("allows incomplete drafts without claiming readiness", () => expect(() => assertHybridReferences(emptyConfig(), refs())).not.toThrow());
