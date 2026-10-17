@@ -1,4 +1,5 @@
 import {expect,it} from "vitest";
+import {assertCompletedResponse} from "./engine-response";
 import {buildBiomassRequest,type BiomassCatalogue} from "./biomass-input";
 import {biomassRequestSchema,checkBiomassResponse} from "./biomass-contract";
 import {simulationResponse} from "./engine-contract";
@@ -13,3 +14,6 @@ it("accepts arithmetic primary result with unavailable conversions",()=>expect((
 it("rejects fabricated electricity",()=>{const out=reply();const r=out.results["net_electric_energy"];if(r)r.value=0;expect(()=>checkBiomassResponse(req(),out)).toThrow();});
 it("rejects inconsistent primary energy",()=>{const out=reply();const r=out.results["primary_energy"];if(r)r.value=5;expect(()=>checkBiomassResponse(req(),out)).toThrow();});
 it("rejects foreign resource",()=>{const out=reply();out.calculation_metadata["resource_id"]="other";expect(()=>checkBiomassResponse(req(),out)).toThrow();});
+
+it("applies biomass integrity at common persistence boundary",()=>{const out=reply();const r=out.results["primary_energy"];if(r)r.value=5;expect(()=>assertCompletedResponse(req(),out,"test")).toThrow();});
+it("rejects mismatched reference period",()=>{const r=req();const source=r.source_references[0];if(source)source.period="2023";expect(biomassRequestSchema.safeParse(r).success).toBe(false);});

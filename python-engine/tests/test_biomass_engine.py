@@ -8,7 +8,7 @@ from app.services.validation import validate_request
 
 def fixture():
     def v(value, unit="-"): return {"value": value, "unit": unit, "nature": "assumption", "source": "Arithmetic test documentation"}
-    return {"schema_version":"1.0","engine":"biomass","engine_version":"1.0.0","input_data": {"resource_id":v("row-1"),"site_id":v("site-1"),"status":v("validated"),"quality":v("Arithmetic fixture only"),"mass":v(3.6,"t/an"),"pci":v(10,"MJ/kg"),"moisture":v(20,"%"),"mass_basis":v("as_received"),"pci_basis":v("as_received"),"moisture_basis":v("wet"),"basis_compatibility":v(True),"period_start":v("2024-01-01"),"period_end":v("2024-12-31")},"source_references":[{"label":"Arithmetic test","table":"biomass_resources","record_id":"row-1"}]}
+    return {"schema_version":"1.0","engine":"biomass","engine_version":"1.0.0","input_data": {"resource_id":v("row-1"),"site_id":v("site-1"),"status":v("validated"),"quality":v("Arithmetic fixture only"),"mass":v(3.6,"t/an"),"pci":v(10,"MJ/kg"),"moisture":v(20,"%"),"mass_basis":v("as_received"),"pci_basis":v("as_received"),"moisture_basis":v("wet"),"basis_compatibility":v(True),"period_start":v("2024-01-01"),"period_end":v("2024-12-31")},"source_references":[{"label":"Arithmetic test","table":"biomass_resources","record_id":"row-1","period":"2024-01-01 / 2024-12-31"}]}
 
 
 def test_primary_units_and_no_electricity():
@@ -59,3 +59,14 @@ def test_gj_kwh_arithmetic():
 def test_overflow_no_output():
     body=fixture();body["input_data"]["mass"]["value"]=1e308;body["input_data"]["pci"]["value"]=1e308
     with pytest.raises(ValueError): BiomassPrimaryEngine().run(SimulationRequest.model_validate(body))
+
+
+def test_reference_period_mismatch():
+    body=fixture();body["source_references"][0]["period"]="2023-01-01 / 2023-12-31"
+    assert validate_request(SimulationRequest.model_validate(body))[0]
+
+
+@pytest.mark.parametrize("key,value",[("mass","3.6"),("mass",True),("basis_compatibility",1)])
+def test_no_numeric_or_boolean_coercion(key,value):
+    body=fixture();body["input_data"][key]["value"]=value
+    with pytest.raises(ValueError): SimulationRequest.model_validate(body)
