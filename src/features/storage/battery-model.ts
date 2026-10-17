@@ -126,7 +126,7 @@ export function sheetWarnings(s: Sheet): string[] {
 export function validationGateErrors(s: Sheet): string[] {
   const e: string[] = [];
   if (!s.acquisition_method) e.push("La méthode d’obtention des caractéristiques est obligatoire pour valider une fiche.");
-  if (s.nominal_voltage_v == null && s.capacity_ah == null && s.energy_kwh == null) e.push("Valider exige au moins une caractéristique électrique documentée (tension, capacité ou énergie nominale).");
+  if (s["nominal_voltage_v"] == null && s["capacity_ah"] == null && s["energy_kwh"] == null) e.push("Valider exige au moins une caractéristique électrique documentée (tension, capacité ou énergie nominale).");
   if (s.chemistry === "other" && !s.chemistry_detail?.trim()) e.push("Précisez la technologie pour « Autre » avant validation.");
   return e;
 }
