@@ -134,6 +134,13 @@
       "when": 1792224734998,
       "tag": "0018_fix_equipment_update_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792225164322,
+      "tag": "0019_guard_demand_status_lock_validated",
+      "breakpoints": true
     }
   ]
 }
