@@ -142,15 +142,18 @@ export const runWindSimulation = runEngine;
 export const getSimulationSeries = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), resultType: z.string().regex(/^series_[a-z_]+$/) }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: sim } = await context.supabase.from("simulations").select("id,name,status").eq("id", data.id).maybeSingle();
+    const { data: sim, error: simError } = await context.supabase.from("simulations").select("id,name,status").eq("id", data.id).maybeSingle();
+    if (simError) throw new Error("Lecture de la simulation indisponible.");
     if (!sim) throw new Error("Simulation introuvable.");
     if (sim.status !== "completed") throw new Error("Seules les simulations terminées fournissent des séries.");
     const { data: row, error } = await context.supabase.from("simulation_results").select("timeseries,unit").eq("simulation_id", data.id).eq("result_type", data.resultType).maybeSingle();
     if (error) throw new Error("Série indisponible.");
     const t = row?.timeseries as { values?: number[] } | null;
     if (!row || !t?.values?.length) return null;
-    const { data: full } = await context.supabase.from("simulations").select("parameters").eq("id", data.id).single();
+    const { data: full, error: fullError } = await context.supabase.from("simulations").select("parameters").eq("id", data.id).single();
+    if (fullError || !full) throw new Error("Lecture des paramètres indisponible.");
     const ts = (full?.parameters as { request?: { timeseries?: { timestamps?: string[]; utc_offset_hours?: number } } } | null)?.request?.timeseries;
+    if (!ts?.timestamps?.length || ts.timestamps.length !== t.values.length || typeof ts.utc_offset_hours !== "number") throw new Error("Série enregistrée incomplète : horodatages ou fuseau manquants.");
     return { name: sim.name as string, values: t.values, unit: row.unit as string, timestamps: ts?.timestamps ?? [], utcOffset: ts?.utc_offset_hours ?? null };
   });
 

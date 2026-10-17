@@ -122,3 +122,30 @@ def test_wind_service_missing_key_no_results(client,monkeypatch):
 def test_wind_wrong_key_no_results(client):
     out=client.post("/api/v1/simulations",json=fixture(),headers={**H,"X-Engine-Key":"wrong"})
     assert out.status_code==401 and "results" not in out.json()
+
+def test_rotor_diameter_geometry():
+    r=fixture("B");r["input_data"]["rotor_diameter"]={"value":10,"unit":"m","nature":"assumption","source":"Arithmetic only"}
+    r["input_data"]["swept_area"]["value"]=25*math.pi
+    out=ENGINE.run(SimulationRequest(**r))
+    assert out.timeseries["kinetic_power"].values[0] == pytest.approx(.5*1.2*25*math.pi*125)
+
+def test_rotor_area_mismatch_rejected():
+    r=fixture("B");r["input_data"]["rotor_diameter"]={"value":10,"unit":"m","nature":"assumption","source":"Arithmetic only"}
+    with pytest.raises(ValueError,match="Surface incompatible"): ENGINE.run(SimulationRequest(**r))
+
+def test_curve_sources_bound_to_reference():
+    r=fixture("C");r["input_data"]["curve_powers"]["source"]="Different document"
+    with pytest.raises(ValueError,match="référence documentaire"): ENGINE.run(SimulationRequest(**r))
+
+def test_zero_documented_cut_in_allowed():
+    r=fixture("C");r["input_data"]["cut_in"]={"value":0,"unit":"m/s","nature":"assumption","source":"Arithmetic only"}
+    assert ENGINE.run(SimulationRequest(**r)).results["turbine_energy"].value == 1.5
+
+def test_overflow_api_no_results(client):
+    r=fixture();r["timeseries"]["series"]["wind_speed"]["values"]=[1e308,1e308]
+    out=client.post("/api/v1/simulations",json=r,headers=H)
+    assert out.status_code==422 and "results" not in out.json()
+
+def test_incomplete_hour_refused():
+    r=fixture("C");r["timeseries"]["timestamps"][1]="2024-02-29T01:30:00Z"
+    with pytest.raises(ValueError): ENGINE.run(SimulationRequest(**r))
