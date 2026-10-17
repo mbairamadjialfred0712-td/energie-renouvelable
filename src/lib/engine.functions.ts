@@ -8,6 +8,7 @@ import { assertCompletedResponse } from "@/features/engine/engine-response";
 import type { Json } from "@/integrations/supabase/types";
 import { cspRequestSchema } from "@/features/engine/csp-contract";
 import { windRequestSchema } from "@/features/engine/wind-contract";
+import { biomassRequestSchema } from "@/features/engine/biomass-contract";
 
 export const getEngineStatus = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async (): Promise<EngineStatus> => {
   const { callEngine, EngineCallError } = await import("./engine-http.server");
@@ -26,6 +27,7 @@ export const validateSimulationRequest = createServerFn({ method: "POST" }).midd
     const raw = z.object({ engine: z.string() }).passthrough().parse(input);
     if (raw.engine === "csp") cspRequestSchema.parse(input);
     if (raw.engine === "wind") windRequestSchema.parse(input);
+    if (raw.engine === "biomass") biomassRequestSchema.parse(input);
     return simulationRequest.parse(input);
   })
   .handler(async ({ data }) => {
@@ -45,11 +47,12 @@ const runInput = z.object({
   locality_id: z.string().uuid().nullable().optional(),
   request: simulationRequest,
   weather_dataset_id: z.string().uuid().optional(),
+  biomass_resource_id: z.string().uuid().optional(),
   confirm_hourly_mean: z.boolean().optional(),
   confirm_radiation_conversion: z.boolean().optional(),
 }).strict();
 
-const ENGINES: Record<string, string> = { photovoltaic: "Production photovoltaïque horaire", battery: "Stockage batterie horaire (réservoir + rendements)", csp: "CSP cylindro-parabolique — bilan prescrit", wind: "Éolien — ressource / flux cinétique / courbe documentée" };
+const ENGINES: Record<string, string> = { photovoltaic: "Production photovoltaïque horaire", battery: "Stockage batterie horaire (réservoir + rendements)", csp: "CSP cylindro-parabolique — bilan prescrit", wind: "Éolien — ressource / flux cinétique / courbe documentée", biomass: "Biomasse — énergie primaire recensée (non électrique)" };
 
 const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => {
@@ -65,6 +68,12 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
     const objective = ENGINES[data.request.engine];
     if (!objective) throw new Error("Moteur non disponible.");
     let sourceSnapshot: Json = null;
+    if (data.request.engine === "biomass") {
+      const { prepareBiomassSource } = await import("./biomass-source.server");
+      const prepared = await prepareBiomassSource(context.supabase, data.request, data.biomass_resource_id);
+      if (data.locality_id && data.locality_id !== prepared.localityId) throw new Error("Localité biomasse incohérente.");
+      data.locality_id = prepared.localityId; data.request = prepared.request; sourceSnapshot = prepared.provenance as unknown as Json;
+    }
     if (data.request.engine === "wind") {
       if (data.request.timeseries != null) throw new Error("Vent navigateur refusé : choisir un jeu enregistré.");
       const { prepareWindSource } = await import("./wind-source.server");
@@ -93,7 +102,7 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
     const { data: sim, error } = await supabaseAdmin.from("simulations").insert({
       owner_id: context.userId, name: data.name, description: data.description ?? null,
       project_id: data.project_id ?? null, locality_id: data.locality_id ?? null,
-      period_start: ts?.timestamps[0]?.slice(0, 10) ?? null, period_end: ts?.timestamps.at(-1)?.slice(0, 10) ?? null,
+      period_start: ts?.timestamps[0]?.slice(0, 10) ?? (data.request.engine === "biomass" ? String(data.request.input_data["period_start"]?.value) : null), period_end: ts?.timestamps.at(-1)?.slice(0, 10) ?? (data.request.engine === "biomass" ? String(data.request.input_data["period_end"]?.value) : null),
       objective, status: "running",
       parameters: { request: data.request, source_snapshot: sourceSnapshot } as unknown as Json, assumptions: data.request.assumptions as unknown as Json,
     }).select("id").single();
@@ -132,6 +141,7 @@ export const runPvSimulation = runEngine;
 export const runBatterySimulation = runEngine;
 export const runCspSimulation = runEngine;
 export const runWindSimulation = runEngine;
+export const runBiomassSimulation = runEngine;
 
 /** Séries horaires de résultats d'une simulation terminée (ex. ac_energy PV pour alimenter le moteur batterie). */
 export const getSimulationSeries = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
@@ -161,6 +171,7 @@ export const getSimulation = createServerFn({ method: "GET" }).middleware([requi
     return {
       simulation: { id: sim.data.id, name: sim.data.name, status: sim.data.status, engine_version: sim.data.engine_version, created_at: sim.data.created_at },
       inputs: params.request?.input_data ?? {},
+      biomassSource: (sim.data.parameters as { request?: { engine?: string } } | null)?.request?.engine === "biomass" ? JSON.stringify((sim.data.parameters as { source_snapshot?: Json } | null)?.source_snapshot ?? null, null, 2) : null,
       windMetadata: (sim.data.parameters as { request?: { engine?: string } } | null)?.request?.engine === "wind" && sim.data.status === "completed" ? JSON.stringify({ metadata: (res.data?.[0]?.input_snapshot as { metadata?: Json } | null)?.metadata, source: (sim.data.parameters as { source_snapshot?: Json } | null)?.source_snapshot }, null, 2) : null,
       windSeries: (sim.data.parameters as { request?: { engine?: string } } | null)?.request?.engine === "wind" && sim.data.status === "completed" ? (res.data ?? []).filter((r) => r.result_type.startsWith("series_")).map((r) => ({ key: r.result_type.slice(7), unit: r.unit, values: ((r.timeseries as { values?: number[] } | null)?.values ?? []), method: r.calculation_method })) : [],
       cspLimits: params.request?.input_data?.["technology"]?.value === "parabolic_trough" && sim.data.status === "completed" ? String((res.data?.[0]?.input_snapshot as { metadata?: { limits?: string } } | null)?.metadata?.limits ?? "Bilan prescrit ; température et fluide documentés, non simulés. Pertes constantes à chaque heure, nuit incluse ; validation scientifique en attente.") : null,

@@ -63,6 +63,20 @@ class SimulationRequest(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
+    def strict_biomass_numbers(cls, raw):
+        if isinstance(raw, dict) and raw.get("engine") == "biomass":
+            for key, item in (raw.get("input_data") or {}).items():
+                if not isinstance(item, dict): continue
+                value = item.get("value")
+                if key in ("mass", "pci", "moisture", "fraction") or key.startswith("level_"):
+                    if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float))):
+                        raise ValueError("Biomasse : valeurs strictement numériques, sans coercition.")
+                if key == "basis_compatibility" and not isinstance(value, bool):
+                    raise ValueError("Biomasse : confirmation booléenne explicite requise.")
+        return raw
+
+    @model_validator(mode="before")
+    @classmethod
     def strict_wind_numbers(cls, raw):
         if isinstance(raw, dict) and raw.get("engine") == "wind":
             ts = raw.get("timeseries")

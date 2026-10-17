@@ -12,7 +12,8 @@
 
 ## En cours
 - [x] PROMPT 12 : audit données/RPC/intégration et VALIDATION_BIOMASS.md ; 172 tests Python et 222 TypeScript existants réussis, aucune fiche biomasse en base, aucun moteur modifié
-- [ ] PROMPT 12 : implémenter et intégrer V1 primaire après validation Joël (bloqué : base de masse/humidité et périmètre à confirmer dans le plan)
+- [x] PROMPT 12 : V1 primaire approuvée et intégrée (moteur isolé, sélection serveur, instantanés, formulaire/résultats, aucune fraction/conversion supposée) ; 201 Python et 248 TypeScript réussis, service local authentifié et navigateur connecté vérifiés, build OK
+- [ ] PROMPT 12 : premier bilan réel hébergé calcul → sauvegarde → consultation et échecs de persistance (bloqué : service configuré et vraie fiche biomasse documentée/validée à fournir ; validation physique Joël restante)
 - [x] PROMPT 11.1 : audit ciblé et corrections durées/unités, géométrie, sources/limites, intégrité et lectures ; 172 Python + 222 TypeScript réussis, navigateur connecté et service local authentifié vérifiés ; PV/CSP et données inchangés
 - [ ] PROMPT 11.1 : premier calcul réel hébergé et persistance/échecs de sauvegarde (bloqué : service configuré, météo validée et courbe compatible à fournir ; Render NON TESTÉ)
 - [x] PROMPT 11 : audit réel et conception A/B/C consignés dans VALIDATION_WIND.md ; 116 tests Python et 175 TypeScript existants réexécutés ; catalogue 24 fiches, aucune validée et aucune série enregistrée

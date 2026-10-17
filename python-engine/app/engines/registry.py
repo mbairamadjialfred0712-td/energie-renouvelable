@@ -46,6 +46,8 @@ def _load() -> dict[str, Engine]:
     engines["csp"] = CspBalanceEngine()
     from app.engines.wind.engine import WindEngine
     engines["wind"] = WindEngine()
+    from app.engines.biomass.engine import BiomassPrimaryEngine
+    engines["biomass"] = BiomassPrimaryEngine()
     return engines
 
 

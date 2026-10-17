@@ -1,0 +1,12 @@
+import { biomassRequestSchema, BIOMASS_VERSION } from "./biomass-contract";
+import type { SimulationRequest } from "./engine-contract";
+export type BiomassCatalogue = { id: string; site_id: string | null; status: string; source: string; quality: string | null; quantity: number | null; unit: string; lhv: number | null; lhv_basis: string | null; lhv_method: string | null; moisture: number | null; period_start: string | null; period_end: string | null; data_nature: string; fraction: number | null; levels: Record<string,number|null|undefined> };
+export type BiomassDeclaration = { moistureBasis: "wet" | "dry" | ""; justification: string; confirmed: boolean };
+export function buildBiomassRequest(row: BiomassCatalogue, project: string, declaration: BiomassDeclaration): SimulationRequest {
+  const nature: SimulationRequest["input_data"][string]["nature"] = row.data_nature === "measured" ? "measured" : row.data_nature === "estimate" ? "estimate" : row.data_nature === "assumption" ? "assumption" : "external";
+  const value = (v: string | number | boolean | null, unit="-", source=row.source) => ({value:v,unit,nature,source});
+  const input_data: SimulationRequest["input_data"]={resource_id:value(row.id),site_id:value(row.site_id),status:value(row.status),quality:value(row.quality),mass:value(row.quantity,row.unit),pci:value(row.lhv,"MJ/kg",row.lhv_method ? `${row.source} — ${row.lhv_method}`.slice(0,500):""),moisture:value(row.moisture,"%"),period_start:value(row.period_start),period_end:value(row.period_end),mass_basis:{value:row.unit==="t/an"?"as_received":"unsupported",unit:"-",nature:"assumption",source:declaration.justification},pci_basis:value(row.lhv_basis),moisture_basis:{value:declaration.moistureBasis,unit:"-",nature:"assumption",source:declaration.justification},basis_compatibility:{value:declaration.confirmed,unit:"-",nature:"assumption",source:declaration.justification}};
+  if(row.fraction!==null) input_data["fraction"]=value(row.fraction,"%");
+  for(const [k,v] of Object.entries(row.levels)) if(v!=null) input_data["level_"+k]=value(v,row.unit);
+  return biomassRequestSchema.parse({schema_version:"1.0",engine:"biomass",engine_version:BIOMASS_VERSION,project_id:project,input_data,assumptions:{},source_references:[{label:row.source.slice(0,300),table:"biomass_resources",record_id:row.id,period:`${row.period_start} / ${row.period_end}`}],timeseries:null});
+}
