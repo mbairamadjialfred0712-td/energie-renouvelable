@@ -66,6 +66,7 @@ l'enregistrer dans `IMPLEMENTED`, ajouter ses tests de formules avec référence
 - Déployer et valider scientifiquement le PV existant ; ne pas déclarer les autres moteurs disponibles sans preuve.
 - Mode asynchrone pour calculs longs et persistance transactionnelle à envisager : aujourd'hui écritures contrôlées et compensation, pas de transaction globale.
 - Limitation de débit (proxy ou middleware), supervision, tests de bout en bout après déploiement.
+- Migration `0022_trusted_simulation_results.sql` : aucune écriture directe autorisée à `authenticated`/`anon` sur simulations et résultats. Lecture propriétaire/admin conservée sous RLS. Le serveur vérifie rôles et accès avec le client utilisateur avant d'utiliser son client privilégié pour enregistrer le calcul. Cela protège aussi les consommateurs existants de résultats, sans modifier leurs moteurs.
 
 ## Checklist de mise en service PV (audit du 17/10/2026)
 1. Obtenir la décision scientifique de Joël selon `docs/VALIDATION_PV.md` (sources, paramètres, référence et écarts admissibles).
