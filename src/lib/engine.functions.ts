@@ -1,51 +1,17 @@
 // Client HTTP centralisé vers le moteur scientifique Python (exécuté côté serveur uniquement).
 // L'URL et la clé partagée viennent des variables serveur SCIENTIFIC_ENGINE_URL / SCIENTIFIC_ENGINE_KEY.
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { capabilitiesResponse, errorResponse, healthResponse, simulationRequest, simulationResponse, validationResponse, type EngineStatus } from "@/features/engine/engine-contract";
+import { capabilitiesResponse, healthResponse, simulationRequest, simulationResponse, validationResponse, type EngineStatus } from "@/features/engine/engine-contract";
+import { assertCompletedResponse } from "@/features/engine/engine-response";
 import type { Json } from "@/integrations/supabase/types";
 
-const TIMEOUT_MS = 10_000;
-
-class EngineCallError extends Error {
-  constructor(public kind: "not_configured" | "unreachable" | "error", message: string) { super(message); }
-}
-
-async function callEngine<T>(path: string, schema: z.ZodType<T>, init?: { method: "POST"; body: unknown; auth: boolean; timeoutMs?: number }): Promise<T> {
-  const base = process.env["SCIENTIFIC_ENGINE_URL"]?.replace(/\/+$/, "");
-  const key = process.env["SCIENTIFIC_ENGINE_KEY"];
-  if (!base) throw new EngineCallError("not_configured", "Moteur de calcul non configuré.");
-  if (!/^https:\/\//.test(base) && !/^http:\/\/(localhost|127\.0\.0\.1)/.test(base)) throw new EngineCallError("not_configured", "L’URL du moteur doit utiliser HTTPS.");
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (init?.auth) {
-    if (!key) throw new EngineCallError("not_configured", "Clé du moteur de calcul non configurée.");
-    const auth = getRequestHeader("authorization");
-    if (!auth) throw new EngineCallError("error", "Session utilisateur absente.");
-    headers["X-Engine-Key"] = key;
-    headers["Authorization"] = auth; // jeton vérifié par FastAPI auprès du service d'identité
-  }
-  let res: Response;
-  try {
-    res = await fetch(`${base}/api/v1${path}`, { method: init?.method ?? "GET", headers, body: init ? JSON.stringify(init.body) : null, signal: AbortSignal.timeout(init?.timeoutMs ?? TIMEOUT_MS) });
-  } catch (e) {
-    const timeout = e instanceof Error && e.name === "TimeoutError";
-    throw new EngineCallError("unreachable", timeout ? "Délai d’attente dépassé du moteur de calcul." : "Moteur de calcul injoignable.");
-  }
-  const json: unknown = await res.json().catch(() => null);
-  if (!res.ok) {
-    const err = errorResponse.safeParse(json);
-    throw new EngineCallError("error", err.success ? err.data.error.message : `Erreur HTTP ${res.status} du moteur.`);
-  }
-  const parsed = schema.safeParse(json);
-  if (!parsed.success) throw new EngineCallError("error", "Réponse du moteur non conforme au contrat v1.");
-  return parsed.data;
-}
-
 export const getEngineStatus = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async (): Promise<EngineStatus> => {
+  const { callEngine, EngineCallError } = await import("./engine-http.server");
   try {
     const [health, capabilities] = await Promise.all([callEngine("/health", healthResponse), callEngine("/capabilities", capabilitiesResponse)]);
+    if (!health.auth_configured) return { state: "error", message: "Service joignable, mais authentification du moteur non configurée." };
     return { state: "online", health, capabilities };
   } catch (e) {
     if (e instanceof EngineCallError) return { state: e.kind, message: e.message };
@@ -56,6 +22,7 @@ export const getEngineStatus = createServerFn({ method: "GET" }).middleware([req
 export const validateSimulationRequest = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => simulationRequest.parse(input))
   .handler(async ({ data }) => {
+    const { callEngine, EngineCallError } = await import("./engine-http.server");
     try {
       return { ok: true as const, result: await callEngine("/simulations/validate", validationResponse, { method: "POST", body: data, auth: true }) };
     } catch (e) {
@@ -83,12 +50,22 @@ const ENGINES: Record<string, string> = { photovoltaic: "Production photovoltaï
 const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => runInput.parse(input))
   .handler(async ({ data, context }) => {
+    const { callEngine } = await import("./engine-http.server");
     const supabase = context.supabase as any;
     await assertCanRun(supabase, context.userId);
     const objective = ENGINES[data.request.engine];
     if (!objective) throw new Error("Moteur non disponible.");
+    for (const [table, id] of [["projects", data.project_id], ["localities", data.locality_id]] as const) {
+      if (id) {
+        const { data: linked, error: accessError } = await supabase.from(table).select("id").eq("id", id).maybeSingle();
+        if (accessError || !linked) throw new Error("Projet ou localité inaccessible.");
+      }
+    }
+    if (data.request.project_id && data.request.project_id !== data.project_id) throw new Error("Projet incohérent dans la requête.");
+    // Privileged persistence only after user-RLS role and linked-entity access checks.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const ts = data.request.timeseries;
-    const { data: sim, error } = await supabase.from("simulations").insert({
+    const { data: sim, error } = await supabaseAdmin.from("simulations").insert({
       owner_id: context.userId, name: data.name, description: data.description ?? null,
       project_id: data.project_id ?? null, locality_id: data.locality_id ?? null,
       period_start: ts?.timestamps[0]?.slice(0, 10) ?? null, period_end: ts?.timestamps.at(-1)?.slice(0, 10) ?? null,
@@ -98,22 +75,28 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
     if (error || !sim) throw new Error("La simulation n’a pas pu être créée.");
     type Detail = { field?: string | null; code: string; message: string };
     const fail = async (message: string, details: Detail[] = []) => {
-      await supabase.from("simulations").update({ status: "failed", parameters: { request: data.request, error: { message, details } } as unknown as Json }).eq("id", sim.id);
+      const saved = await supabaseAdmin.from("simulations").update({ status: "failed", parameters: { request: data.request, error: { message, details } } as unknown as Json }).eq("id", sim.id).eq("owner_id", context.userId).select("id").single();
+      if (saved.error || !saved.data) throw new Error("Échec du calcul ; son statut n’a pas pu être enregistré. Aucun succès confirmé.");
       return { id: sim.id as string, status: "failed" as const, message, details };
     };
     try {
       const v = await callEngine("/simulations/validate", validationResponse, { method: "POST", body: data.request, auth: true, timeoutMs: 60_000 });
+      if (v.engine !== data.request.engine || !v.engine_available) return await fail("Moteur demandé indisponible ou réponse de validation incohérente.");
       if (!v.valid) return await fail("Données refusées par le moteur.", v.validation_errors.map((e) => ({ field: e.field ?? null, code: e.code, message: e.message })));
       const out = await callEngine("/simulations", simulationResponse, { method: "POST", body: { ...data.request, simulation_id: sim.id }, auth: true, timeoutMs: 60_000 });
-      if (out.status !== "completed") return await fail("Le moteur n’a pas terminé le calcul.");
-      const snapshot = { schema_version: out.schema_version, engine_version: out.engine_version, metadata: out.calculation_metadata, warnings: out.warnings } as unknown as Json;
+      assertCompletedResponse(data.request, out, sim.id);
+      const snapshot = { schema_version: out.schema_version, engine_version: out.engine_version, metadata: { ...out.calculation_metadata, completed_at: out.completed_at }, warnings: out.warnings } as unknown as Json;
       const rows = [
         ...Object.entries(out.results).map(([k, r]) => ({ owner_id: context.userId, simulation_id: sim.id, result_type: k, value: r.value, unit: r.unit, calculation_method: r.method, input_snapshot: snapshot, assumptions_snapshot: data.request.assumptions as unknown as Json, source_references: data.request.source_references as unknown as Json })),
         ...Object.entries(out.timeseries).map(([k, s]) => ({ owner_id: context.userId, simulation_id: sim.id, result_type: `series_${k}`, value: null, unit: s.unit, timeseries: { values: s.values, timestamps_ref: "parameters.request.timeseries.timestamps" } as unknown as Json, calculation_method: s.method, input_snapshot: snapshot, assumptions_snapshot: data.request.assumptions as unknown as Json, source_references: data.request.source_references as unknown as Json })),
       ];
-      const ins = await supabase.from("simulation_results").insert(rows);
+      const ins = await supabaseAdmin.from("simulation_results").insert(rows);
       if (ins.error) return await fail("Résultats non enregistrés : la simulation est marquée en échec.");
-      await supabase.from("simulations").update({ status: "completed", engine_version: `${data.request.engine} ${out.engine_version}` }).eq("id", sim.id);
+      const saved = await supabaseAdmin.from("simulations").update({ status: "completed", engine_version: `${data.request.engine} ${out.engine_version}` }).eq("id", sim.id).eq("owner_id", context.userId).select("id").single();
+      if (saved.error || !saved.data) {
+        await supabaseAdmin.from("simulation_results").delete().eq("simulation_id", sim.id).eq("owner_id", context.userId);
+        return await fail("Statut final non enregistré : aucun succès confirmé.");
+      }
       return { id: sim.id as string, status: "completed" as const, message: "Simulation terminée.", details: out.warnings.map((e) => ({ field: e.field ?? null, code: e.code, message: e.message })) };
     } catch (e) {
       return await fail(e instanceof Error ? e.message : "Erreur du moteur.");
@@ -133,10 +116,10 @@ export const getSimulationSeries = createServerFn({ method: "GET" }).middleware(
     const { data: row, error } = await context.supabase.from("simulation_results").select("timeseries,unit").eq("simulation_id", data.id).eq("result_type", data.resultType).maybeSingle();
     if (error) throw new Error("Série indisponible.");
     const t = row?.timeseries as { values?: number[] } | null;
-    if (!t?.values?.length) return null;
+    if (!row || !t?.values?.length) return null;
     const { data: full } = await context.supabase.from("simulations").select("parameters").eq("id", data.id).single();
     const ts = (full?.parameters as { request?: { timeseries?: { timestamps?: string[]; utc_offset_hours?: number } } } | null)?.request?.timeseries;
-    return { name: sim.name as string, values: t.values, unit: row!.unit as string, timestamps: ts?.timestamps ?? [], utcOffset: ts?.utc_offset_hours ?? null };
+    return { name: sim.name as string, values: t.values, unit: row.unit as string, timestamps: ts?.timestamps ?? [], utcOffset: ts?.utc_offset_hours ?? null };
   });
 
 export const listSimulations = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
@@ -160,9 +143,12 @@ export const getSimulation = createServerFn({ method: "GET" }).middleware([requi
       simulation: { id: sim.data.id, name: sim.data.name, status: sim.data.status, engine_version: sim.data.engine_version, created_at: sim.data.created_at },
       inputs: params.request?.input_data ?? {},
       seriesMeta: Object.fromEntries(Object.entries(series).map(([k, v]) => [k, { unit: v.unit, nature: v.nature, source: v.source ?? null }])),
+      assumptions: Object.fromEntries(Object.entries((params.request as { assumptions?: Record<string, { value: Json; unit?: string; nature: string }> } | undefined)?.assumptions ?? {}).map(([k, v]) => [k, { value: String(v.value), unit: v.unit ?? null, nature: String(v.nature) }])),
+      lastTimestamp: params.request?.timeseries?.timestamps?.at(-1) ?? null,
+      calculatedAt: (res.data?.[0]?.input_snapshot as { metadata?: { completed_at?: string } } | null)?.metadata?.completed_at ?? null,
       firstTimestamp: params.request?.timeseries?.timestamps?.[0] ?? null,
       utcOffset: params.request?.timeseries?.utc_offset_hours ?? null,
       error: params.error ? { message: String(params.error.message), details: (Array.isArray(params.error.details) ? params.error.details : []).map((d) => ({ field: d.field ?? null, message: String(d.message) })) } : null,
-      results: (res.data ?? []).map((r) => ({ result_type: r.result_type, value: r.value, unit: r.unit, calculation_method: r.calculation_method, warnings: ((r.input_snapshot as { warnings?: { code: string; message: string }[] } | null)?.warnings ?? []).map((w) => ({ code: String(w.code), message: String(w.message) })) })),
+      results: (sim.data.status === "completed" ? res.data ?? [] : []).map((r) => ({ result_type: r.result_type, value: r.value, unit: r.unit, calculation_method: r.calculation_method, warnings: ((r.input_snapshot as { warnings?: { code: string; message: string }[] } | null)?.warnings ?? []).map((w) => ({ code: String(w.code), message: String(w.message) })) })),
     };
   });

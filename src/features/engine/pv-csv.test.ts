@@ -1,0 +1,7 @@
+import { expect, it } from "vitest";
+import { buildPvCsvTemplate, parsePvCsv } from "./pv-csv";
+it("non-leap demonstration covers 8760 hours through December 31", () => { const csv = parsePvCsv(buildPvCsvTemplate(2023)); expect(csv.errors).toEqual([]); expect(csv.timestamps.length).toBe(8760); expect(csv.timestamps.at(-1)).toBe("2023-12-31T23:00:00"); });
+it("leap demonstration omits February 29, not December 31", () => { const csv = parsePvCsv(buildPvCsvTemplate(2024)); expect(csv.timestamps.length).toBe(8760); expect(csv.timestamps.some((s) => s.startsWith("2024-02-29"))).toBe(false); expect(csv.timestamps.at(-1)).toBe("2024-12-31T23:00:00"); });
+it("missing values remain missing and are flagged, never zero", () => { const csv = parsePvCsv("timestamp;ghi;dni;dhi;temp_air;wind_speed\n2023-01-01T00:00:00;;0;0;20;1"); expect(csv.series["ghi"]?.[0]).toBeNull(); expect(csv.errors.length).toBeGreaterThan(0); });
+it("duplicate columns rejected", () => expect(parsePvCsv("timestamp;ghi;ghi\nx;1;2").errors.some((e) => e.includes("dupliquées"))).toBe(true));
+it("malformed rectangular CSV rejected", () => expect(parsePvCsv("timestamp;ghi;dni;dhi;temp_air;wind_speed\nx;1;2").errors.some((e) => e.includes("colonnes incorrect"))).toBe(true));

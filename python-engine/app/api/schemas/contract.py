@@ -45,6 +45,7 @@ class TimeSeriesIn(BaseModel):
     timestamps: list[str] = Field(max_length=8784)
     utc_offset_hours: float = Field(ge=-12, le=14)
     timestamp_convention: Literal["period_start"] = "period_start"
+    leap_day_convention: Literal["omit_feb29"] | None = None
     series: dict[str, SeriesIn] = Field(max_length=20)
 
 

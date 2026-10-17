@@ -6,6 +6,7 @@ officiel Pvwattsv8 de SAM, puis agrège ses sorties horaires. Voir docs/VALIDATI
 from __future__ import annotations
 
 import math
+import calendar
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from importlib.metadata import version as pkg_version
@@ -15,7 +16,7 @@ import PySAM.Pvwattsv8 as pvwatts
 from app.api.schemas.contract import Issue, ResultValue, SeriesOut, SimulationRequest
 from app.engines.base import EngineOutput
 
-ENGINE_VERSION = "1.0.0"
+ENGINE_VERSION = "1.0.1"
 MODEL = "PVWatts v8 (NREL SAM, via PySAM Pvwattsv8)"
 HOURS = 8760
 
@@ -75,7 +76,13 @@ class PVWattsV8Engine:
         for name, (units, lo, hi) in PARAMS.items():
             v = req.input_data.get(name)
             if v is None or not isinstance(v.value, (int, float)) or isinstance(v.value, bool):
-                continue  # absence / unité signalées par la validation générique
+                errors.append(Issue(field=f"input_data.{name}", code="missing_parameter" if v is None else "invalid_type", message="Paramètre numérique obligatoire (ni texte ni booléen)."))
+                continue
+            if not math.isfinite(v.value):
+                errors.append(Issue(field=f"input_data.{name}", code="out_of_range", message="Valeur finie requise."))
+                continue
+            if v.unit not in units:
+                errors.append(Issue(field=f"input_data.{name}", code="incompatible_units", message="Unité du paramètre incompatible ; aucune conversion implicite."))
             if v.unit in units and not (lo <= float(v.value) <= hi):
                 errors.append(Issue(field=f"input_data.{name}", code="out_of_range", message=f"Valeur hors plage [{lo} ; {hi}] {next(iter(units))}."))
             if name in INTEGER_PARAMS and float(v.value) != int(v.value):
@@ -90,6 +97,12 @@ class PVWattsV8Engine:
             return errors, warnings
         if len(stamps) != HOURS:
             errors.append(Issue(field="timeseries.timestamps", code="incomplete_year", message=f"{len(stamps)} heures reçues ; PVWatts v8 horaire exige exactement {HOURS} heures (29 février exclu)."))
+        if stamps:
+            year = stamps[0].year
+            if stamps[0] != datetime(year, 1, 1) or stamps[-1] != datetime(year, 12, 31, 23) or any(s.year != year for s in stamps):
+                errors.append(Issue(field="timeseries.timestamps", code="calendar_year", message="Une année civile complète du 1er janvier 00 h au 31 décembre 23 h est requise."))
+            if calendar.isleap(year) and ts.leap_day_convention != "omit_feb29":
+                errors.append(Issue(field="timeseries.leap_day_convention", code="leap_convention_required", message="Année bissextile : confirmer explicitement omit_feb29 ; aucune suppression automatique."))
         if len(set(stamps)) != len(stamps):
             errors.append(Issue(field="timeseries.timestamps", code="duplicate_timestamp", message="Horodatages en double."))
         for i in range(1, len(stamps)):
@@ -102,7 +115,7 @@ class PVWattsV8Engine:
                 break
         if any(s.strftime("%m-%d") == "02-29" for s in stamps if s):
             errors.append(Issue(field="timeseries.timestamps", code="leap_day", message="Le 29 février doit être retiré (convention SAM 8760 h)."))
-        if any(s.minute or s.second for s in stamps if s):
+        if any(s.minute or s.second or s.microsecond for s in stamps if s):
             errors.append(Issue(field="timeseries.timestamps", code="not_hourly", message="Horodatages au début de chaque heure (minute 0) requis."))
         expected = {**SERIES, **OPTIONAL_SERIES}
         for name in ts.series:
@@ -130,13 +143,16 @@ class PVWattsV8Engine:
                 warnings.append(Issue(field=f"timeseries.series.{name}", code="estimate", message="Série estimée : le résultat n'est pas fondé sur des mesures."))
         if "albedo" not in ts.series:
             a = req.assumptions.get("albedo")
-            if a is None or not isinstance(a.value, (int, float)) or a.unit != "-" or not (0 <= float(a.value) <= 1):
+            if a is None or not isinstance(a.value, (int, float)) or isinstance(a.value, bool) or a.nature.value != "assumption" or a.unit != "-" or not (0 <= float(a.value) <= 1):
                 errors.append(Issue(field="assumptions.albedo", code="missing_parameter", message="Albédo requis : série horaire ou hypothèse constante explicite (sans unité, 0–1)."))
         warnings.append(Issue(field=None, code="engineer_validation_required", message="Résultat indicatif : modèle et paramètres à valider par l'ingénieur avant usage professionnel."))
         return errors, warnings
 
     # ---------- exécution ----------
     def run(self, req: SimulationRequest) -> EngineOutput:
+        errors, _ = self.validate(req)
+        if errors:
+            raise ValueError("Entrées PV invalides : " + "; ".join(e.message for e in errors))
         ts = req.timeseries
         assert ts is not None
         stamps = [_parse_ts(t) for t in ts.timestamps]
@@ -175,8 +191,11 @@ class PVWattsV8Engine:
 
         ac_w = list(m.Outputs.ac)
         dc_w = list(m.Outputs.dc)
-        if len(ac_w) != HOURS:
-            raise ValueError("Sortie PVWatts v8 de longueur inattendue.")
+        for name, values in {"ac": ac_w, "dc": dc_w, "poa": list(m.Outputs.poa), "tcell": list(m.Outputs.tcell)}.items():
+            if len(values) != HOURS or any(not math.isfinite(v) for v in values):
+                raise ValueError(f"Sortie PVWatts v8 invalide ou incomplète : {name}.")
+        if not math.isfinite(float(m.Outputs.capacity_factor)) or not math.isfinite(float(m.Outputs.ac_annual)):
+            raise ValueError("Agrégat PVWatts v8 non fini.")
         hourly_kwh = [w / 1000.0 for w in ac_w]  # puissance moyenne horaire (W) × 1 h → Wh → kWh
         monthly: OrderedDict[str, float] = OrderedDict()
         daily: OrderedDict[str, float] = OrderedDict()
@@ -208,6 +227,7 @@ class PVWattsV8Engine:
         meta = {"model": MODEL, "pysam_version": pkg_version("nrel-pysam"), "engine_version": ENGINE_VERSION,
                 "timestamp_convention": ts.timestamp_convention, "utc_offset_hours": ts.utc_offset_hours,
                 "first_timestamp": ts.timestamps[0], "last_timestamp": ts.timestamps[-1],
+                "leap_day_convention": ts.leap_day_convention,
                 "daily_dates": list(daily.keys()), "fixed_settings": {"en_snowloss": 0, "bifaciality": 0, "dc_degradation": 0, "analysis_period_years": 1},
                 "significant_figures_aggregates": 3}
         return EngineOutput(results=results, timeseries=series, warnings=warnings, metadata=meta)

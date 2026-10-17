@@ -1,7 +1,7 @@
 # Moteur scientifique — Énergie Renouvelable (API v1)
 
-Service FastAPI indépendant. **Moteur implémenté : photovoltaïque horaire (PVWatts v8 via NREL PySAM).**
-Tous les autres moteurs restent `not_implemented` (`POST /simulations` → `503 engine_unavailable`).
+Service FastAPI indépendant. **Code implémenté : photovoltaïque horaire (PVWatts v8 via NREL PySAM) et batterie (réservoir + rendements, existant conservé).**
+Les autres moteurs restent `not_implemented` (`POST /simulations` → `503 engine_unavailable`). Code implémenté ≠ service déployé ≠ validation scientifique.
 Dossier de validation scientifique : `docs/VALIDATION_PV.md`.
 
 ## Architecture
@@ -15,7 +15,8 @@ Navigateur ──> Serveur Lovable (src/lib/engine.functions.ts, session vérifi
 ```
 - Le navigateur n'appelle jamais FastAPI directement ; aucune clé dans le frontend.
 - `requested_by` est dérivé du jeton vérifié, jamais du corps JSON (champ refusé : `extra=forbid`).
-- Persistance : réalisée par le serveur Lovable sous RLS, après un résultat `completed` (non branché tant qu'aucun moteur n'existe).
+- Persistance : réalisée par le serveur Lovable sous RLS. Identité de la simulation, moteur, schéma et sorties PV complètes sont vérifiés avant enregistrement. Aucun succès confirmé tant que l'écriture du statut final n'a pas réussi. Une simulation non terminée ne fournit pas de résultats à l'interface.
+- Les routes GET de résultats Python utilisent actuellement `NoRepository` et retournent introuvable ; la consultation réelle passe par Lovable et ses résultats enregistrés, pas par ces routes Python.
 
 ## Endpoints
 | Méthode | Chemin | Auth | Rôle |
@@ -62,6 +63,18 @@ Créer `app/engines/<nom>.py` (protocole `Engine` : `name`, `version`, `required
 l'enregistrer dans `IMPLEMENTED`, ajouter ses tests de formules avec références, puis le valider par l'ingénieur.
 
 ## Restant avant production
-- Implémenter et valider chaque moteur (PV, CSP, éolien, biomasse, batterie, hybride, optimisation, finance).
-- Persistance des résultats dans `simulation_results` via le serveur Lovable, mode asynchrone pour calculs longs.
+- Déployer et valider scientifiquement le PV existant ; ne pas déclarer les autres moteurs disponibles sans preuve.
+- Mode asynchrone pour calculs longs et persistance transactionnelle à envisager : aujourd'hui écritures contrôlées et compensation, pas de transaction globale.
 - Limitation de débit (proxy ou middleware), supervision, tests de bout en bout après déploiement.
+
+## Checklist de mise en service PV (audit du 17/10/2026)
+1. Obtenir la décision scientifique de Joël selon `docs/VALIDATION_PV.md` (sources, paramètres, référence et écarts admissibles).
+2. Déployer le Blueprint Render existant (plan Starter payant prévu ; ne pas engager de coût sans accord). Vérifier le build sur Python 3.12.7 : les tests de cet audit sont exécutés sur Python 3.13, pas sur Render.
+3. Vérifier les variables Render : `ENGINE_SHARED_KEY`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `ENGINE_ENV`, `MAX_BODY_BYTES`. Ne jamais copier clés ou jetons dans le dépôt, la conversation ou les journaux.
+4. Saisir dans les paramètres sécurisés Lovable l'URL HTTPS réelle `SCIENTIFIC_ENGINE_URL` et la même clé `SCIENTIFIC_ENGINE_KEY`. Elles sont absentes lors de cet audit. Le serveur refuse les redirections HTTP pour ne pas transmettre les credentials à une autre destination.
+5. Lire `/api/v1/health` (`auth_configured: true`) et `/api/v1/capabilities` (`photovoltaic: available`, version 1.0.1). Ces lectures prouvent la joignabilité, pas l'autorisation d'un calcul ni la validation scientifique.
+6. Faire un calcul réel depuis Lovable avec un compte ingénieur autorisé et un CSV sourcé (année civile, W/m², °C, m/s, début d'heure locale standard ; convention bissextile explicite si nécessaire). Relire entrées/hypothèses, résultats horaires, jours, mois, année, version et date dans la base.
+7. Vérifier clé absente/incorrecte, token expiré, rôle refusé côté Lovable, unités erronées, trous, timeout, JSON invalide et corps > 3 Mo (y compris chunked). Aucun résultat de succès ne doit survivre à un échec.
+8. Activer supervision, alertes et limitation de débit. La clé partagée et l'identité authentifient le transport Python ; les rôles et l'accès projet sont vérifiés par Lovable. Ne pas considérer le service comme opérationnel avant ces preuves.
+
+Reproductibilité : PySAM et pvlib sont épinglés ; les autres dépendances conservent les plages existantes. Archiver `pip freeze`, OS, Python, schéma et version SSC lors de chaque déploiement ; le blueprint seul ne garantit pas un environnement identique. Aucun fichier de verrouillage de versions transitoires n'est imposé par cet audit.
