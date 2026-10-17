@@ -1,0 +1,1 @@
+"""Wind analysis, kinetic flux and documented turbine curve (independent of PV/CSP)."""
