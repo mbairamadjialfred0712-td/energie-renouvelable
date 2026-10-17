@@ -33,8 +33,10 @@ describe("computeLcoe", () => {
   });
 
   it("CAPEX compté en année 0 : non actualisé même à taux élevé", () => {
-    const res = computeLcoe({ ...base, annualOpex: 0, discountRatePct: 50 });
+    const res = computeLcoe({ ...base, discountRatePct: 50 });
     expect(res.totalCapex).toBe(1_000_000);
+    // CAPEX non actualisé : à taux très élevé, les coûts futurs pèsent moins que le CAPEX.
+    expect(res.totalDiscountedCost).toBeLessThan(1_000_000 + 20_000 * 25);
     expect(res.totalDiscountedCost).toBeGreaterThan(1_000_000);
   });
 
