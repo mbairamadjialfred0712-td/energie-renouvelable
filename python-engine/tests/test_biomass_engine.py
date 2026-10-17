@@ -26,7 +26,10 @@ def test_primary_units_and_no_electricity():
 @pytest.mark.parametrize("key,value,unit",[("mass",-1,"t/an"),("mass",0,"t/an"),("mass",3.6,"kg/an"),("mass",3.6,"t/mois"),("pci",0,"MJ/kg"),("pci",10,"GJ/kg"),("pci_basis","dry","-"),("mass_basis","dry","-"),("moisture",None,"%"),("moisture",101,"%"),("moisture",-1,"%"),("moisture_basis","","-"),("status","unverified","-"),("period_end","2024-11-30","-"),("period_start","2024-02-30","-"),("basis_compatibility",False,"-"),("fraction",101,"%"),("efficiency",0.8,"-"),("mass",True,"t/an")])
 def test_refuses_invalid_inputs(key,value,unit):
     body=fixture();body["input_data"][key]={"value":value,"unit":unit,"nature":"assumption","source":"Arithmetic documentation"}
-    req=SimulationRequest.model_validate(body)
+    try:
+        req=SimulationRequest.model_validate(body)
+    except ValueError:
+        return
     assert validate_request(req)[0]
     with pytest.raises(ValueError): BiomassPrimaryEngine().run(req)
 

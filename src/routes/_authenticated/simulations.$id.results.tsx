@@ -54,8 +54,8 @@ function Results() {
         <section className="rounded-lg border p-4 text-sm">
           <h2 className="font-semibold">Traçabilité des entrées</h2>
           {data.biomassSource && <><p className="mt-2">Bilan non électrique · simulation {s.id} · {String(data.inputs["period_start"]?.value ?? "—")} → {String(data.inputs["period_end"]?.value ?? "—")}</p><details className="mt-3"><summary className="cursor-pointer font-medium">Instantané de la fiche, sources et déclarations</summary><pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs">{data.biomassSource}</pre></details></>}
-          <p className="mt-1 text-muted-foreground">Première heure : {data.firstTimestamp ?? "—"} · UTC{data.utcOffset !== null && data.utcOffset >= 0 ? "+" : ""}{data.utcOffset ?? "?"} · début d’heure</p>
-          <p className="mt-1 text-muted-foreground">Dernière heure : {data.lastTimestamp ?? "—"} · Calcul terminé : {data.calculatedAt ?? (s.status === "completed" ? "Non enregistré dans l’historique ancien" : "Non exécuté ou non terminé")}</p>
+          {!data.biomassSource && <p className="mt-1 text-muted-foreground">Première heure : {data.firstTimestamp ?? "—"} · UTC{data.utcOffset !== null && data.utcOffset >= 0 ? "+" : ""}{data.utcOffset ?? "?"} · début d’heure</p>}
+          <p className="mt-1 text-muted-foreground">{!data.biomassSource && <>Dernière heure : {data.lastTimestamp ?? "—"} · </>}Calcul terminé : {data.calculatedAt ?? (s.status === "completed" ? "Non enregistré dans l’historique ancien" : "Non exécuté ou non terminé")}</p>
           <ul className="mt-2 grid gap-1 sm:grid-cols-2">{Object.entries(data.seriesMeta).map(([k, v]) => <li key={k}>{k} ({v.unit}) — {v.nature}{v.source ? ` · ${v.source}` : ""}</li>)}</ul>
           <ul className="mt-2 grid gap-1 sm:grid-cols-2">{Object.entries(data.inputs).map(([k, v]) => <li key={k}>{(data.biomassSource ? BIOMASS_INPUT_LABELS[k] : undefined) ?? k} = {String(v.value)} {v.unit} — {v.nature}</li>)}</ul>
           <ul className="mt-2 grid gap-1 sm:grid-cols-2">{Object.entries(data.assumptions).map(([k, v]) => <li key={k}>{k} = {String(v.value)} {v.unit} — {v.nature}</li>)}</ul>

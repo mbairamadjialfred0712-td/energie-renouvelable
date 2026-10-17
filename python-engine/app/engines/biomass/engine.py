@@ -73,6 +73,8 @@ class BiomassPrimaryEngine:
         if not annual_period(raw("period_start"), raw("period_end")): error("period_end", "Douze mois complets datés requis, aucune annualisation.")
         if len(request.source_references) != 1 or request.source_references[0].table != "biomass_resources" or request.source_references[0].record_id != raw("resource_id"):
             error("resource_id", "Une seule fiche biomasse identifiée par sa source est acceptée ; aucun cumul.")
+        elif request.source_references[0].period != f"{raw('period_start')} / {raw('period_end')}":
+            error("period_end", "Période de la source incohérente avec le bilan.")
         if request.assumptions: error("assumptions", "Les déclarations documentées doivent figurer dans les entrées ; aucune hypothèse de conversion admise.")
         warnings.append(Issue(code="primary_only", message="Énergie primaire de la quantité recensée : ni quantité mobilisable ni chaleur utile ni électricité. Fraction non appliquée ; aucun cumul de fiches."))
         warnings.append(Issue(code="scientific_validation_pending", message="Périmètre V1 approuvé ; qualité, compatibilité physique et références à valider par l'ingénieur. Humidité non corrigée."))

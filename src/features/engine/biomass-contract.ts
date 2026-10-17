@@ -36,6 +36,7 @@ export const biomassRequestSchema = simulationRequest.superRefine((r,c) => {
   for (const k of ["resource_id","site_id","quality"]) if(typeof val(k) !== "string" || !String(val(k)).trim()) err(k,"Identifiant/qualité requis.");
   if (!biomassAnnualPeriod(val("period_start"), val("period_end"))) err("period_end","Douze mois complets datés requis ; aucune annualisation.");
   if (r.source_references.length !== 1 || r.source_references[0]?.table !== "biomass_resources" || r.source_references[0]?.record_id !== val("resource_id")) err("resource_id","Une seule fiche sourcée par bilan ; aucun cumul.");
+  else if (r.source_references[0]?.period !== `${val("period_start")} / ${val("period_end")}`) err("period_end","Période de la source incohérente.");
 });
 export function checkBiomassResponse(request: SimulationRequest, out: z.infer<typeof simulationResponse>) {
   biomassRequestSchema.parse(request);
