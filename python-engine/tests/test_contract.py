@@ -5,7 +5,7 @@ from app.core.config import get_settings
 from app.main import app
 
 KEY = "k" * 40
-VALID = {"schema_version": "1.0", "engine": "wind",
+VALID = {"schema_version": "1.0", "engine": "biomass",
          "input_data": {"power": {"value": 10, "unit": "kWc", "nature": "assumption"}},
          "source_references": [{"label": "Saisie utilisateur"}]}
 
@@ -32,7 +32,8 @@ H = {"X-Engine-Key": KEY, "Authorization": "Bearer good"}
 def test_health_and_capabilities_declare_only_implemented(client):
     assert client.get("/api/v1/health").json()["auth_configured"] is True
     engines = client.get("/api/v1/capabilities").json()["engines"]
-    assert engines and all(e["status"] == "not_implemented" and e["version"] is None for e in engines if e["engine"] not in ("photovoltaic", "battery", "csp"))
+    assert engines and all(e["status"] == "not_implemented" and e["version"] is None for e in engines if e["engine"] not in ("photovoltaic", "battery", "csp", "wind"))
+    assert next(e for e in engines if e["engine"] == "wind")["version"] == "1.0.0"
     assert next(e for e in engines if e["engine"] == "csp")["version"] == "1.0.0"
 
 

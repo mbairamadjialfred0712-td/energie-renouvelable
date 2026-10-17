@@ -63,6 +63,22 @@ class SimulationRequest(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
+    def strict_wind_numbers(cls, raw):
+        if isinstance(raw, dict) and raw.get("engine") == "wind":
+            ts = raw.get("timeseries")
+            if isinstance(ts, dict):
+                collection = ts.get("series")
+                if not isinstance(collection, dict): raise ValueError("Wind : dictionnaire de séries requis.")
+                for series in collection.values():
+                    if not isinstance(series, dict) or not isinstance(series.get("values"), list): raise ValueError("Wind : liste de valeurs requise.")
+                    if any(isinstance(x, bool) or (x is not None and not isinstance(x, (int,float))) for x in series["values"]): raise ValueError("Wind : nombres stricts requis.")
+            for item in (raw.get("input_data") or {}).values():
+                if isinstance(item, dict) and isinstance(item.get("value"), list):
+                    if any(isinstance(x,bool) or not isinstance(x,(int,float)) for x in item["value"]): raise ValueError("Wind : courbe numérique stricte requise.")
+        return raw
+
+    @model_validator(mode="before")
+    @classmethod
     def strict_csp_series(cls, raw):
         # CSP-only guard before float coercion; preserve existing PV/battery contracts.
         if isinstance(raw, dict) and raw.get("engine") == "csp":

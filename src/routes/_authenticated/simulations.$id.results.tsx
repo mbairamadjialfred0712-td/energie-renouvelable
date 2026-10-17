@@ -5,6 +5,8 @@ import { WorkspacePage, EmptyState } from "@/components/app/page";
 import { getSimulation } from "@/lib/engine.functions";
 import { CSP_LABELS } from "@/features/engine/csp-contract";
 import { CspResults } from "@/features/engine/csp-results";
+import { WIND_LABELS } from "@/features/engine/wind-contract";
+import { WindResults } from "@/features/engine/wind-results";
 
 const opts = (id: string) => queryOptions({ queryKey: ["simulation", id], queryFn: () => getSimulation({ data: { id } }) });
 const STATUS: Record<string, string> = { draft: "Brouillon", queued: "En attente", running: "En cours", completed: "Terminée", failed: "Échouée" };
@@ -38,13 +40,14 @@ function Results() {
           <p className="rounded-lg border bg-muted/40 p-4 text-sm">Valeurs calculées par {s.engine_version ?? "le moteur scientifique"}. Résultat indicatif : modèle et paramètres à valider par l’ingénieur.</p>
           {data.cspLimits && <p className="border-l-2 border-primary pl-4 text-sm">{data.cspLimits}</p>}
           <div className="grid gap-4 sm:grid-cols-2">
-            {scalars.map((r) => <div key={r.result_type} className="rounded-lg border p-4"><p className="text-xs text-muted-foreground">{CSP_LABELS[r.result_type] ?? LABELS[r.result_type] ?? r.result_type}</p><p className="mt-1 text-2xl font-semibold">{r.value === null ? "Indisponible" : r.value.toLocaleString("fr-FR")} <span className="text-base font-normal">{r.value === null ? "" : r.unit}</span></p><p className="mt-1 text-xs text-muted-foreground">{r.calculation_method}</p></div>)}
+            {scalars.map((r) => <div key={r.result_type} className="rounded-lg border p-4"><p className="text-xs text-muted-foreground">{WIND_LABELS[r.result_type] ?? CSP_LABELS[r.result_type] ?? LABELS[r.result_type] ?? r.result_type}</p><p className="mt-1 text-2xl font-semibold">{r.value === null ? "Indisponible" : r.value.toLocaleString("fr-FR")} <span className="text-base font-normal">{r.value === null ? "" : r.unit}</span></p><p className="mt-1 text-xs text-muted-foreground">{r.calculation_method}</p></div>)}
           </div>
           {monthly.length > 0 && <section className="rounded-lg border p-4">
             <h2 className="mb-3 font-semibold">Énergie AC mensuelle (kWh, somme des heures)</h2>
             <div className="h-64"><ResponsiveContainer><BarChart data={monthly}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" fontSize={11} /><YAxis fontSize={11} /><Tooltip /><Bar dataKey="kWh" fill="var(--color-primary)" /></BarChart></ResponsiveContainer></div>
           </section>}
           {data.cspSeries.length > 0 && <CspResults series={data.cspSeries} start={data.firstTimestamp} source={data.sourceSnapshot} />}
+          {data.windSeries.length > 0 && <WindResults series={data.windSeries} metadata={data.windMetadata} />}
           {meta.warnings && meta.warnings.length > 0 && <section className="rounded-lg border p-4 text-sm"><h2 className="font-semibold">Avertissements</h2><ul className="mt-2 list-disc pl-6">{meta.warnings.map((w, i) => <li key={i}>{w.message}</li>)}</ul></section>}
         </>}
         <section className="rounded-lg border p-4 text-sm">
