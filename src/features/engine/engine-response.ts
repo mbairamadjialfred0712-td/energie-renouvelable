@@ -11,11 +11,18 @@ export function assertCompletedResponse(request: SimulationRequest, out: z.infer
       const s = out.timeseries[k + "_power"], r = out.results[k + "_energy"];
       if (!n || !s || s.unit !== "W" || s.values.length !== n || !r || r.unit !== "kWh" || r.value === null) throw new Error(`Bilan CSP incomplet : ${k}.`);
     }
-    for (const [k, s] of Object.entries(out.timeseries)) if (!k.endsWith("_power") || s.unit !== "W" || s.values.length !== n) throw new Error("Série CSP incohérente.");
+    for (const [k, s] of Object.entries(out.timeseries)) {
+      if (!k.endsWith("_power") || s.unit !== "W" || s.values.length !== n) throw new Error("Série CSP incohérente.");
+      const r = out.results[k.slice(0, -6) + "_energy"];
+      const energy = s.values.reduce((sum, p) => sum + p / 1000, 0);
+      // Floating-point integrity only, not an engineering acceptance tolerance.
+      if (!r || r.value === null || r.unit !== "kWh" || !Number.isFinite(energy) || Math.abs(r.value - energy) > 1e-9 * Math.max(1, Math.abs(energy))) throw new Error("Énergie CSP incohérente avec sa série de puissance.");
+    }
     const reasons = out.calculation_metadata["unavailable_reasons"];
     for (const k of ["useful_thermal_energy", "gross_electric_energy", "auxiliary_energy", "net_electric_energy"]) {
       const r = out.results[k];
-      if (!r || r.unit !== "kWh" || (r.value === null && (!reasons || typeof reasons !== "object" || !(k in reasons)))) throw new Error("Résultat CSP absent ou indisponibilité sans motif.");
+      const reason = reasons && typeof reasons === "object" && !Array.isArray(reasons) ? (reasons as Record<string, unknown>)[k] : undefined;
+      if (!r || r.unit !== "kWh" || (r.value === null && (typeof reason !== "string" || !reason.trim())) || (r.value !== null && !out.timeseries[k.replace(/_energy$/, "_power")])) throw new Error("Résultat CSP absent ou indisponibilité sans motif.");
     }
     if (out.calculation_metadata["time_standard"] !== "UTC" || out.calculation_metadata["scientific_validation"] !== "pending") throw new Error("Métadonnées CSP incohérentes.");
     return;

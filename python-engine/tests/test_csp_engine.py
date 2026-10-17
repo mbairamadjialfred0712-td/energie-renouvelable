@@ -153,3 +153,18 @@ def test_full_calendar_year_including_leap_day(year, hours):
     assert out.metadata["coverage"] == "full_calendar_year"
     assert out.results["incident_energy"].value == 80*hours
     assert len([k for k in out.results if k.startswith("monthly_incident_energy_")]) == 12
+
+@pytest.mark.parametrize("series", [None, [], {"dni": {"values": None}}, {"dni": {"values": 800}}])
+def test_api_malformed_series_is_422_not_server_error(client, series):
+    r = fixture(); r["timeseries"]["series"] = series
+    assert client.post("/api/v1/simulations", json=r, headers=H).status_code == 422
+
+def test_engine_rejects_bool_even_if_model_constructed_without_validation():
+    req = SimulationRequest(**fixture())
+    req.timeseries.series["dni"].values[0] = True
+    with pytest.raises(ValueError): ENGINE.run(req)
+
+def test_result_limits_disclose_documented_not_simulated_conditions():
+    out = ENGINE.run(SimulationRequest(**fixture()))
+    assert "Température et fluide enregistrés comme conditions, non simulés" in out.metadata["limits"]
+    assert "nuit incluse" in out.metadata["limits"]

@@ -94,7 +94,7 @@ class CspBalanceEngine:
             if not dni.source or not dni.source.strip(): err("dni.source", "Source DNI obligatoire.")
             if dni.nature.value == "calculated": err("dni.nature", "Entrée calculée interdite.")
             if len(dni.values) != len(ts.timestamps): err("dni", "Longueur de série incohérente.")
-            if any(x is None or not math.isfinite(x) or x < 0 for x in dni.values): err("dni", "DNI manquant, négatif ou non fini : calcul refusé.")
+            if any(isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(x) or x < 0 for x in dni.values): err("dni", "DNI manquant, non numérique, négatif ou non fini : calcul refusé.")
         if not req.source_references: err("source_references", "Provenance obligatoire.")
         warnings.append(Issue(code="screening_not_validated", message="Bilan prescrit non prédictif, sans géométrie, pilotage, stockage ni validation scientifique acquise. Conditions et coefficients à valider par Joël."))
         return errors, warnings
@@ -160,5 +160,5 @@ class CspBalanceEngine:
             "model": "prescribed-trough-balance", "scientific_validation": "pending", "time_standard": "UTC", "interval_hours": 1,
             "coverage": "full_calendar_year" if annual else "declared_period_only", "period_end_exclusive": value("period_end"),
             "unavailable_reasons": reasons, "signed_thermal_balance": True,
-            "limits": "Rendement effectif, pertes et conditions prescrits ; pas de modèle de géométrie, HTF, démarrage, stockage, dégradation ou optimisation.",
+            "limits": "Rendement effectif constant ; pertes et auxiliaires prescrits appliqués à chaque heure, nuit incluse. Température et fluide enregistrés comme conditions, non simulés ; pas de modèle de géométrie, HTF, démarrage, stockage, dégradation ou optimisation.",
         })

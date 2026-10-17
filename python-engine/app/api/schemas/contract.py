@@ -68,8 +68,13 @@ class SimulationRequest(BaseModel):
         if isinstance(raw, dict) and raw.get("engine") == "csp":
             ts = raw.get("timeseries")
             if isinstance(ts, dict):
-                for series in ts.get("series", {}).values():
-                    if isinstance(series, dict) and any(isinstance(x, bool) or (x is not None and not isinstance(x, (int, float))) for x in series.get("values", [])):
+                collection = ts.get("series")
+                if not isinstance(collection, dict):
+                    raise ValueError("CSP : dictionnaire de séries requis.")
+                for series in collection.values():
+                    if not isinstance(series, dict) or not isinstance(series.get("values"), list):
+                        raise ValueError("CSP : chaque série doit contenir une liste de valeurs.")
+                    if any(isinstance(x, bool) or (x is not None and not isinstance(x, (int, float))) for x in series["values"]):
                         raise ValueError("CSP : valeurs horaires strictement numériques, ni booléens ni texte.")
         return raw
 
