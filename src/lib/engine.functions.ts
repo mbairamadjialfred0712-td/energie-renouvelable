@@ -21,7 +21,11 @@ export const getEngineStatus = createServerFn({ method: "GET" }).middleware([req
 });
 
 export const validateSimulationRequest = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => simulationRequest.parse(input))
+  .inputValidator((input: unknown) => {
+    const raw = z.object({ engine: z.string() }).passthrough().parse(input);
+    if (raw.engine === "csp") cspRequestSchema.parse(input);
+    return simulationRequest.parse(input);
+  })
   .handler(async ({ data }) => {
     const { callEngine, EngineCallError } = await import("./engine-http.server");
     try {
