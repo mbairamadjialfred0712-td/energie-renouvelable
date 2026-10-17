@@ -41,7 +41,7 @@ export function checkBiomassResponse(request: SimulationRequest, out: z.infer<ty
   biomassRequestSchema.parse(request);
   const energy=out.results["primary_energy"], mass=request.input_data["mass"]?.value, pci=request.input_data["pci"]?.value;
   // Integrity check only; not a browser-side calculation or fallback output.
-  if(typeof mass !== "number" || typeof pci !== "number" || !energy || energy.unit !== "MWh/an" || energy.value == null || energy.value <= 0 || !Number.isFinite(energy.value) || Math.abs(energy.value*3.6/mass-pci)>1e-9*Math.max(1,pci)) throw new Error("Bilan primaire incohérent avec les entrées enregistrées.");
+  if(typeof mass !== "number" || typeof pci !== "number" || !energy || energy.unit !== "MWh/an" || energy.value == null || energy.value <= 0 || !Number.isFinite(energy.value) || !Number.isFinite(energy.value/mass*3.6) || Math.abs(energy.value/mass*3.6-pci)>1e-9*Math.max(1,pci)) throw new Error("Bilan primaire incohérent avec les entrées enregistrées.");
   const keys=["primary_energy","mobilisable_mass","useful_thermal_energy","gross_electric_energy","net_electric_energy"];
   if(Object.keys(out.results).length!==keys.length || Object.keys(out.timeseries).length) throw new Error("Sortie biomasse hors périmètre.");
   const reasons=out.calculation_metadata["unavailable_reasons"];
