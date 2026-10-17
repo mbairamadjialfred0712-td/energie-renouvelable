@@ -12,7 +12,8 @@
 
 ## En cours
 - [x] PROMPT 11 : audit réel et conception A/B/C consignés dans VALIDATION_WIND.md ; 116 tests Python et 175 TypeScript existants réexécutés ; catalogue 24 fiches, aucune validée et aucune série enregistrée
-- [ ] PROMPT 11 : implémentation A/B/C et intégration (bloqué : choix scientifiques horaires/courbe/hauteur/densité à confirmer par Joël) ; parcours hébergé ensuite (service non configuré, données réelles validées à fournir)
+- [x] PROMPT 11 : conventions V1 validées ; moteur A/B/C, sélection météo serveur et snapshots, onglet/résultats intégrés ; 165 Python + 204 TypeScript réussis, service local avec identité réelle et formulaire connecté vérifiés ; pas de migration ni moteur PV/CSP modifié
+- [ ] PROMPT 11 : parcours hébergé calcul → sauvegarde → consultation (bloqué : service non configuré, données météo validées et courbe documentée compatibles à fournir) ; validation physique finale à confirmer par Joël
 - [x] PROMPT 10.1 : conformité CSP contrôlée, défauts de séries/réponses corrigés et limites affichées ; 116 tests Python + 175 TypeScript et service local/navigateur réexécutés, aucune donnée fictive en base ; Render/persistance hébergée restent bloqués comme PROMPT 10
 - [x] PROMPT 10 : audit, choix Joël bilan thermique limité, moteur/contrat séparés, onglet CSP, provenance figée et tests exécutés ; dossier de validation complété
 - [ ] PROMPT 10 : parcours CSP hébergé avec persistance réelle (bloqué : service Python non configuré, aucun jeu météo validé disponible ; paramètres et validation scientifique Joël à fournir)
