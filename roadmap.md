@@ -11,7 +11,8 @@
 - Exécution E2E PV et batterie : le moteur Python n'est pas en ligne (Render + secrets SCIENTIFIC_ENGINE_URL/KEY). Tant qu'il n'est pas déployé, aucune simulation ne peut tourner et aucune simulation PV terminée n'existe pour tester la liaison production → LCOE.
 
 ## En cours
-- [ ] PROMPT 11.1 : audit ciblé durées/unités, rotor/courbe, refus et sauvegarde ; corrections démontrées, tests et rapport sans modification PV/CSP ni données fictives
+- [x] PROMPT 11.1 : audit ciblé et corrections durées/unités, géométrie, sources/limites, intégrité et lectures ; 172 Python + 222 TypeScript réussis, navigateur connecté et service local authentifié vérifiés ; PV/CSP et données inchangés
+- [ ] PROMPT 11.1 : premier calcul réel hébergé et persistance/échecs de sauvegarde (bloqué : service configuré, météo validée et courbe compatible à fournir ; Render NON TESTÉ)
 - [x] PROMPT 11 : audit réel et conception A/B/C consignés dans VALIDATION_WIND.md ; 116 tests Python et 175 TypeScript existants réexécutés ; catalogue 24 fiches, aucune validée et aucune série enregistrée
 - [x] PROMPT 11 : conventions V1 validées ; moteur A/B/C, sélection météo serveur et snapshots, onglet/résultats intégrés ; 165 Python + 204 TypeScript réussis, service local avec identité réelle et formulaire connecté vérifiés ; pas de migration ni moteur PV/CSP modifié
 - [ ] PROMPT 11 : parcours hébergé calcul → sauvegarde → consultation (bloqué : service non configuré, données météo validées et courbe documentée compatibles à fournir) ; validation physique finale à confirmer par Joël

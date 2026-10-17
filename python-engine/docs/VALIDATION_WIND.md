@@ -121,3 +121,11 @@ Navigateur connecté : A/B/C, refus d’entrées incomplètes, lancement désact
 ### Premier calcul réel et validation humaine
 
 Jeu météo importé/validé : heures UTC continues, vent en m/s non manquant, hauteur/source/nature/qualité/période explicites, moyennes horaires confirmées ; site et projet accessibles avec localité cohérente. B : densité kg/m³ et surface m² justifiées. C : turbine, rotor/moyeu, puissance nominale W, courbe source/version/conditions et domaine couvrant toutes les observations, hauteur et densité compatibles sans correction. Service déployé/configuré et authentifié. Joël : authenticité/compatibilité de courbe, qualité/représentativité et cas physiques avec tolérances À VALIDER PAR L’INGÉNIEUR ; conventions V1 déjà approuvées.
+
+### Tests réellement exécutés — TERMINÉ
+
+- Python : `/tmp/pv-audit-venv/bin/python -m pytest tests -q` depuis python-engine : **172 réussis**, 1 avertissement Starlette/httpx ; 165 précédents réexécutés + 7 nouveaux (géométrie, incohérence surface, sources, seuil zéro, overflow, demi-heure, arrêt).
+- TypeScript : `bunx vitest run` : **222 réussis / 17 fichiers** ; 204 précédents réexécutés + 18 nouveaux (12 contrat/réponse, 6 accès/lectures). Aucun test de copie/styling, aucun modèle PV/CSP modifié.
+- Service local réellement lancé : identité réelle authentifiée, health → validation → calcul C réussis ; appel anonyme refusé. Cas arithmétique fabriqué exclusivement pour test, jamais sauvegardé ; pas Render ni parcours Lovable hébergé.
+- Formulaire connecté vérifié dans le navigateur et capture examinée : état indisponible, erreurs et courbe déclarée explicites, lancement désactivé. Vérification automatique build OK.
+- Sauvegarde éolienne réelle hébergée, panne de finalisation/compensation et différents rôles en base : NON TESTÉ ; données réelles et service requis, aucune preuve opérationnelle inventée.
