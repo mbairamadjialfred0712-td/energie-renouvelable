@@ -1,0 +1,19 @@
+import { expect, it } from "vitest";
+import { parseWindCurve, selectWindWeather, checkWindResponse, windRequestSchema } from "./wind-contract";
+import type { SimulationRequest } from "./engine-contract";
+const sample = (timestamp: string, wind_speed: number | null) => ({ timestamp, wind_speed, ghi: null, dni: null, dhi: null, temp_air: null });
+it("selects exact hourly winds without replacing absent radiation", () => { const s = selectWindWeather([sample("2024-01-01T00:00:00Z",5),sample("2024-01-01T01:00:00Z",10)],true); expect(s.values).toEqual([5,10]);expect(s.end).toBe("2024-01-01T02:00:00Z"); });
+it.each([null,-1])("refuses missing or negative wind %s", (v) => expect(() => selectWindWeather([sample("2024-01-01T00:00:00Z",v)],true)).toThrow());
+it("requires hourly mean confirmation", () => expect(() => selectWindWeather([sample("2024-01-01T00:00:00Z",5)],false)).toThrow());
+it.each(["2024-01-01T00:00:00Z","2024-01-01T02:00:00Z","2023-12-31T23:00:00Z"])("refuses duplicate, gap or disorder %s", (t) => expect(() => selectWindWeather([sample("2024-01-01T00:00:00Z",5),sample(t,5)],true)).toThrow());
+it("parses documented points in m/s and W", () => expect(parseWindCurve("0;0\n5;500\n10;1000")).toEqual({xs:[0,5,10],ys:[0,500,1000]}));
+it.each(["", "0;0\n0;10", "5;500\n0;0", "0;\n5;10", "0;0\n5;-1", "0;0\n5;word"])("refuses invalid curve %s", (s) => expect(() => parseWindCurve(s)).toThrow());
+const iv = (value: string | number,unit="-") => ({value,unit,nature:"assumption" as const,source:"test"});
+const request: SimulationRequest = {engine:"wind",engine_version:"1.0.0",schema_version:"1.0",project_id:"00000000-0000-4000-8000-000000000001",input_data:{level:iv("B"),site_id:iv("00000000-0000-4000-8000-000000000002"),measurement_height:iv(10,"m"),swept_area:iv(100,"m²"),air_density:iv(1.2,"kg/m³"),wind_basis:iv("period_mean"),period_start:iv("2024-01-01T00:00:00Z"),period_end:iv("2024-01-01T02:00:00Z")},assumptions:{},source_references:[{label:"Arithmetic only"}],timeseries:{timestamps:["2024-01-01T00:00:00Z","2024-01-01T01:00:00Z"],utc_offset_hours:0,timestamp_convention:"period_start",series:{wind_speed:{values:[5,10],unit:"m/s",nature:"assumption",source:"test"}}}};
+function reply() { return {results:{mean_wind_speed:{value:7.5,unit:"m/s"},min_wind_speed:{value:5,unit:"m/s"},max_wind_speed:{value:10,unit:"m/s"},observed_hours:{value:2,unit:"h"},kinetic_energy:{value:67.5,unit:"kWh"},turbine_energy:{value:null as number|null,unit:"kWh"},capacity_factor:{value:null as number|null,unit:"%"},annual_turbine_energy:{value:null as number|null,unit:"kWh"}},timeseries:{observed_wind_speed:{values:[5,10],unit:"m/s"},kinetic_power:{values:[7500,60000],unit:"W"}},calculation_metadata:{level:"B",time_standard:"UTC",scientific_validation:"pending",unavailable_reasons:{turbine_energy:"B non électrique",capacity_factor:"B",annual_turbine_energy:"Période incomplète"}}}; }
+it("accepts arithmetic kinetic response distinct from electricity", () => expect(() => checkWindResponse(request,reply())).not.toThrow());
+it("refuses inconsistent scalar energy", () => {const out=reply();out.results.kinetic_energy.value=1;expect(() => checkWindResponse(request,out)).toThrow();});
+it("refuses kinetic electricity", () => {const out=reply();out.results.turbine_energy.value=67.5;expect(() => checkWindResponse(request,out)).toThrow();});
+it("refuses invented annual electricity", () => {const out=reply();out.results.annual_turbine_energy.value=100;expect(() => checkWindResponse(request,out)).toThrow();});
+it("refuses unavailable result without reason", () => {const out=reply();out.calculation_metadata.unavailable_reasons.turbine_energy="";expect(() => checkWindResponse(request,out)).toThrow();});
+it.each([0,-1])("blocks invalid swept area %s", (v) => expect(() => windRequestSchema.parse({...request,input_data:{...request.input_data,swept_area:iv(v,"m²")}})).toThrow());

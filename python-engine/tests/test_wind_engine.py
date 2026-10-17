@@ -49,7 +49,7 @@ def test_linear_documented_test_curve():
 
 @pytest.mark.parametrize("change",["height_absent","height_zero","surface_zero","surface_negative","density_missing","density_invalid","height_mismatch","density_mismatch","alpha","curve_missing","curve_duplicate","curve_length","curve_negative","curve_overrated","out_of_range","gap","duplicate","disorder","missing","negative","unit","basis","source","period","directions","leap","assumptions","monotonic"])
 def test_invalid_wind(change):
-    r=fixture("B" if change.startswith("surface") or change.startswith("density_m") or change=="density_invalid" else "C"); d=r["input_data"];ts=r["timeseries"]
+    r=fixture("B" if change.startswith("surface") or change in ("density_missing","density_invalid") else "C"); d=r["input_data"];ts=r["timeseries"]
     if change=="height_absent": del d["measurement_height"]
     elif change=="height_zero": d["measurement_height"]["value"]=0
     elif change=="surface_zero": d["swept_area"]["value"]=0
