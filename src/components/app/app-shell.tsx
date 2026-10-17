@@ -15,7 +15,7 @@ const nav = [
   { label: "Technologies", to: "/technologies", icon: Database },
   { label: "Stockage par batteries", to: "/technologies/storage", icon: Battery },
   { label: "Simulations", to: "/simulations", icon: FlaskConical },
-  { label: "Scénarios", to: "/scenarios", icon: Layers3 },
+  { label: "Systèmes hybrides", to: "/scenarios", icon: Layers3 },
   { label: "Analyse financière", to: "/finance", icon: LineChart },
   { label: "Projets", to: "/projects", icon: FolderKanban },
   { label: "Importations", to: "/imports", icon: Upload },

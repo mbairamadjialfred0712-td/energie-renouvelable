@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Json } from "@/integrations/supabase/types";
 
 export const HYBRID_VERSION = "preparation-1.0";
 export const TECHNOLOGIES = { photovoltaic: "Photovoltaïque", wind: "Éolien", biomass: "Biomasse", csp: "CSP", battery: "Batterie" } as const;
@@ -34,11 +35,11 @@ export type HybridSimulation = {
   id: string; name: string; projectId: string | null; siteId: string | null;
   engine: string; version: string | null; status: string; periodStart: string | null; periodEnd: string | null;
   timestamps: string[]; utcOffset: number | null; convention: string | null;
-  sources: unknown; assumptions: unknown; limits: string;
+  sources: Json; assumptions: Json; limits: string;
   results: { key: string; value: number | null; unit: string; method: string }[];
   series: { key: string; unit: string; values: (number | null)[] }[];
 };
-export type HybridOption = { id: string; name: string; projectId?: string | null; localityId?: string | null; siteId?: string | null; status?: string; source?: string | null; period?: string; technology?: string; snapshot?: unknown };
+export type HybridOption = { id: string; name: string; projectId?: string | null; localityId?: string | null; siteId?: string | null; status?: string; source?: string | null; period?: string; technology?: string; snapshot?: Json };
 export type HybridData = {
   configs: { config: HybridConfig; updatedAt: string; history: { at: string; actor: string; config: HybridConfig }[] }[];
   projects: HybridOption[]; sites: HybridOption[]; demands: HybridOption[]; weather: HybridOption[]; equipment: HybridOption[];
