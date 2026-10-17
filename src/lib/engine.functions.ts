@@ -49,12 +49,6 @@ const runInput = z.object({
   confirm_radiation_conversion: z.boolean().optional(),
 }).strict();
 
-async function assertCanRun(supabase: any, userId: string) {
-  const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-  if (error) throw new Error("Rôles indisponibles.");
-  if (!data?.some((r: { role: string }) => r.role === "admin" || r.role === "engineer")) throw new Error("Seuls les administrateurs et ingénieurs peuvent lancer une simulation.");
-}
-
 const ENGINES: Record<string, string> = { photovoltaic: "Production photovoltaïque horaire", battery: "Stockage batterie horaire (réservoir + rendements)", csp: "CSP cylindro-parabolique — bilan prescrit", wind: "Éolien — ressource / flux cinétique / courbe documentée" };
 
 const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
@@ -65,6 +59,7 @@ const runEngine = createServerFn({ method: "POST" }).middleware([requireSupabase
   })
   .handler(async ({ data, context }) => {
     const { callEngine } = await import("./engine-http.server");
+    const { assertCanRun } = await import("./engine-access.server");
     const supabase = context.supabase as any;
     await assertCanRun(supabase, context.userId);
     const objective = ENGINES[data.request.engine];
@@ -142,16 +137,8 @@ export const runWindSimulation = runEngine;
 export const getSimulationSeries = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), resultType: z.string().regex(/^series_[a-z_]+$/) }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: sim } = await context.supabase.from("simulations").select("id,name,status").eq("id", data.id).maybeSingle();
-    if (!sim) throw new Error("Simulation introuvable.");
-    if (sim.status !== "completed") throw new Error("Seules les simulations terminées fournissent des séries.");
-    const { data: row, error } = await context.supabase.from("simulation_results").select("timeseries,unit").eq("simulation_id", data.id).eq("result_type", data.resultType).maybeSingle();
-    if (error) throw new Error("Série indisponible.");
-    const t = row?.timeseries as { values?: number[] } | null;
-    if (!row || !t?.values?.length) return null;
-    const { data: full } = await context.supabase.from("simulations").select("parameters").eq("id", data.id).single();
-    const ts = (full?.parameters as { request?: { timeseries?: { timestamps?: string[]; utc_offset_hours?: number } } } | null)?.request?.timeseries;
-    return { name: sim.name as string, values: t.values, unit: row.unit as string, timestamps: ts?.timestamps ?? [], utcOffset: ts?.utc_offset_hours ?? null };
+    const { readSimulationSeries } = await import("./engine-access.server");
+    return readSimulationSeries(context.supabase, data.id, data.resultType);
   });
 
 export const listSimulations = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {

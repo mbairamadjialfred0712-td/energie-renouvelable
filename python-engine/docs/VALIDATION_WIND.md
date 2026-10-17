@@ -93,3 +93,39 @@ Interface connectée : A/B/C visibles, vérification d’entrées incomplètes a
 Persistance réussie hébergée, injection réelle d’échecs de sauvegarde/finalisation, rôles différents en base sur un lancement éolien : NON TESTÉ. La préparation serveur est testée avec doublures d’accès, pas présentée comme un test réel RLS. Transport existant et contrôles communs conservés.
 
 Questions restant à Joël : référence constructeur et conditions exactes de courbe, représentativité de la période, critères de qualité, mesures de hauteur/densité compatibles, variabilité sous-horaire et cas physiques avec tolérances. L’approbation de V1 ne constitue pas validation de ces données.
+
+## 8. Audit final de cohérence — PROMPT 11.1
+
+### Défauts démontrés et corrections — TERMINÉ
+
+- Diamètre facultatif reçu en B précédemment ignoré : A = pi × (D/2)² utilisé si fourni ; surface explicite toujours obligatoire, incohérence refusée (tolérance arithmétique relative 1e-9). Pas de dimensionnement ajouté.
+- Démarrage documenté égal à 0 m/s précédemment refusé : accepté sans inventer de seuil ; autres paramètres physiques strictement positifs.
+- Somme de grandes valeurs finies pouvait lever OverflowError non traité : erreur contrôlée sans résultat ; interpolation pondérée évitant un produit intermédiaire inutilement élevé.
+- Réponses auto-cohérentes mais étrangères aux observations/paramètres pouvaient passer : statistiques, flux B, interpolation C, moyenne cinétique, domaine, durées et ensemble des séries contrôlés avant sauvegarde ; énergie annuelle égale à celle de la période complète.
+- Courbe et turbine pouvaient citer des documents différents : source commune exigée pour référence turbine/conditions/points. Authenticité du document toujours à vérifier humainement, explicitement affichée ; aucune table documentaire créée.
+- Lectures simulation/paramètres pouvaient ignorer une erreur et retourner une série sans horodatages : erreurs explicites, longueurs et fuseau requis ; logique extraite dans `src/lib/engine-access.server.ts`, importée dans les handlers authentifiés, testée avec doublures.
+- Résultats turbine explicitement « estimés », jamais présentés comme mesures ; observations avec nature/source, flux B non électrique.
+
+### Temps et limites — TERMINÉ pour le code
+
+Chaque timestamp est le début d’une heure UTC moyenne confirmée ; fin exclusive = dernier timestamp + 1 h. Pas irréguliers/incomplets, doublons, trous, désordre ou vent manquant refusés. W × h / 1000 = kWh ; aucune conversion kW/Wh implicite. Année civile complète uniquement, sinon énergie annuelle indisponible. Une année complète ne prouve pas sa représentativité climatologique.
+
+Seuils démarrage/nominal/arrêt facultatifs lorsqu’ils ne sont pas documentés, conformément au périmètre approuvé : aucune invention, interpolation uniquement dans le domaine fourni, refus hors domaine même après arrêt. Si arrêt documenté : cohérence des points et test de frontière ; pas de pertes appliquées, production brute uniquement.
+
+### Intégration — PARTIEL
+
+Authentification conservée, rôle admin/engineer contrôlé avant écritures privilégiées, site/projet/localité via client utilisateur. Refus analyst/viewer et échec de lecture des rôles testés avec doublures, pas preuve RLS hébergée. Transport : panne, délai, authentification/contrat invalides refusés, sans faux succès. Erreur d’insertion : statut failed ; erreur de finalisation : compensation puis failed ; erreur de sauvegarde du statut : exception, jamais succès. Injection réelle de panne de sauvegarde/compensation : NON TESTÉ ; lecture des résultats uniquement pour completed.
+
+Navigateur connecté : A/B/C, refus d’entrées incomplètes, lancement désactivé, 0 jeu météo validé accessible, 0 erreur navigateur ; aucune donnée fictive en base. URL/clé serveur absentes de l’environnement observé : blocage dans l’aperçu, pas preuve de l’état réel de Render (NON TESTÉ). Parcours hébergé calcul/sauvegarde/consultation BLOQUÉ.
+
+### Premier calcul réel et validation humaine
+
+Jeu météo importé/validé : heures UTC continues, vent en m/s non manquant, hauteur/source/nature/qualité/période explicites, moyennes horaires confirmées ; site et projet accessibles avec localité cohérente. B : densité kg/m³ et surface m² justifiées. C : turbine, rotor/moyeu, puissance nominale W, courbe source/version/conditions et domaine couvrant toutes les observations, hauteur et densité compatibles sans correction. Service déployé/configuré et authentifié. Joël : authenticité/compatibilité de courbe, qualité/représentativité et cas physiques avec tolérances À VALIDER PAR L’INGÉNIEUR ; conventions V1 déjà approuvées.
+
+### Tests réellement exécutés — TERMINÉ
+
+- Python : `/tmp/pv-audit-venv/bin/python -m pytest tests -q` depuis python-engine : **172 réussis**, 1 avertissement Starlette/httpx ; 165 précédents réexécutés + 7 nouveaux (géométrie, incohérence surface, sources, seuil zéro, overflow, demi-heure, arrêt).
+- TypeScript : `bunx vitest run` : **222 réussis / 17 fichiers** ; 204 précédents réexécutés + 18 nouveaux (12 contrat/réponse, 6 accès/lectures). Aucun test de copie/styling, aucun modèle PV/CSP modifié.
+- Service local réellement lancé : identité réelle authentifiée, health → validation → calcul C réussis ; appel anonyme refusé. Cas arithmétique fabriqué exclusivement pour test, jamais sauvegardé ; pas Render ni parcours Lovable hébergé.
+- Formulaire connecté vérifié dans le navigateur et capture examinée : état indisponible, erreurs et courbe déclarée explicites, lancement désactivé. Vérification automatique build OK.
+- Sauvegarde éolienne réelle hébergée, panne de finalisation/compensation et différents rôles en base : NON TESTÉ ; données réelles et service requis, aucune preuve opérationnelle inventée.
