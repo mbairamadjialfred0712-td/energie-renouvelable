@@ -215,8 +215,13 @@ def test_discharge_power_limit_with_remaining_stored_energy():
 
 def test_json_serialization_preserves_battery_balances_not_database_persistence():
     from app.api.schemas.contract import SimulationResponse
+    from datetime import datetime, timezone
     out = eng.run(req([10, 0, 0], [0, 10, 10], overrides={'initial_soc_pct': (10, '%')}))
-    restored = SimulationResponse.model_validate_json(out.model_dump_json())
+    response = SimulationResponse(simulation_id='synthetic-qa-only', status='completed', engine='battery',
+                                  engine_version='1.1.0', created_at=datetime.now(timezone.utc),
+                                  results=out.results, timeseries=out.timeseries,
+                                  calculation_metadata=out.calculation_metadata)
+    restored = SimulationResponse.model_validate_json(response.model_dump_json())
     assert restored.results == out.results
     assert restored.timeseries == out.timeseries
     r = restored.results
