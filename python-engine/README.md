@@ -46,6 +46,11 @@ pytest -q
 ```
 
 ## Déploiement proposé sur Render (blueprint `render.yaml` à la racine du dépôt)
+### Échec d'installation PySAM avec Python 3.14
+Le journal Render du 21/10/2026 utilise Python 3.14.8 et échoue sur `nrel-pysam==7.1.1.post1` : aucune distribution compatible avec cette version de Python. Le paquet Linux CPython 3.12 a été téléchargé et vérifié ; conserver la version scientifique PySAM existante.
+
+Les fichiers `.python-version` à la racine du dépôt et dans `python-engine/` fixent désormais Python **3.12.7**, comme le blueprint, y compris pour un service créé manuellement. Si le service Render possède déjà une variable `PYTHON_VERSION`, elle est prioritaire : dans **Environment**, la définir à `3.12.7`, puis **Manual Deploy → Clear build cache & deploy** après synchronisation du dépôt. Conserver **Root Directory = `python-engine`** et **Build Command = `pip install -r requirements.txt`**. Le nouveau journal doit indiquer Python 3.12.7 avant l'installation. Cette correction ne prouve pas encore le démarrage ni l'intégration hébergée.
+
 **Non exécuté par l'audit PROMPT 14 ; accord préalable sur le pilote payant et les comptes QA requis.** Procédure détaillée et critères d'acceptation dans `docs/DEPLOYMENT_READINESS.md`.
 1. Connecter le dépôt GitHub du projet à Render → *New* → *Blueprint* → sélectionner `render.yaml`.
 2. Render génère `ENGINE_SHARED_KEY`. Saisir `SUPABASE_URL` et `SUPABASE_PUBLISHABLE_KEY` (valeurs publiques du backend).
