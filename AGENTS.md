@@ -15,8 +15,8 @@
 
 - Use Lovable Assets pointers for uploaded application imagery; this keeps source media out of the repository while preserving stable imports.
 - Keep project pre-analysis prompts and model calls in server-only modules; this protects the AI instructions and prevents client-side secret exposure.
-- Render solar temporal charts through the shared SolarEvolution view and browser-safe solar-evolution-data selector, using only dated recorded observations grouped by locality and unit; this prevents inferred trends, unit conversions and divergent detail/list behavior.
-- Render other resource temporal charts through ResourceEvolution and its raw observation selector; structured periods prevent inferred dates and fixed metric units prevent mixed-unit series.
+- Use SolarEvolution/solar-evolution-data and ResourceEvolution/raw selectors for dated observations grouped by locality and native unit; never infer dates, trends or conversions.
+- Pin Python consistently in both `.python-version` files and the Render blueprint; manual services must not default to a runtime without the pinned PySAM wheel.
 - Persist project PV estimates through the authenticated estimate_project_solar RPC, which rechecks roles, ownership and solar validation under resource locks and atomically logs history; this prevents forged results and validation races.
 - Keep the annual PV formula in the versioned pure solar-pv-engine contract aligned with the authoritative database RPC; IA only reviews saved snapshots and never calculates production.
 - Store shared technical settings as immutable versions and snapshot the selected version through authorized calculation RPCs; historical estimates must not change when settings change.
