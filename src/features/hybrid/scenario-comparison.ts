@@ -17,6 +17,7 @@ function evidenceIssues(s: HybridSimulation, c: HybridConfig): string[] {
   if (!s.evidence?.requestValid) issues.push("Paramètres requis ou contrat moteur incomplets.");
   if (!s.evidence?.natures.length) issues.push("Nature des données absente.");
   if (!s.evidence?.calculatedAt) issues.push("Date du calcul absente.");
+  if (s.engine !== "biomass" && (!s.timestamps.length || s.utcOffset === null || s.convention !== "period_start")) issues.push("Chronologie horaire documentée absente.");
   return issues;
 }
 /** Stored scalar values only. No sum, conversion, ranking, extrapolation or dispatch. */
@@ -52,7 +53,7 @@ export function buildScenarioComparison(ids: string[], data: HybridData): Scenar
         if (r && br && r.unit !== br.unit) reasons.push("Unités incompatibles ; aucune conversion.");
         if (r && br && r.method !== br.method) reasons.push("Méthodes différentes : indicateur exclu.");
       }
-      return { value: reasons.length ? null : r?.value ?? null, unit: r?.unit ?? "—", method: [r?.method ?? "Non disponible", ...(s?.evidence?.warnings ?? [])].join(" · "), reasons: [...new Set(reasons)], simulationId: s?.id ?? null, validation: s?.evidence?.validation ?? "Non établie", period: `${s?.periodStart ?? "?"} → ${s?.periodEnd ?? "?"}` };
+      return { value: reasons.length ? null : r?.value ?? null, unit: r?.unit ?? "—", method: [r?.method ?? "Non disponible", `Nature des entrées : ${s?.evidence?.natures.join(", ") ?? "absente"}`, `Calcul : ${s?.evidence?.calculatedAt ?? "date absente"}`, s?.limits ?? "", JSON.stringify(s?.sources ?? []), ...(s?.evidence?.warnings ?? [])].join(" · "), reasons: [...new Set(reasons)], simulationId: s?.id ?? null, validation: s?.evidence?.validation ?? "Non établie", period: `${s?.periodStart ?? "?"} → ${s?.periodEnd ?? "?"}` };
     });
     // Compatibility is bilateral: never leave one side looking comparable when its peer is excluded.
     if (cells.some(c => c.reasons.some(r => /incompatible|différentes|inter-sites/.test(r)))) for (const cell of cells) { cell.value = null; cell.reasons.push("Comparabilité non établie pour cet indicateur entre les scénarios sélectionnés."); }

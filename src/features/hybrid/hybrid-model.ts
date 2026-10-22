@@ -31,6 +31,8 @@ export const hybridConfigSchema = z.object({
     parameterSource: z.string().trim().max(500),
   }).strict()).max(5),
 }).strict().superRefine((c, ctx) => {
+  for (const key of ["periodStart", "periodEnd"] as const) { const v = c[key]; if (v && (!Number.isFinite(Date.parse(v + "T00:00:00Z")) || new Date(v + "T00:00:00Z").toISOString().slice(0, 10) !== v)) ctx.addIssue({ code: "custom", path: [key], message: "Date de période invalide." }); }
+  if (c.periodStart && c.periodEnd && c.periodEnd < c.periodStart) ctx.addIssue({ code: "custom", path: ["periodEnd"], message: "Fin antérieure au début de période." });
   if (new Set(c.components.map(x => x.technology)).size !== c.components.length) ctx.addIssue({ code: "custom", message: "Une seule association par technologie." });
   c.components.forEach((x, i) => { if (x.powerUnit !== newComponent(x.technology).powerUnit) ctx.addIssue({ code: "custom", path: ["components", i, "powerUnit"], message: "Unité incompatible avec la technologie ; aucune conversion implicite." }); });
 });
