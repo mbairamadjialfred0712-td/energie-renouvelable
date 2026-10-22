@@ -31,7 +31,7 @@ export const saveHybridConfiguration = createServerFn({ method: "POST" }).middle
     const previous = current?.data ? decodeHybridEnvelope(current.data.objectives) : null;
     if (current && !previous) throw new Error("Ce scénario ne relève pas du module hybride ; il est préservé.");
     const refs = await loadHybridData(context.supabase, context.userId);
-    const missing = data.components.map(c => c.simulationId).filter((id): id is string => !!id && !refs.simulations.some(s => s.id === id));
+    const missing = [...data.components.map(c => c.simulationId), ...(data.optimization?.candidateIds ?? [])].filter((id): id is string => !!id && !refs.simulations.some(s => s.id === id));
     if (missing.length) {
       const { loadSimulationsByIds } = await import("./hybrid-data.server");
       refs.simulations.push(...await loadSimulationsByIds(context.supabase, missing));

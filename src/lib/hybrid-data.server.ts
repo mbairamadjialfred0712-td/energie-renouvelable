@@ -51,7 +51,7 @@ export async function loadHybridData(sb: SupabaseClient<Database>, userId: strin
   if (results.error) throw new Error("Les résultats individuels n'ont pas pu être chargés.");
   const sims = mapSimulations((simulations.data ?? []) as SimulationRow[], (results.data ?? []) as ResultRow[]);
   const decoded = (configs.data ?? []).map(r => ({ id: r.id, updatedAt: r.updated_at, env: decodeHybridEnvelope(r.objectives) }));
-  const referenced = decoded.flatMap(r => r.env?.config.components.flatMap(c => c.simulationId ? [c.simulationId] : []) ?? []);
+  const referenced = decoded.flatMap(r => [...(r.env?.config.components.flatMap(c => c.simulationId ? [c.simulationId] : []) ?? []), ...(r.env?.config.optimization?.candidateIds ?? [])]);
   const missing = [...new Set(referenced)].filter(id => !sims.some(s => s.id === id));
   if (missing.length) sims.push(...await loadSimulationsByIds(sb, missing));
   return {

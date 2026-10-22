@@ -14,6 +14,7 @@ import { WorkspacePage } from "@/components/app/page";
 import { saveHybridConfiguration } from "@/lib/hybrid.functions";
 import { emptyConfig, evaluateHybrid, newComponent, TECHNOLOGIES, type HybridConfig, type HybridData, type HybridOption, type Technology } from "./hybrid-model";
 import { ScenarioComparisonPanel } from "./scenario-comparison-panel";
+import { OptimizationPanel } from "./optimization-panel";
 
 const icons = { photovoltaic: Sun, wind: Wind, biomass: Leaf, csp: Flame, battery: Battery };
 function Choice({ label, value, options, onChange }: { label: string; value: string | null; options: HybridOption[]; onChange: (id: string | null) => void }) {
@@ -54,7 +55,8 @@ export function HybridWorkspace({ data }: { data: HybridData }) {
         {!config ? <div className="grid min-h-72 place-items-center border border-dashed border-border p-8 text-center"><div><GitMerge className="mx-auto mb-4 h-12 w-12 text-primary" /><h2 className="text-lg font-semibold">Aucun système sélectionné</h2><p className="mt-2 text-sm text-muted-foreground">Aucun bilan ni résultat hybride enregistré.</p></div></div> : <>
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h2 className="break-words text-xl font-semibold">{draft ? draft.id ? "Modifier la configuration" : "Nouvelle configuration" : config.name}</h2><Badge variant="outline" className="mt-2">{draft ? "Brouillon" : evaluation?.status}</Badge></div>{!draft && data.canWrite && <Button variant="outline" size="sm" onClick={() => { setDraft(structuredClone(config)); setTab("preparation"); }}><Pencil />Modifier</Button>}</div>
           <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4"><TabsTrigger value="preparation">A · Préparation</TabsTrigger><TabsTrigger value="comparison">B · Comparaison</TabsTrigger><TabsTrigger value="simulation">C · Simulation</TabsTrigger><TabsTrigger value="history">Historique</TabsTrigger></TabsList>
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-5"><TabsTrigger value="preparation">A · Préparation</TabsTrigger><TabsTrigger value="comparison">B · Comparaison</TabsTrigger><TabsTrigger value="optimization">Optimisation</TabsTrigger><TabsTrigger value="simulation">C · Simulation</TabsTrigger><TabsTrigger value="history">Historique</TabsTrigger></TabsList>
+            <TabsContent value="optimization" className="pt-5">{!draft && record ? <OptimizationPanel key={config.id} config={config} data={data} revision={record.updatedAt} /> : <p className="text-sm text-muted-foreground">Configuration enregistrée requise.</p>}</TabsContent>
             <TabsContent value="preparation" className="space-y-6 pt-4">
               {draft ? <>
                 <div className="grid gap-4 sm:grid-cols-2"><Label className="grid gap-2 sm:col-span-2">Nom<Input aria-label="Nom de la configuration" value={draft.name} onChange={e => patch({ name: e.target.value })} /></Label>

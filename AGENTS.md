@@ -37,3 +37,4 @@
 - Isolate engine role checks and series reads in engine-access.server for testable user access.
 - Hybrid preparation reuses versioned scenarios JSON and retains revisions; compare trusted individual simulations without summing or copying results. Chronological dispatch remains unavailable until validated.
 - Persist comparison selections inside the existing hybrid preparation envelope so its database role guard remains effective; resolve trusted values under user RLS and apply engine-specific metric/site/period/unit/provenance compatibility on the server, never in editable JSON.
+- Keep optimization V1 as server-side exhaustive selection of stored battery candidates with identical PV/demand and explicit initial/terminal policies; persist complete run snapshots in a single simulations INSERT, not editable scenario output or a second physical engine.

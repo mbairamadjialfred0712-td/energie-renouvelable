@@ -10,6 +10,7 @@ import { WindResults } from "@/features/engine/wind-results";
 import { BatteryResults } from "@/features/engine/battery-results";
 import { BATTERY_LABELS } from "@/features/engine/battery-contract";
 import { BIOMASS_LABELS, BIOMASS_INPUT_LABELS } from "@/features/engine/biomass-contract";
+import { OptimizationReportView } from "@/features/hybrid/optimization-panel";
 
 const opts = (id: string) => queryOptions({ queryKey: ["simulation", id], queryFn: () => getSimulation({ data: { id } }) });
 const STATUS: Record<string, string> = { draft: "Brouillon", queued: "En attente", running: "En cours", completed: "Terminée", failed: "Échouée" };
@@ -26,6 +27,7 @@ function Results() {
   const { data } = useSuspenseQuery(opts(id));
   if (!data) return <WorkspacePage eyebrow="Simulations" title="Simulation introuvable" description="Elle n’existe pas ou vous n’y avez pas accès."><EmptyState title="Aucune simulation" description="Aucun résultat n’est affiché." /></WorkspacePage>;
   const { simulation: s, results } = data;
+  if (data.optimization) return <WorkspacePage eyebrow="Scénarios / Optimisation" title={s.name} description={`Énumération de calculs enregistrés · ${s.engine_version ?? "version absente"}`}><OptimizationReportView report={data.optimization} /></WorkspacePage>;
   const scalars = results.filter((r) => !r.result_type.startsWith("series_") && !r.result_type.startsWith("monthly_") && !r.result_type.startsWith("daily_"));
   const monthly = results.filter((r) => r.result_type.startsWith("monthly_ac_energy_")).sort((a, b) => a.result_type.localeCompare(b.result_type)).map((r) => ({ month: r.result_type.slice(-7), kWh: r.value }));
   const meta = { warnings: results[0]?.warnings ?? [] };
