@@ -39,3 +39,4 @@
 - [x] PROMPT 9 : audit PV, corrections dates/payload/réponses/persistance et écritures directes ; 66 tests Python + 147 frontend, service local authentifié et aperçu en échec honnête vérifiés ; documentation de mise en service complétée
 - [x] PROMPT A1 : module biomasse finalisé (garde de validation stricte, 20 tests vitest, écritures compensées, voie générique fermée, sélecteur projet aligné sur le RPC)
 - [x] PROMPT A2 : module demande finalisé (33 tests vitest, validations serveur renforcées, cohérence site/localité, contrôle de rôle à la suppression, politique RLS équipements corrigée, parcours navigateur vérifié)
+- [ ] PROMPT 15 (22/10/2026) : audit global de cohérence + préparation des scénarios — diagnostic 4 catégories, contrôles projet/site/période, unités, traçabilité, tests Python/TS, VALIDATION_SCENARIOS.md, rapport final 13 points. Ne rien reconstruire, corriger seulement les défauts démontrés.
