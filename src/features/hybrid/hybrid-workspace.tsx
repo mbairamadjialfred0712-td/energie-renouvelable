@@ -45,6 +45,7 @@ export function HybridWorkspace({ data }: { data: HybridData }) {
     <div className="grid min-w-0 gap-6 xl:grid-cols-[240px_minmax(0,1fr)]">
       <section className="min-w-0" aria-label="Configurations hybrides"><h2 className="mb-3 text-sm font-semibold">Configurations enregistrées</h2>
         {data.configs.length === 0 ? <div className="border border-dashed border-border p-5 text-sm text-muted-foreground">Aucune configuration hybride.</div> : <div className="space-y-2">{data.configs.map(r => <Button key={r.config.id} variant={selected === r.config.id && !draft ? "secondary" : "outline"} className="h-auto w-full justify-start whitespace-normal py-3 text-left" onClick={() => { setSelected(r.config.id); setDraft(null); setError(""); }}><GitMerge className="shrink-0" /><span className="min-w-0 break-words">{r.config.name}<span className="mt-1 block text-xs font-normal text-muted-foreground">{r.config.components.map(c => TECHNOLOGIES[c.technology]).join(" + ") || "Brouillon"}</span></span></Button>)}</div>}
+        {data.discardedConfigs > 0 && <p role="alert" className="mt-3 text-xs text-destructive">{data.discardedConfigs} configuration(s) enregistrée(s) illisible(s) : version ou structure non reconnue, données préservées mais non affichées.</p>}
         <div className="mt-6 border-t border-border pt-4 text-xs leading-6 text-muted-foreground"><p>Simulation hybride : indisponible</p><p>Validation scientifique : requise</p></div>
       </section>
       <div className="min-w-0">
@@ -56,7 +57,7 @@ export function HybridWorkspace({ data }: { data: HybridData }) {
               {draft ? <>
                 <div className="grid gap-4 sm:grid-cols-2"><Label className="grid gap-2 sm:col-span-2">Nom<Input aria-label="Nom de la configuration" value={draft.name} onChange={e => patch({ name: e.target.value })} /></Label>
                   <Choice label="Projet de référence" value={draft.projectId} options={data.projects} onChange={projectId => patch({ projectId, siteId: null, demandId: null, components: draft.components.map(c => ({ ...c, simulationId: null, equipmentId: null, weatherId: null })) })} />
-                  <Choice label="Site de référence" value={draft.siteId} options={data.sites} onChange={siteId => patch({ siteId, demandId: null, components: draft.components.map(c => ({ ...c, equipmentId: c.technology === "battery" ? c.equipmentId : null, weatherId: null })) })} />
+                  <Choice label="Site de référence" value={draft.siteId} options={data.sites} onChange={siteId => patch({ siteId, demandId: null, components: draft.components.map(c => ({ ...c, simulationId: null, equipmentId: c.technology === "battery" ? c.equipmentId : null, weatherId: null })) })} />
                   <Choice label="Demande énergétique" value={draft.demandId} options={data.demands.filter(x => x.siteId === draft.siteId && draft.siteId !== null)} onChange={demandId => patch({ demandId })} />
                   <Label className="grid gap-2">Description<Input value={draft.description} onChange={e => patch({ description: e.target.value })} /></Label>
                 </div>
