@@ -12,6 +12,7 @@ import { saveHybridConfiguration } from "@/lib/hybrid.functions";
 import { getOptimizationRuns, inspectOptimization, runStoredOptimization } from "@/lib/optimization.functions";
 import { optimizationProblemSchema, type OptimizationProblem, type OptimizationReport } from "@/services/optimization/stored-battery-contract";
 import type { HybridConfig, HybridData } from "./hybrid-model";
+import { ZodError } from "zod";
 
 export function OptimizationReportView({ report }: { report: OptimizationReport }) {
   return <section aria-label="Résultat d'optimisation" className="space-y-4 border-t border-border pt-4">
@@ -42,7 +43,7 @@ export function OptimizationPanel({ config, data, revision }: { config: HybridCo
       if (mode === "save") { await save({ data: { ...config, optimization: problem() } }); await client.invalidateQueries({ queryKey: ["hybrid-workspace"] }); }
       else if (mode === "inspect") setReport(await inspect({ data: { configId: config.id, revision } }));
       else { const r = await run({ data: { configId: config.id, revision } }); setReport(r.report); await client.invalidateQueries({ queryKey: ["optimization-runs", config.id] }); }
-    } catch (e) { setError(e instanceof Error ? e.message : "Optimisation indisponible."); } finally { setBusy(false); }
+    } catch (e) { setError(e instanceof ZodError ? "Problème incomplet : sélectionnez au moins un calcul et sa référence, puis renseignez les bornes et leurs justifications." : e instanceof Error ? e.message : "Optimisation indisponible."); } finally { setBusy(false); }
   };
   const options = data.simulations.filter(s => s.projectId === config.projectId && s.engine === "battery" && (!s.siteId || s.siteId === config.siteId));
   return <section aria-label="Optimisation batterie" className="space-y-5">
