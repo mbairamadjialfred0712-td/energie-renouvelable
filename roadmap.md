@@ -11,6 +11,7 @@
 - Exécution E2E PV et batterie : le moteur Python n'est pas en ligne (Render + secrets SCIENTIFIC_ENGINE_URL/KEY). Tant qu'il n'est pas déployé, aucune simulation ne peut tourner et aucune simulation PV terminée n'existe pour tester la liaison production → LCOE.
 
 ## En cours
+- [ ] Demande du 22/10/2026 : relancer Render avec PYTHON_VERSION=3.12.7 puis vérifier éolien, bilan primaire biomasse et batterie calculés, sauvegardés et consultés (autorisation de relance reçue ; accès Render à connecter ; aucune simulation, aucun résultat, aucune météo ni configuration stockage validée au contrôle initial).
 - [x] Correction installation Render du 21/10/2026 : Python 3.14 sans wheel PySAM ; version 3.12.7 fixée dans le dépôt et le moteur, téléchargement du wheel Linux CPython 3.12 vérifié, consignes de relance ajoutées ; déploiement hébergé à confirmer par son nouveau journal
 - [x] PROMPT 14 HYBRIDE : audit, préparation A sauvegardée/relue avec historique, comparaison B des résultats individuels sans agrégation, permissions serveur/base, tests et VALIDATION_HYBRID.md ; C explicitement indisponible
 - [ ] PROMPT 14 HYBRIDE : B alimenté par de vrais résultats, isolation entre deux comptes et C coordonné (bloqué : résultats individuels absents, comptes QA autorisés, service configuré, contrat de dispatch et validation scientifique Joël nécessaires)
