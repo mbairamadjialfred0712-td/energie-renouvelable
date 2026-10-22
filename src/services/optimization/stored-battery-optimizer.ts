@@ -17,7 +17,11 @@ export function optimizeStoredBatteries(raw: OptimizationProblem, candidates: St
   const referenceRequest = batteryRequestSchema.safeParse(reference?.request);
   const referenceResponse = simulationResponse.safeParse(reference?.response);
   let referenceValid = reference?.status === "completed" && reference.siteId === siteId && reference.projectId === projectId && reference.provenanceValid && referenceRequest.success && referenceResponse.success;
-  if (referenceRequest.success && referenceResponse.success) { try { checkBatteryResponse(referenceRequest.data, referenceResponse.data); } catch { referenceValid = false; } }
+  if (referenceRequest.success && referenceResponse.success) {
+    const out = referenceResponse.data, ev = requestEvidence(referenceRequest.data);
+    referenceValid = referenceValid && ev.requestValid && referenceRequest.data.source_references.length > 0 && out.status === "completed" && out.engine === "battery" && out.simulation_id === p.referenceId && Boolean(out.completed_at) && Boolean(out.engine_version);
+    try { checkBatteryResponse(referenceRequest.data, out); } catch { referenceValid = false; }
+  }
   const assessments = [...p.candidateIds].sort().map((id): CandidateAssessment => {
     const c = candidates.find(c => c.id === id);
     const a: CandidateAssessment = { id, name: c?.name ?? "Référence inaccessible", value: null, capacity: null, initialEnergy: null, finalEnergy: null, admissible: false, reasons: [], verified: [], engineVersion: null, validation: "Non établie", sources: null };
