@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { alignmentErrors, checkHourlySeries, decodeHybridEnvelope, emptyConfig, evaluateHybrid, hybridConfigSchema, HYBRID_VERSION, newComponent, type HybridData, type HybridSimulation, type Technology } from "./hybrid-model";
 
-const data = (): HybridData => ({ configs: [], projects: [{ id: "p", name: "QA", localityId: "l" }], sites: [{ id: "s", name: "QA", localityId: "l" }], demands: [], weather: [], equipment: [], simulations: [], canWrite: true });
+const data = (): HybridData => ({ configs: [], projects: [{ id: "p", name: "QA", localityId: "l" }], sites: [{ id: "s", name: "QA", localityId: "l" }], demands: [], weather: [], equipment: [], simulations: [], canWrite: true, discardedConfigs: 0 });
 const simulation = (): HybridSimulation => ({ id: "sim", name: "SYNTHÉTIQUE QA", projectId: "p", siteId: "s", engine: "photovoltaic", version: "photovoltaic 1.0.1", status: "completed", periodStart: "2026-01-01", periodEnd: "2026-01-01", timestamps: ["2026-01-01T00:00:00", "2026-01-01T01:00:00"], utcOffset: 0, convention: "period_start", sources: [{ label: "QA synthétique" }], assumptions: {}, limits: "QA", results: [{ key: "energy", value: 2, unit: "kWh", method: "fixture" }], series: [{ key: "series_ac_energy", unit: "kWh", values: [1, 1] }] });
 
 describe("hybrid preparation — synthetic contract fixtures, no scientific calculations", () => {

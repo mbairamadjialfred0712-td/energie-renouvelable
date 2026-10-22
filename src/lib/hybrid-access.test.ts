@@ -1,7 +1,8 @@
 import { expect, it } from "vitest";
 import { assertHybridReferences, assertHybridWriter } from "./hybrid-access.server";
 import { emptyConfig, newComponent, type HybridData } from "@/features/hybrid/hybrid-model";
-const refs = (): HybridData => ({ configs: [], projects: [{ id: "p", name: "QA", localityId: "l" }], sites: [{ id: "s", name: "QA", localityId: "l" }], demands: [], weather: [], equipment: [], simulations: [], canWrite: false });
+const refs = (): HybridData => ({ configs: [], projects: [{ id: "p", name: "QA", localityId: "l" }], sites: [{ id: "s", name: "QA", localityId: "l" }], demands: [], weather: [], equipment: [], simulations: [], canWrite: false, discardedConfigs: 0 });
+const sim = (siteId: string | null) => ({ id: "sim1", name: "QA", projectId: "p", siteId, engine: "wind", version: "wind 1.0.0", status: "completed", periodStart: null, periodEnd: null, timestamps: [], utcOffset: null, convention: null, sources: [], assumptions: null, limits: "", results: [], series: [] });
 it.each(["viewer", "analyst"])("%s cannot save hybrid configurations", role => expect(() => assertHybridWriter([role], "a")).toThrow());
 it("engineer cannot modify another owner's configuration", () => expect(() => assertHybridWriter(["engineer"], "a", "b")).toThrow());
 it("owner engineer can save preparation", () => expect(() => assertHybridWriter(["engineer"], "a", "a")).not.toThrow());
@@ -10,3 +11,6 @@ it("cannot forge inaccessible project reference", () => expect(() => assertHybri
 it("cannot reference mismatched site locality", () => { const d = refs(); d.sites[0] = { id: "s", name: "QA", localityId: "different" }; expect(() => assertHybridReferences({ ...emptyConfig(), projectId: "p", siteId: "s" }, d)).toThrow("localités différentes"); });
 it("cannot attach inaccessible simulation", () => expect(() => assertHybridReferences({ ...emptyConfig(), projectId: "p", components: [{ ...newComponent("wind"), simulationId: "foreign" }] }, refs())).toThrow("Simulation inaccessible"));
 it("allows incomplete drafts without claiming readiness", () => expect(() => assertHybridReferences(emptyConfig(), refs())).not.toThrow());
+it("rejects a simulation attached to another site", () => { const d = refs(); d.simulations = [sim("other-site")]; expect(() => assertHybridReferences({ ...emptyConfig(), projectId: "p", siteId: "s", components: [{ ...newComponent("wind"), simulationId: "sim1" }] }, d)).toThrow("autre site"); });
+it("accepts a simulation of the same site", () => { const d = refs(); d.simulations = [sim("s")]; expect(() => assertHybridReferences({ ...emptyConfig(), projectId: "p", siteId: "s", components: [{ ...newComponent("wind"), simulationId: "sim1" }] }, d)).not.toThrow(); });
+it("accepts a simulation whose historical site is not established", () => { const d = refs(); d.simulations = [sim(null)]; expect(() => assertHybridReferences({ ...emptyConfig(), projectId: "p", siteId: "s", components: [{ ...newComponent("wind"), simulationId: "sim1" }] }, d)).not.toThrow(); });
