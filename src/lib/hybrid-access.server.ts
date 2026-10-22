@@ -12,7 +12,9 @@ export function assertHybridReferences(c: HybridConfig, data: HybridData) {
   if (project && site && project.localityId && site.localityId && project.localityId !== site.localityId) throw new Error("Projet et site de localités différentes.");
   if (c.demandId && !data.demands.some(d => d.id === c.demandId && d.siteId === c.siteId)) throw new Error("Demande inaccessible ou d'un autre site.");
   for (const x of c.components) {
-    if (x.simulationId && !data.simulations.some(s => s.id === x.simulationId && s.projectId === c.projectId && s.engine === x.technology)) throw new Error("Simulation inaccessible ou d'un autre projet/moteur.");
+    const sim = x.simulationId ? data.simulations.find(s => s.id === x.simulationId) : null;
+    if (x.simulationId && (!sim || sim.projectId !== c.projectId || sim.engine !== x.technology)) throw new Error("Simulation inaccessible ou d'un autre projet/moteur.");
+    if (sim && c.siteId && sim.siteId && sim.siteId !== c.siteId) throw new Error("Simulation rattachée à un autre site.");
     if (x.weatherId && !data.weather.some(w => w.id === x.weatherId && w.siteId === c.siteId)) throw new Error("Météo inaccessible ou d'un autre site.");
     if (x.equipmentId && !data.equipment.some(e => e.id === x.equipmentId && e.technology === x.technology && (x.technology === "battery" ? e.projectId === c.projectId : e.siteId === c.siteId))) throw new Error("Équipement inaccessible ou incompatible.");
   }

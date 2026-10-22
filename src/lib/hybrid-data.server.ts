@@ -18,7 +18,11 @@ export async function loadHybridData(sb: SupabaseClient<Database>, userId: strin
   const ids = (simulations.data ?? []).map(s => s.id);
   const results = ids.length ? await sb.from("simulation_results").select("simulation_id,result_type,value,unit,calculation_method,timeseries,input_snapshot,source_references").in("simulation_id", ids) : { data: [], error: null };
   if (results.error) throw new Error("Les résultats individuels n'ont pas pu être chargés.");
-  const sims: HybridSimulation[] = (simulations.data ?? []).map(s => {
+  const sims = mapSimulations(simulations.data ?? [], results.data ?? []);
+  const decoded = (configs.data ?? []).map(r => ({ id: r.id, updatedAt: r.updated_at, env: decodeHybridEnvelope(r.objectives) }));
+  return {
+    configs: decoded.flatMap(r => r.env ? [{ config: { ...r.env.config, id: r.id }, updatedAt: r.updatedAt, history: r.env.history }] : []),
+    discardedConfigs: decoded.filter(r => !r.env).length,
     const params = object(s.parameters), request = object(params["request"]), ts = object(request["timeseries"]), snapshot = object(params["source_snapshot"]);
     const rows = s.status === "completed" ? (results.data ?? []).filter(r => r.simulation_id === s.id) : [];
     const metadata = object(object(rows[0]?.input_snapshot)["metadata"]);
