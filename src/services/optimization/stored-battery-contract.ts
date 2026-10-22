@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Json } from "@/integrations/supabase/types";
 
 export const OPTIMIZATION_VERSION = "stored-battery-enumeration/1.0.0";
 export const MAX_CANDIDATES = 12;
@@ -24,7 +25,7 @@ export type CandidateAssessment = {
   id: string; name: string; value: number | null; capacity: number | null;
   initialEnergy: number | null; finalEnergy: number | null;
   admissible: boolean; reasons: string[]; verified: string[];
-  engineVersion: string | null; validation: string; sources: unknown;
+  engineVersion: string | null; validation: string; sources: Json;
 };
 export type OptimizationReport = {
   version: string; method: "exhaustive_stored_candidates";
