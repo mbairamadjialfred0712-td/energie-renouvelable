@@ -7,7 +7,7 @@ const problem = (): OptimizationProblem => ({ objective: "minimize_energy_not_se
 const report = (): OptimizationReport => ({ version: "stored-battery-enumeration/1.0.0", method: "exhaustive_stored_candidates", status: "completed", optimality: "finite_domain_only", winners: [b], assessments: [], improvement: null, limitations: [] });
 function accessClient(role: string, owner = "owner", revision = "revision") {
   return { from: (table: string) => {
-    const q: any = { select: () => q, eq: () => q, maybeSingle: () => Promise.resolve({ error: null, data: table === "scenarios" ? { owner_id: owner, archived: false, updated_at: revision, objectives: { kind: "hybrid_preparation", modelVersion: HYBRID_VERSION, config: { ...emptyConfig(), name: "Synthetic", optimization: problem() } } } : null }), then: (resolve: any) => resolve({ error: null, data: [{ role }] }) }; return q;
+    const q: any = { select: () => q, eq: () => q, abortSignal: () => q, maybeSingle: () => Promise.resolve({ error: null, data: table === "scenarios" ? { owner_id: owner, archived: false, updated_at: revision, objectives: { kind: "hybrid_preparation", modelVersion: HYBRID_VERSION, config: { ...emptyConfig(), name: "Synthetic", optimization: problem() } } } : null }), then: (resolve: any) => resolve({ error: null, data: [{ role }] }) }; return q;
   } };
 }
 it.each(["viewer", "analyst"])("%s cannot launch optimization", async role => await expect(prepareOptimization(accessClient(role) as any, "owner", a, "revision")).rejects.toThrow("ingénieurs"));

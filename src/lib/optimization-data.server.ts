@@ -8,21 +8,22 @@ import { assertHybridWriter } from "./hybrid-access.server";
 const obj = (v: unknown): Record<string, any> => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, any> : {};
 export async function prepareOptimization(sb: SupabaseClient<Database>, userId: string, configId: string, expectedRevision: string) {
   const deadline = Date.now() + 15_000;
+  const signal = AbortSignal.timeout(15_000);
   const [row, roles] = await Promise.all([
-    sb.from("scenarios").select("id,name,owner_id,objectives,updated_at,archived").eq("id", configId).maybeSingle(),
-    sb.from("user_roles").select("role").eq("user_id", userId),
+    sb.from("scenarios").select("id,name,owner_id,objectives,updated_at,archived").eq("id", configId).abortSignal(signal).maybeSingle(),
+    sb.from("user_roles").select("role").eq("user_id", userId).abortSignal(signal),
   ]);
   if (row.error || !row.data || row.data.archived || roles.error) throw new Error("Configuration ou permissions indisponibles.");
   assertHybridWriter((roles.data ?? []).map(r => r.role), userId, row.data.owner_id);
   if (row.data.updated_at !== expectedRevision) throw new Error("Configuration modifiée ; rechargez avant de lancer.");
   const config = decodeHybridEnvelope(row.data.objectives)?.config;
   if (!config?.optimization || !config.siteId || !config.projectId) throw new Error("Projet, site et problème enregistré requis.");
-  const [site, project] = await Promise.all([sb.from("study_sites").select("id,locality_id").eq("id", config.siteId).maybeSingle(), sb.from("projects").select("id,locality_id").eq("id", config.projectId).maybeSingle()]);
+  const [site, project] = await Promise.all([sb.from("study_sites").select("id,locality_id").eq("id", config.siteId).abortSignal(signal).maybeSingle(), sb.from("projects").select("id,locality_id").eq("id", config.projectId).abortSignal(signal).maybeSingle()]);
   if (site.error || project.error || !site.data || !project.data || !site.data.locality_id || site.data.locality_id !== project.data.locality_id) throw new Error("Site/projet inaccessible ou incompatible.");
   const ids = config.optimization.candidateIds;
   const [sims, results] = await Promise.all([
-    sb.from("simulations").select("id,name,project_id,status,engine_version,parameters,created_at").in("id", ids),
-    sb.from("simulation_results").select("simulation_id,result_type,value,unit,calculation_method,timeseries,input_snapshot").in("simulation_id", ids),
+    sb.from("simulations").select("id,name,project_id,status,engine_version,parameters,created_at").in("id", ids).abortSignal(signal),
+    sb.from("simulation_results").select("simulation_id,result_type,value,unit,calculation_method,timeseries,input_snapshot").in("simulation_id", ids).abortSignal(signal),
   ]);
   if (sims.error || results.error) throw new Error("Lecture des candidats indisponible.");
   // Missing IDs are rejected, not reported with another user's metadata.
@@ -45,7 +46,7 @@ export async function prepareOptimization(sb: SupabaseClient<Database>, userId: 
     const sim = sims.data?.find(s => s.id === c.id), source = obj(obj(sim?.parameters)["source_snapshot"]);
     const pvId = source["pv_simulation_id"];
     if (typeof pvId !== "string") continue;
-    const pv = await sb.from("simulations").select("id,status,project_id,parameters").eq("id", pvId).maybeSingle();
+    const pv = await sb.from("simulations").select("id,status,project_id,parameters").eq("id", pvId).abortSignal(signal).maybeSingle();
     if (pv.error || !pv.data || pv.data.status !== "completed" || pv.data.project_id !== config.projectId) { c.provenanceValid = false; continue; }
     const pvSource = obj(obj(pv.data.parameters)["source_snapshot"]);
     c.siteId = typeof pvSource["site_id"] === "string" ? pvSource["site_id"] : obj(pvSource["weather"])["site_id"] ?? null;
