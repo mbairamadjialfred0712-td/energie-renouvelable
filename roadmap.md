@@ -8,7 +8,7 @@
 - [x] Liaison LCOE ↔ simulation existante (production année 1 = annual_ac_energy enregistrée, jamais recalculée)
 
 ## En attente (bloquant externe)
-- Exécution E2E PV et batterie : le moteur Python n'est pas en ligne (Render + secrets SCIENTIFIC_ENGINE_URL/KEY). Tant qu'il n'est pas déployé, aucune simulation ne peut tourner et aucune simulation PV terminée n'existe pour tester la liaison production → LCOE.
+- Exécution E2E PV et batterie : Render est en ligne depuis le 22/10/2026, mais son authentification et la connexion SCIENTIFIC_ENGINE_URL/KEY de l’application restent non configurées ; aucune simulation PV terminée n’existe pour tester la liaison production → LCOE.
 
 ## En cours
 - [x] Demande du 22/10/2026 : Render relancé avec PYTHON_VERSION=3.12.7 et cache nettoyé ; commande générique gunicorn remplacée par uvicorn app.main:app et contrôle /api/v1/health ; déploiement live à 08:38:49 UTC, Python 3.12.7 confirmé par les journaux, health et capabilities HTTP 200, moteurs PV/éolien/biomasse/batterie chargés ; deux contrôles de cohérence runtime exécutés avec succès.
