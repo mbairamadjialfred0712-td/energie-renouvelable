@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Json } from "@/integrations/supabase/types";
 import { comparisonSelectionSchema } from "./scenario-comparison";
+import { optimizationProblemSchema } from "@/services/optimization/stored-battery-contract";
 
 export const HYBRID_VERSION = "preparation-1.0";
 export const TECHNOLOGIES = { photovoltaic: "Photovoltaïque", wind: "Éolien", biomass: "Biomasse", csp: "CSP", battery: "Batterie" } as const;
@@ -21,6 +22,7 @@ export const hybridConfigSchema = z.object({
   periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().default(null),
   periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().default(null),
   comparison: comparisonSelectionSchema.default({ name: "", scenarioIds: [] }),
+  optimization: optimizationProblemSchema.nullable().optional(),
   components: z.array(z.object({
     technology: technologySchema,
     simulationId: optionalId,
