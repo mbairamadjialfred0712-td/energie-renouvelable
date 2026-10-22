@@ -2,11 +2,20 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { decodeHybridEnvelope, hybridConfigSchema, HYBRID_VERSION } from "@/features/hybrid/hybrid-model";
 import type { Json } from "@/integrations/supabase/types";
+import { z } from "zod";
 
 export const getHybridWorkspace = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { loadHybridData } = await import("./hybrid-data.server");
   return loadHybridData(context.supabase, context.userId);
 });
+export const getScenarioComparison = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ ids: z.array(z.string().uuid()).min(2).max(12).refine(ids => new Set(ids).size === ids.length) }).strict().parse(i))
+  .handler(async ({ data, context }) => {
+    const { loadHybridData } = await import("./hybrid-data.server");
+    const { buildScenarioComparison } = await import("@/features/hybrid/scenario-comparison");
+    const refs = await loadHybridData(context.supabase, context.userId);
+    return buildScenarioComparison(data.ids, refs);
+  });
 export const saveHybridConfiguration = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => hybridConfigSchema.parse(i))
   .handler(async ({ data, context }) => {

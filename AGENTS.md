@@ -36,3 +36,4 @@
 - Keep wind A/B/C isolated with documented curves in request snapshots and server-selected validated hourly weather; check response integrity before existing authenticated persistence so kinetic flux never becomes electricity.
 - Isolate engine role checks and series reads in engine-access.server for testable user access.
 - Hybrid preparation reuses versioned scenarios JSON and retains revisions; compare trusted individual simulations without summing or copying results. Chronological dispatch remains unavailable until validated.
+- Persist comparison selections inside the existing hybrid preparation envelope so its database role guard remains effective; resolve trusted values under user RLS and apply engine-specific metric/site/period/unit/provenance compatibility on the server, never in editable JSON.
