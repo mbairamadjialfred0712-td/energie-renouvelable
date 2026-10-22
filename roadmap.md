@@ -45,3 +45,7 @@
 - [x] PROMPT A2 : module demande finalisé (33 tests vitest, validations serveur renforcées, cohérence site/localité, contrôle de rôle à la suppression, politique RLS équipements corrigée, parcours navigateur vérifié)
 - [x] PROMPT 15 (22/10/2026) : audit global livré — 4 défauts démontrés corrigés (simulation d'un autre site bloquée au serveur, références au-delà des 100 dernières simulations rechargées par identifiants, enveloppes illisibles signalées, associations réinitialisées au changement de site) ; 317 tests TS + 225 Python réussis ; VALIDATION_SCENARIOS.md en 13 points ; service hébergé toujours bloqué sur ENGINE_SHARED_KEY côté Render.
 - [x] PROMPT 16 (22/10/2026) : audit Render livré — service hébergé joignable (health/capabilities 200, 5 moteurs) mais auth_configured=false ; rejets d'authentification vérifiés (503 échec fermé) ; 225 tests Python, 317 TS, tsgo propre, build OK ; DEPLOYMENT_RENDER.md avec tableau de statut. Bloqué : ENGINE_SHARED_KEY + SUPABASE_URL + SUPABASE_PUBLISHABLE_KEY à renseigner dans Render, puis calculs de bout en bout et isolation deux comptes.
+
+- [x] Authentification Render configurée et vérifiée (22/10) ; calcul éolien A QA sauvegardé et relu.
+- [ ] PV QA : bloqué — la météo QA couvre 168 h, le moteur PV exige 8 760 h.
+- [ ] Batterie QA : bloquée — PV terminé requis + demande QA validée alignée sur les mêmes heures (demande actuellement non vérifiée).
