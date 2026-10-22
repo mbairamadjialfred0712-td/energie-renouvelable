@@ -7,6 +7,7 @@ import { assertHybridWriter } from "./hybrid-access.server";
 
 const obj = (v: unknown): Record<string, any> => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, any> : {};
 export async function prepareOptimization(sb: SupabaseClient<Database>, userId: string, configId: string, expectedRevision: string) {
+  const deadline = Date.now() + 15_000;
   const [row, roles] = await Promise.all([
     sb.from("scenarios").select("id,name,owner_id,objectives,updated_at,archived").eq("id", configId).maybeSingle(),
     sb.from("user_roles").select("role").eq("user_id", userId),
@@ -40,6 +41,7 @@ export async function prepareOptimization(sb: SupabaseClient<Database>, userId: 
   });
   // Site is established from the linked completed PV's saved provenance, not today's editable association.
   for (const c of candidates) {
+    if (Date.now() > deadline) throw new Error("Délai de préparation dépassé ; aucune optimisation enregistrée.");
     const sim = sims.data?.find(s => s.id === c.id), source = obj(obj(sim?.parameters)["source_snapshot"]);
     const pvId = source["pv_simulation_id"];
     if (typeof pvId !== "string") continue;
@@ -48,6 +50,7 @@ export async function prepareOptimization(sb: SupabaseClient<Database>, userId: 
     const pvSource = obj(obj(pv.data.parameters)["source_snapshot"]);
     c.siteId = typeof pvSource["site_id"] === "string" ? pvSource["site_id"] : obj(pvSource["weather"])["site_id"] ?? null;
   }
+  if (Date.now() > deadline) throw new Error("Délai de préparation dépassé ; aucune optimisation enregistrée.");
   return { report: optimizeStoredBatteries(config.optimization, candidates, config.siteId, config.projectId), problem: config.optimization, configId, revision: row.data.updated_at, name: row.data.name, projectId: config.projectId, localityId: site.data.locality_id,
     sourceSnapshot: candidates.map(c => ({ id: c.id, request: c.request, response: c.response, siteId: c.siteId, provenanceValid: c.provenanceValid })) };
 }
