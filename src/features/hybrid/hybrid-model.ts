@@ -45,6 +45,8 @@ export type HybridData = {
   configs: { config: HybridConfig; updatedAt: string; history: { at: string; actor: string; config: HybridConfig }[] }[];
   projects: HybridOption[]; sites: HybridOption[]; demands: HybridOption[]; weather: HybridOption[]; equipment: HybridOption[];
   simulations: HybridSimulation[]; canWrite: boolean;
+  /** Configurations enregistrées dont l'enveloppe n'a pas pu être décodée ; jamais silencieusement ignorées. */
+  discardedConfigs: number;
 };
 
 /** Checks only: no resampling, conversion, energy addition or dispatch. */
