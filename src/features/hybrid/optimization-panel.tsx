@@ -13,7 +13,7 @@ import { getOptimizationRuns, inspectOptimization, runStoredOptimization } from 
 import { optimizationProblemSchema, type OptimizationProblem, type OptimizationReport } from "@/services/optimization/stored-battery-contract";
 import type { HybridConfig, HybridData } from "./hybrid-model";
 
-function Report({ report }: { report: OptimizationReport }) {
+export function OptimizationReportView({ report }: { report: OptimizationReport }) {
   return <section aria-label="Résultat d'optimisation" className="space-y-4 border-t border-border pt-4">
     <h3 className="font-semibold">{report.status === "blocked" ? "Optimisation impossible faute de données" : report.status === "no_feasible" ? "Aucune solution admissible trouvée" : "Optimum dans le domaine enregistré admissible"}</h3>
     <p className="text-sm text-muted-foreground">{report.version} · Énumération exhaustive · {report.assessments.length} candidat(s) · {report.winners.length} optimum(s) ex æquo</p>
@@ -58,7 +58,7 @@ export function OptimizationPanel({ config, data, revision }: { config: HybridCo
     <p className="text-sm">Contraintes obligatoires : même PV et demande, même énergie initiale mobilisable, stock final ≥ stock initial, bilans/SOC/puissances/rendements cohérents. Coûts et contraintes réseau non vérifiés.</p>
     {data.canWrite && <div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={() => action("save")}><Save />Enregistrer le problème</Button><Button variant="outline" disabled={busy || !unchanged} onClick={() => action("inspect")}><Search />Vérifier les données</Button><Button disabled={busy || !unchanged} onClick={() => action("run")}><Play />{busy ? "Vérification…" : "Lancer et enregistrer"}</Button></div>}
     {error && <p role="alert" className="break-words text-sm text-destructive">{error}</p>}
-    {report && <Report report={report} />}
-    <h3 className="font-semibold">Exécutions enregistrées</h3>{history.error && <p role="alert">Historique indisponible.</p>}{history.data?.length === 0 && <p className="text-sm text-muted-foreground">Aucune optimisation exécutée.</p>}{history.data?.map(h => <details key={h.id} className="border-t border-border pt-3"><summary>{new Date(h.at).toLocaleString("fr-FR")} · {h.report.status}{h.revision !== revision ? " · configuration modifiée depuis" : ""}</summary><Report report={h.report} /><details><summary>Problème enregistré</summary><pre className="whitespace-pre-wrap break-words text-xs">{JSON.stringify(h.problem, null, 2)}</pre></details></details>)}
+    {report && <OptimizationReportView report={report} />}
+    <h3 className="font-semibold">Exécutions enregistrées</h3>{history.error && <p role="alert">Historique indisponible.</p>}{history.data?.length === 0 && <p className="text-sm text-muted-foreground">Aucune optimisation exécutée.</p>}{history.data?.map(h => <details key={h.id} className="border-t border-border pt-3"><summary>{new Date(h.at).toLocaleString("fr-FR")} · {h.report.status}{h.revision !== revision ? " · configuration modifiée depuis" : ""}</summary><OptimizationReportView report={h.report} /><details><summary>Problème enregistré</summary><pre className="whitespace-pre-wrap break-words text-xs">{JSON.stringify(h.problem, null, 2)}</pre></details></details>)}
   </section>;
 }
