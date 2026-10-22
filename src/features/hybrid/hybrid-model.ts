@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Json } from "@/integrations/supabase/types";
+import { comparisonSelectionSchema } from "./scenario-comparison";
 
 export const HYBRID_VERSION = "preparation-1.0";
 export const TECHNOLOGIES = { photovoltaic: "Photovoltaïque", wind: "Éolien", biomass: "Biomasse", csp: "CSP", battery: "Batterie" } as const;
@@ -16,6 +17,10 @@ export const hybridConfigSchema = z.object({
   assumptions: z.string().trim().max(4000),
   constraints: z.string().trim().max(4000),
   reviewRequested: z.boolean(),
+  objective: z.string().trim().max(2000).default(""),
+  periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().default(null),
+  periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().default(null),
+  comparison: comparisonSelectionSchema.default({ name: "", scenarioIds: [] }),
   components: z.array(z.object({
     technology: technologySchema,
     simulationId: optionalId,
@@ -26,11 +31,13 @@ export const hybridConfigSchema = z.object({
     parameterSource: z.string().trim().max(500),
   }).strict()).max(5),
 }).strict().superRefine((c, ctx) => {
+  for (const key of ["periodStart", "periodEnd"] as const) { const v = c[key]; if (v && (!Number.isFinite(Date.parse(v + "T00:00:00Z")) || new Date(v + "T00:00:00Z").toISOString().slice(0, 10) !== v)) ctx.addIssue({ code: "custom", path: [key], message: "Date de période invalide." }); }
+  if (c.periodStart && c.periodEnd && c.periodEnd < c.periodStart) ctx.addIssue({ code: "custom", path: ["periodEnd"], message: "Fin antérieure au début de période." });
   if (new Set(c.components.map(x => x.technology)).size !== c.components.length) ctx.addIssue({ code: "custom", message: "Une seule association par technologie." });
   c.components.forEach((x, i) => { if (x.powerUnit !== newComponent(x.technology).powerUnit) ctx.addIssue({ code: "custom", path: ["components", i, "powerUnit"], message: "Unité incompatible avec la technologie ; aucune conversion implicite." }); });
 });
 export type HybridConfig = z.infer<typeof hybridConfigSchema>;
-export const emptyConfig = (): HybridConfig => ({ id: null, name: "", projectId: null, siteId: null, demandId: null, description: "", assumptions: "", constraints: "", reviewRequested: false, components: [] });
+export const emptyConfig = (): HybridConfig => ({ id: null, name: "", projectId: null, siteId: null, demandId: null, description: "", assumptions: "", constraints: "", reviewRequested: false, objective: "", periodStart: null, periodEnd: null, comparison: { name: "", scenarioIds: [] }, components: [] });
 export const newComponent = (technology: Technology): HybridConfig["components"][number] => ({ technology, simulationId: null, equipmentId: null, weatherId: null, power: null, powerUnit: technology === "battery" ? "kWh" : technology === "photovoltaic" ? "kWc" : technology === "csp" ? "kWth" : "kW", parameterSource: "" });
 export type HybridSimulation = {
   id: string; name: string; projectId: string | null; siteId: string | null;
@@ -39,6 +46,7 @@ export type HybridSimulation = {
   sources: Json; assumptions: Json; limits: string;
   results: { key: string; value: number | null; unit: string; method: string }[];
   series: { key: string; unit: string; values: (number | null)[] }[];
+  evidence?: { requestValid: boolean; natures: string[]; boundary: string; calculatedAt: string | null; validation: string; warnings: string[] };
 };
 export type HybridOption = { id: string; name: string; projectId?: string | null; localityId?: string | null; siteId?: string | null; status?: string; source?: string | null; period?: string; technology?: string; snapshot?: Json };
 export type HybridData = {
@@ -47,6 +55,7 @@ export type HybridData = {
   simulations: HybridSimulation[]; canWrite: boolean;
   /** Configurations enregistrées dont l'enveloppe n'a pas pu être décodée ; jamais silencieusement ignorées. */
   discardedConfigs: number;
+  invalidConfigs?: { id: string; name: string; reason: string }[];
 };
 
 /** Checks only: no resampling, conversion, energy addition or dispatch. */
