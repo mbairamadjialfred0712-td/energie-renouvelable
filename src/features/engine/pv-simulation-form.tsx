@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { runPvSimulation } from "@/lib/engine.functions";
+import { listProjects } from "@/lib/projects.functions";
 import { ENGINE_SCHEMA_VERSION, type SimulationRequest } from "./engine-contract";
 import { buildPvCsvTemplate, parsePvCsv, PV_SERIES, type ParsedSeries } from "./pv-csv";
 
@@ -37,6 +38,9 @@ export function PvSimulationForm() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [values, setValues] = useState<Record<string, string>>({});
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [projectId, setProjectId] = useState("");
+  useEffect(() => { listProjects().then((r) => setProjects((r as { id: string; name: string }[]).map((p) => ({ id: p.id, name: p.name })))).catch(() => setProjects([])); }, []);
   const [natures, setNatures] = useState<Record<string, string>>({});
   const [csv, setCsv] = useState<ParsedSeries | null>(null);
   const [seriesNature, setSeriesNature] = useState("external");
@@ -82,7 +86,7 @@ export function PvSimulationForm() {
     };
     setBusy(true);
     try {
-      const r = await runPvSimulation({ data: { name: name.trim(), request } });
+      const r = await runPvSimulation({ data: { name: name.trim(), request, project_id: projectId || null } });
       if (r.status === "completed") toast.success("Simulation terminée.");
       else toast.error(r.message);
       navigate({ to: "/simulations/$id/results", params: { id: r.id } });
@@ -98,6 +102,11 @@ export function PvSimulationForm() {
       <section className="space-y-3">
         <Label htmlFor="sim-name">Nom de la simulation *</Label>
         <Input id="sim-name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Label htmlFor="pv-project">Projet rattaché (requis pour une simulation batterie ultérieure)</Label>
+        <select id="pv-project" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+          <option value="">— Aucun projet —</option>
+          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
       </section>
 
       <section className="space-y-3 rounded-lg border p-5">
