@@ -20,14 +20,18 @@ export async function requestEngine<T>(config: { base?: string | undefined; key?
   }
   let res: Response;
   try {
-    res = await fetch(`${config.base.replace(/\/+$/, "")}/api/v1${path}`, { method: init?.method ?? "GET", headers, body: init ? JSON.stringify(init.body) : null, signal: AbortSignal.timeout(init?.timeoutMs ?? 10_000), redirect: "error" });
+    res = await fetch(`${config.base.replace(/\/+$/, "")}/api/v1${path}`, { method: init?.method ?? "GET", headers, body: init ? JSON.stringify(init.body) : null, signal: AbortSignal.timeout(init?.timeoutMs ?? 60_000), redirect: "error" });
   } catch (e) {
-    throw new EngineCallError("unreachable", e instanceof Error && ["TimeoutError", "AbortError"].includes(e.name) ? "Délai d’attente dépassé du moteur de calcul." : "Moteur photovoltaïque indisponible : service injoignable.");
+    throw new EngineCallError("unreachable", e instanceof Error && ["TimeoutError", "AbortError"].includes(e.name) ? `Délai d’attente dépassé (${Math.round((init?.timeoutMs ?? 60_000) / 1000)} s) : le service hébergé est peut-être en cours de réveil, réessayez dans une minute.` : "Erreur réseau : le serveur de l’application n’a pas pu joindre le moteur (DNS, TLS ou service arrêté). Il ne s’agit pas d’une erreur CORS : l’appel part du serveur, jamais du navigateur.");
   }
   const json: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const err = errorResponse.safeParse(json);
-    const detail = err.success ? err.data.error.message : `Erreur HTTP ${res.status} du moteur.`;
+    const label = res.status === 401 || res.status === 403 ? `Accès refusé par le moteur (HTTP ${res.status}) : clé partagée ou session utilisateur refusée.`
+      : res.status === 404 ? `Route du moteur introuvable (HTTP 404) : ${url.pathname.replace(/\/+$/, "")}/api/v1${path}.`
+      : res.status === 422 ? "Données refusées par la validation du moteur (HTTP 422)."
+      : res.status >= 500 ? `Erreur interne du moteur (HTTP ${res.status}).` : `Erreur HTTP ${res.status} du moteur.`;
+    const detail = err.success ? `${label} ${err.data.error.message}` : label;
     // Never relay a credential accidentally included by an upstream error.
     const safe = [config.key, config.authorization, config.authorization?.slice(7)].filter((v): v is string => Boolean(v)).reduce((text, secret) => text.split(secret).join("[masqué]"), detail);
     throw new EngineCallError("error", safe);
