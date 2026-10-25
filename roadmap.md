@@ -49,3 +49,6 @@
 - [x] Authentification Render configurée et vérifiée (22/10) ; calcul éolien A QA sauvegardé et relu.
 - [ ] PV QA : bloqué — la météo QA couvre 168 h, le moteur PV exige 8 760 h.
 - [ ] Batterie QA : bloquée — PV terminé requis + demande QA validée alignée sur les mêmes heures (demande actuellement non vérifiée).
+
+- [x] Tableau multi-scénarios PV/Batterie sur la page Simulations (couverture, autoconsommation, ENS enregistrées ; PV seul = non calculé) — 4 tests
+- [ ] Remplacer les paramètres PV QA inventés par les vraies données du site — EN ATTENTE des valeurs de Joël
