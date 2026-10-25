@@ -14,23 +14,23 @@ describe("buildPvBatteryRows", () => {
   it("n'affiche jamais couverture, autoconsommation ou ENS pour un PV seul", () => {
     const rows = buildPvBatteryRows([pv], results);
     expect(rows).toHaveLength(1);
-    expect(rows[0].engine).toBe("photovoltaic");
-    expect(rows[0].coverageRatePct).toBeNull();
-    expect(rows[0].selfConsumptionRatePct).toBeNull();
-    expect(rows[0].energyNotServedKwh).toBeNull();
+    expect(rows.at(0)!.engine).toBe("photovoltaic");
+    expect(rows.at(0)!.coverageRatePct).toBeNull();
+    expect(rows.at(0)!.selfConsumptionRatePct).toBeNull();
+    expect(rows.at(0)!.energyNotServedKwh).toBeNull();
   });
 
   it("reprend les valeurs enregistrées d'une simulation batterie terminée", () => {
     const rows = buildPvBatteryRows([bat], results);
-    expect(rows[0].coverageRatePct).toBeCloseTo(81.07);
-    expect(rows[0].selfConsumptionRatePct).toBeCloseTo(87.16);
-    expect(rows[0].energyNotServedKwh).toBeCloseTo(3025.72);
+    expect(rows.at(0)!.coverageRatePct).toBeCloseTo(81.07);
+    expect(rows.at(0)!.selfConsumptionRatePct).toBeCloseTo(87.16);
+    expect(rows.at(0)!.energyNotServedKwh).toBeCloseTo(3025.72);
   });
 
   it("laisse null un indicateur batterie absent des résultats enregistrés", () => {
     const rows = buildPvBatteryRows([bat], results.filter((r) => r.result_type !== "energy_not_served"));
-    expect(rows[0].energyNotServedKwh).toBeNull();
-    expect(rows[0].coverageRatePct).toBeCloseTo(81.07);
+    expect(rows.at(0)!.energyNotServedKwh).toBeNull();
+    expect(rows.at(0)!.coverageRatePct).toBeCloseTo(81.07);
   });
 
   it("ignore les simulations non terminées et les autres moteurs", () => {
