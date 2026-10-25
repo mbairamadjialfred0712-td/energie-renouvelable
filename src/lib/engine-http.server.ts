@@ -18,12 +18,21 @@ export async function requestEngine<T>(config: { base?: string | undefined; key?
     headers["X-Engine-Key"] = config.key;
     headers["Authorization"] = config.authorization;
   }
+  const target = `${config.base.replace(/\/+$/, "")}/api/v1${path}`;
+  const safeTarget = `${url.origin}${url.pathname.replace(/\/+$/, "")}/api/v1${path}`; // no query, no credentials
+  const started = Date.now();
   let res: Response;
   try {
-    res = await fetch(`${config.base.replace(/\/+$/, "")}/api/v1${path}`, { method: init?.method ?? "GET", headers, body: init ? JSON.stringify(init.body) : null, signal: AbortSignal.timeout(init?.timeoutMs ?? 60_000), redirect: "error" });
+    // Cloudflare Workers (workerd) throws a TypeError before sending for redirect: "error";
+    // "manual" is supported there and 3xx responses are refused below so credentials never follow a redirect.
+    res = await fetch(target, { method: init?.method ?? "GET", headers, body: init ? JSON.stringify(init.body) : null, signal: AbortSignal.timeout(init?.timeoutMs ?? 60_000), redirect: "manual" });
   } catch (e) {
+    const name = e instanceof Error ? e.name : typeof e;
+    console.warn("[engine-http]", JSON.stringify({ stage: "fetch_failed", url: safeTarget, ms: Date.now() - started, error: name }));
     throw new EngineCallError("unreachable", e instanceof Error && ["TimeoutError", "AbortError"].includes(e.name) ? `Délai d’attente dépassé (${Math.round((init?.timeoutMs ?? 60_000) / 1000)} s) : le service hébergé est peut-être en cours de réveil, réessayez dans une minute.` : "Erreur réseau : le serveur de l’application n’a pas pu joindre le moteur (DNS, TLS ou service arrêté). Il ne s’agit pas d’une erreur CORS : l’appel part du serveur, jamais du navigateur.");
   }
+  if (!res.ok) console.warn("[engine-http]", JSON.stringify({ stage: "http_status", url: safeTarget, ms: Date.now() - started, status: res.status }));
+  if ((res.status >= 300 && res.status < 400) || res.type === "opaqueredirect") throw new EngineCallError("error", `Redirection refusée (HTTP ${res.status || "3xx"}) : vérifiez l’URL du moteur, les identifiants ne suivent jamais une redirection.`);
   const json: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const err = errorResponse.safeParse(json);
