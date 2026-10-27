@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { FinanceCalculator } from "@/features/finance/finance-ui";
+import { CashflowAnalysis } from "@/features/finance/cashflow-ui";
 import { getProjectFinance } from "@/lib/finance.functions";
 
 const title = "Analyse financière — Énergie Renouvelable";
@@ -52,6 +53,8 @@ function FinancePage() {
         {project && !a && data && <p className="text-sm text-muted-foreground">Ce projet n’a pas d’hypothèses financières enregistrées.</p>}
       </header>
       {(!project || data) && <FinanceCalculator key={project ?? "blank"} initial={initial} initialReplacements={initialReplacements} />}
+      <CashflowAnalysis />
+      <p className="text-xs text-muted-foreground">Cette analyse des flux n'est pas encore enregistrée : les résultats sont recalculés à partir des valeurs saisies.</p>
     </div>
   );
 }
