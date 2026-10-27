@@ -8,12 +8,20 @@ import { WindSimulationForm } from "@/features/engine/wind-simulation-form";
 import { BiomassSimulationForm } from "@/features/engine/biomass-simulation-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+const TABS = ["pv", "battery", "csp", "wind", "biomass"] as const;
+type Tab = (typeof TABS)[number];
 export const Route = createFileRoute("/_authenticated/simulations/new")({
+  validateSearch: (s: Record<string, unknown>): { tab?: Tab } => (TABS.includes(s["tab"] as Tab) ? { tab: s["tab"] as Tab } : {}),
   head: () => ({ meta: [{ title: "Nouvelle simulation et bilan biomasse — Énergie Renouvelable" }, { name: "description", content: "Simulations PV, batterie, CSP, éolien et bilan primaire biomasse documenté." }, { property: "og:title", content: "Nouvelle simulation et bilan biomasse — Énergie Renouvelable" }, { property: "og:description", content: "Configuration traçable des simulations et de l’énergie primaire biomasse." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
-  component: () => (
+  component: NewSimulation,
+});
+
+function NewSimulation() {
+  const { tab } = Route.useSearch();
+  return (
     <WorkspacePage eyebrow="Simulations / Nouvelle" title="Nouvelle simulation / bilan" description="Moteur scientifique Python. Résultats indicatifs, à valider par l’ingénieur.">
       <div className="space-y-6"><EngineStatusCard />
-        <Tabs defaultValue="pv"><TabsList className="h-auto flex-wrap"><TabsTrigger value="pv">Photovoltaïque (PVWatts v8)</TabsTrigger><TabsTrigger value="battery">Batterie (réservoir + rendements)</TabsTrigger><TabsTrigger value="csp">CSP (bilan limité)</TabsTrigger><TabsTrigger value="wind">Éolien (A / B / C)</TabsTrigger><TabsTrigger value="biomass">Biomasse (énergie primaire)</TabsTrigger></TabsList>
+        <Tabs key={tab ?? "pv"} defaultValue={tab ?? "pv"}><TabsList className="h-auto flex-wrap"><TabsTrigger value="pv">Photovoltaïque (PVWatts v8)</TabsTrigger><TabsTrigger value="battery">Batterie (réservoir + rendements)</TabsTrigger><TabsTrigger value="csp">CSP (bilan limité)</TabsTrigger><TabsTrigger value="wind">Éolien (A / B / C)</TabsTrigger><TabsTrigger value="biomass">Biomasse (énergie primaire)</TabsTrigger></TabsList>
           <TabsContent value="pv" className="mt-5"><PvSimulationForm /></TabsContent>
           <TabsContent value="battery" className="mt-5"><BatterySimulationForm /></TabsContent>
           <TabsContent value="csp" className="mt-5"><CspSimulationForm /></TabsContent>
@@ -22,5 +30,5 @@ export const Route = createFileRoute("/_authenticated/simulations/new")({
         </Tabs>
       </div>
     </WorkspacePage>
-  ),
-});
+  );
+}
