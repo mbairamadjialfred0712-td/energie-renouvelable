@@ -25,7 +25,7 @@ interface FieldState {
 }
 
 const EMPTY: FieldState = {
-  currency: "EUR",
+  currency: "",
   capex: "",
   annualOpex: "",
   lifetimeYears: "",
@@ -61,6 +61,7 @@ export function FinanceCalculator({ initial, initialReplacements }: { initial?: 
 
   const canCompute = useMemo(
     () =>
+      fields.currency.trim() !== "" &&
       fields.capex.trim() !== "" &&
       fields.annualOpex.trim() !== "" &&
       fields.lifetimeYears.trim() !== "" &&
@@ -77,7 +78,7 @@ export function FinanceCalculator({ initial, initialReplacements }: { initial?: 
         .filter((r) => r.year.trim() !== "" || r.cost.trim() !== "")
         .map((r) => ({ year: parseNumber(r.year), cost: parseNumber(r.cost) }));
       const input: FinanceInput = {
-        currency: fields.currency.trim() || "EUR",
+        currency: fields.currency.trim(),
         capex: parseNumber(fields.capex),
         annualOpex: parseNumber(fields.annualOpex),
         lifetimeYears: parseNumber(fields.lifetimeYears),
@@ -166,7 +167,7 @@ export function FinanceCalculator({ initial, initialReplacements }: { initial?: 
             (inflation non modélisée). Remplacements en fin d'année indiquée. Aucune valeur résiduelle, aucun revenu, aucune fiscalité.
           </p>
           <p className="text-muted-foreground">
-            Limite : ce LCOE n'est ni un prix de vente ni un indicateur de rentabilité ; NPV/TRI/payback ne sont pas calculés.
+            Limite : ce LCOE n'est ni un prix de vente ni un indicateur de rentabilité ; VAN, TRI et temps de retour sont calculés dans la section « Flux de trésorerie » ci-dessous (même formule LCOE, vérifiée par test croisé).
           </p>
         </CardContent>
       </Card>
