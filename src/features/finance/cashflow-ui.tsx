@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { listFinanceProductionSources } from "@/lib/finance-production.functions";
 import { computeCashflows, runSensitivity, type CashflowResult, type CostItem, type SensitivityVariable } from "./cashflow-engine";
 
 const fmt = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
@@ -37,7 +39,14 @@ export function CashflowAnalysis() {
   const [sensVar, setSensVar] = useState<SensitivityVariable>("capex");
   const [deltas, setDeltas] = useState("");
   const [sens, setSens] = useState<ReturnType<typeof runSensitivity> | null>(null);
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((s) => ({ ...s, [k]: e.target.value }));
+  const [prodSource, setProdSource] = useState<{ kind: "user" } | { kind: "sim"; id: string; name: string }>({ kind: "user" });
+  const [prodRef, setProdRef] = useState("");
+  const { data: sources = [], isLoading: srcLoading } = useQuery({ queryKey: ["finance-production-sources"], queryFn: () => listFinanceProductionSources() });
+  const invalidate = () => { setRes(null); setSens(null); };
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => { invalidate(); if (k === "prod") setProdSource({ kind: "user" }); setF((s) => ({ ...s, [k]: e.target.value })); };
+  const pickSim = (id: string) => { invalidate(); const c = sources.find((x) => x.simulationId === id); if (!c || !c.eligible) { setProdSource({ kind: "user" }); return; } setProdSource({ kind: "sim", id, name: c.name }); setF((s) => ({ ...s, prod: String(c.valueKwh) })); };
+  const setCapexI: typeof setCapex = (v) => { invalidate(); setCapex(v); };
+  const setOpexI: typeof setOpex = (v) => { invalidate(); setOpex(v); };
   const toItems = (l: Item[]): CostItem[] => l.map((i) => ({ label: i.label || "(sans nom)", amount: num(i.amount), source: i.source, includedInOther: i.included }));
   const buildInput = () => ({
     currency: f.currency.trim(), lifetimeYears: num(f.years), realDiscountRatePct: num(f.rate), capexItems: toItems(capex), opexItems: toItems(opex),
@@ -45,7 +54,7 @@ export function CashflowAnalysis() {
     yearOneProductionKwh: num(f.prod), degradationPctPerYear: num(f.degr), soldShare: (opt(f.sold) ?? 0) / 100, substitutedShare: (opt(f.subst) ?? 0) / 100,
     saleTariffPerKwh: opt(f.tariff), referenceCostPerKwh: opt(f.refCost), subsidy: opt(f.subsidy) ?? 0, residualValue: opt(f.residual) ?? 0,
   });
-  const run = () => { setErr(null); setSens(null); try { setRes(computeCashflows(buildInput())); } catch (e) { setRes(null); setErr(e instanceof Error ? e.message : "Entrées invalides."); } };
+  const run = () => { setErr(null); if (prodSource.kind === "user" && !prodRef.trim()) { setRes(null); setErr("Production saisie manuellement : indiquez sa source (ou « hypothèse utilisateur »)."); return; } setSens(null); try { setRes(computeCashflows(buildInput())); } catch (e) { setRes(null); setErr(e instanceof Error ? e.message : "Entrées invalides."); } };
   const runSens = () => { setErr(null); try { setSens(runSensitivity(buildInput(), sensVar, deltas.split(";").map((s) => num(s.trim())).filter((x) => !Number.isNaN(x)))); } catch (e) { setSens(null); setErr(e instanceof Error ? e.message : "Sensibilité invalide."); } };
   const cur = f.currency || "devise";
   const fld = (k: keyof typeof f, label: string, unit?: string) => <div className="space-y-1.5"><Label>{label}{unit && <span className="text-muted-foreground"> ({unit})</span>}</Label><Input value={f[k]} onChange={set(k)} /></div>;
@@ -53,14 +62,34 @@ export function CashflowAnalysis() {
 
   return <div className="space-y-6">
     <Card><CardHeader><CardTitle>Flux de trésorerie, VAN, TRI et temps de retour</CardTitle></CardHeader><CardContent className="space-y-4">
-      <p className="text-sm text-muted-foreground">Conventions : flux annuels, monnaie constante (taux réel), CAPEX et subvention en année 0, autres flux en fin d'année, avant impôts et financement. Aucune valeur par défaut : tout champ vide de revenu signifie « pas de revenu ».</p>
+      <div className="border border-border bg-muted/40 p-3 text-sm space-y-1">
+        <p className="font-medium">Conventions de calcul</p>
+        <ul className="list-disc pl-5 text-muted-foreground">
+          <li>Flux en monnaie constante ; taux d'actualisation réel (aucune inflation).</li>
+          <li>Année 0 : CAPEX brut et subvention, non actualisés. Années 1…N : flux en fin d'année.</li>
+          <li>Devise : {f.currency || "à renseigner"} · Durée d'analyse : {f.years ? `${f.years} ans` : "à renseigner"}.</li>
+          <li>Avant impôts et financement (ni fiscalité, ni dette). Champs de revenu vides = aucun revenu.</li>
+          <li>Champs obligatoires : devise, durée, taux, production, dégradation, au moins un poste CAPEX.</li>
+        </ul>
+      </div>
+      <div className="space-y-2 border border-border p-3">
+        <Label>Production de référence (année 1)</Label>
+        {srcLoading ? <p className="text-sm text-muted-foreground">Chargement des simulations…</p> : sources.length === 0 ? <p className="text-sm text-muted-foreground">Aucune simulation terminée avec production annuelle enregistrée : saisie manuelle uniquement.</p> :
+          <select className="h-9 w-full border border-border bg-background px-2 text-sm" value={prodSource.kind === "sim" ? prodSource.id : ""} onChange={(e) => pickSim(e.target.value)}>
+            <option value="">Saisie manuelle (hypothèse utilisateur)</option>
+            {sources.map((s) => <option key={s.simulationId} value={s.simulationId} disabled={!s.eligible}>{s.name} — {s.valueKwh != null ? `${fmt.format(s.valueKwh)} ${s.unit}` : "—"} ({s.periodStart} → {s.periodEnd}){s.eligible ? "" : ` — non utilisable : ${s.reason}`}</option>)}
+          </select>}
+        {prodSource.kind === "sim"
+          ? <p className="text-xs text-muted-foreground">Source : simulation terminée « {prodSource.name} », valeur enregistrée relue, non recalculée. Les années 2…N sont des projections : E₁ × (1 − dégradation)^(t−1).</p>
+          : <><Input placeholder="Source de la production saisie (ou « hypothèse utilisateur »)" value={prodRef} onChange={(e) => { invalidate(); setProdRef(e.target.value); }} /><p className="text-xs text-muted-foreground">Valeur saisie : hypothèse utilisateur, jamais présentée comme simulée. Années 2…N projetées par dégradation.</p></>}
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {fld("currency", "Devise")}{fld("years", "Durée d'analyse", "ans")}{fld("rate", "Taux d'actualisation réel", "%")}{fld("prod", "Production année 1", "kWh")}
         {fld("degr", "Dégradation", "%/an")}{fld("sold", "Part vendue", "% production")}{fld("tariff", "Tarif de vente", `${cur}/kWh`)}{fld("subst", "Part substituée", "% production")}
         {fld("refCost", "Coût de référence évité", `${cur}/kWh`)}{fld("subsidy", "Subvention année 0", cur)}{fld("residual", "Valeur résiduelle année N", cur)}{fld("repl", "Remplacements « année:coût; … »")}
       </div>
-      <Items title="Postes CAPEX" items={capex} setItems={setCapex} currency={cur} />
-      <Items title="Postes OPEX annuels (constants)" items={opex} setItems={setOpex} currency={cur} />
+      <Items title="Postes CAPEX" items={capex} setItems={setCapexI} currency={cur} />
+      <Items title="Postes OPEX annuels (constants)" items={opex} setItems={setOpexI} currency={cur} />
       <Button onClick={run}>Calculer les flux</Button>
       {err && <p className="text-sm text-destructive">{err}</p>}
     </CardContent></Card>
@@ -68,13 +97,16 @@ export function CashflowAnalysis() {
     {res && <>
       <Card><CardHeader><CardTitle>Indicateurs</CardTitle></CardHeader><CardContent className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-3 text-sm">
-          <div>CAPEX total : <b>{fmt.format(res.totalCapex)} {cur}</b></div>
+          <div>CAPEX brut (coût total) : <b>{fmt.format(res.totalCapex)} {cur}</b></div>
+          <div>Subvention année 0 : <b>{fmt.format(res.rows[0]!.subsidy)} {cur}</b></div>
+          <div>Investissement net (après subvention) : <b>{fmt.format(res.totalCapex - res.rows[0]!.subsidy)} {cur}</b></div>
           <div>OPEX annuel : <b>{fmt.format(res.annualOpex)} {cur}/an</b></div>
           <div>VAN : <b>{fmt.format(res.npv)} {cur}</b></div>
           <div>TRI : <b>{res.irr.status === "ok" ? `${fmt.format(res.irr.ratePct)} %` : `Indisponible — ${res.irr.reason}`}</b></div>
           <div>Retour simple : <b>{yrs(res.simplePaybackYears)}</b></div>
           <div>Retour actualisé : <b>{yrs(res.discountedPaybackYears)}</b></div>
-          <div>LCOE : <b>{fmt.format(res.lcoePerKwh)} {cur}/kWh</b></div>
+          <div>LCOE (CAPEX brut + OPEX + remplacements, hors subvention et revenus) : <b>{fmt.format(res.lcoePerKwh)} {cur}/kWh</b></div>
+          <div className="sm:col-span-3 text-xs text-muted-foreground">Production : {prodSource.kind === "sim" ? `simulation « ${prodSource.name} »` : `hypothèse utilisateur (${prodRef})`} ; {f.years} années projetées avec {f.degr} %/an de dégradation.</div>
         </div>
         {res.warnings.map((w) => <p key={w} className="text-sm text-muted-foreground">⚠ {w}</p>)}
       </CardContent></Card>
