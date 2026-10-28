@@ -123,3 +123,29 @@ describe("sensibilité et comparaison", () => {
     expect(checkComparability([{ name: "A", input: base }, { name: "B", input: { ...base, currency: "EUR", lifetimeYears: 20 } }])).toHaveLength(2);
   });
 });
+
+/** Références indépendantes : formules fermées calculées à la main, pas via le moteur. */
+describe("références indépendantes", () => {
+  const ref: CashflowInput = { ...base, realDiscountRatePct: 10, capexItems: [{ label: "c", amount: 1000, source: "s" }], opexItems: [], saleTariffPerKwh: 0.2 };
+  it("VAN d'une annuité : −1000 + 200×(1−1,1^−10)/0,1 = 228,913…", () => {
+    expect(computeCashflows(ref).npv).toBeCloseTo(228.91342, 4);
+  });
+  it("TRI de −1000, +500×3 = 23,3752 % (racine connue)", () => {
+    const r = computeIrr([-1000, 500, 500, 500]);
+    expect(r.status === "ok" && r.ratePct).toBeCloseTo(23.3752, 3);
+  });
+  it("retour simple interpolé : 1000/200 = 5,0 ans ; avec 300/an = 3,333 ans", () => {
+    expect(computeCashflows({ ...ref, realDiscountRatePct: 0 }).simplePaybackYears).toBeCloseTo(5, 9);
+    expect(computeCashflows({ ...ref, realDiscountRatePct: 0, saleTariffPerKwh: 0.3 }).simplePaybackYears).toBeCloseTo(10 / 3, 9);
+  });
+  it("LCOE à taux 0 : (CAPEX + Σ OPEX) / Σ E = (1000 + 10×50)/10 000 = 0,15", () => {
+    expect(computeCashflows({ ...base }).lcoePerKwh).toBeCloseTo(0.15, 12);
+  });
+  it("subvention : réduit l'investissement net mais n'entre ni dans le CAPEX brut ni dans le LCOE", () => {
+    const a = computeCashflows(base), b = computeCashflows({ ...base, subsidy: 400 });
+    expect(b.totalCapex).toBe(1000);
+    expect(b.rows[0]!.net).toBe(-600);
+    expect(b.lcoePerKwh).toBe(a.lcoePerKwh);
+    expect(b.npv - a.npv).toBeCloseTo(400, 9);
+  });
+});
