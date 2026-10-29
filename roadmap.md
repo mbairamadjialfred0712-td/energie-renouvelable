@@ -52,3 +52,5 @@
 
 - [x] Tableau multi-scénarios PV/Batterie sur la page Simulations (couverture, autoconsommation, ENS enregistrées ; PV seul = non calculé) — 4 tests
 - [ ] Remplacer les paramètres PV QA inventés par les vraies données du site — EN ATTENTE des valeurs de Joël
+- [x] 29/10/2026 — vérifier les données disponibles et le tableau PV/Batterie sous le compte demandeur ; 40 tests financiers/comparaison réussis, lien batterie rouvert ; revue documentaire PROMPT 18.2, aucune migration ni donnée modifiée.
+- [ ] 29/10/2026 — relancer finance/PV et compléter la comparaison financière : bloqué par les paramètres PV réels et leurs sources, la confirmation de l'emploi de météo synthétique ou une année réelle, et les hypothèses de recettes/coûts détaillées ; la persistance reste une proposition à approuver.
