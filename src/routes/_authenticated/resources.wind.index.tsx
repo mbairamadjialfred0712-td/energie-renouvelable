@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -23,7 +22,11 @@ function WindList() {
   const { data: rows, isLoading, error } = useQuery({ queryKey: ["wind"], queryFn: () => listWind() });
   const { data: evo } = useQuery({ queryKey: ["resources", "wind"], queryFn: () => listResources({ data: { type: "wind" } }) });
   const { data: access } = useQuery({ queryKey: ["solar-access"], queryFn: () => getSolarAccess() });
-  const [q, setQ] = useState(""); const [status, setStatus] = useState(""); const [nature, setNature] = useState(""); const [loc, setLoc] = useState(""); const [height, setHeight] = useState("");
+  const search = Route.useSearch(); const navigate = Route.useNavigate();
+  const q = search["q"] ?? "", status = search["status"] ?? "", nature = search["nature"] ?? "", loc = search["locality"] ?? "";
+  const update = (key: string, value: string) => navigate({ search: previous => ({ ...previous, [key]: value || undefined }), replace: true });
+  const setQ = (v: string) => update("q", v), setStatus = (v: string) => update("status", v), setNature = (v: string) => update("nature", v), setLoc = (v: string) => update("locality", v);
+  const height = search["height"] ?? "", setHeight = (v: string) => update("height", v);
   const all = rows ?? [];
   const localities = [...new Map(all.map((r) => [r.locality_id, r.locality_name ?? "—"])).entries()];
   const heights = [...new Set(all.map((r) => r.height).filter((h): h is number => h !== null))].sort((a, b) => a - b);
@@ -35,6 +38,7 @@ function WindList() {
 
   return (
     <WorkspacePage eyebrow="Ressources / Éolien" title="Ressource éolienne" description={META} action={action}>
+      <div className="mb-4 flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/technologies" search={{ locality: loc || undefined, status: status || undefined }}>Voir les technologies</Link></Button><Button asChild variant="outline"><Link to="/simulations/new" search={{ tab: "wind" }}>Configurer un calcul</Link></Button></div>
       {access && !access.canWrite && <p className="mb-4 border border-border bg-muted p-3 text-sm">Votre rôle est en lecture seule. Un administrateur peut vous attribuer le rôle Ingénieur pour saisir des données.</p>}
       <div className="mb-4 grid gap-3 sm:grid-cols-3">{[["Jeux enregistrés", all.length], ["Jeux validés", validated], ["Localités couvertes", localities.length]].map(([k, v]) => <div key={k} className="border border-border bg-background p-4"><p className="text-xs text-muted-foreground">{k}</p><p className="mt-1 text-xl font-semibold tabular-nums">{v}</p></div>)}</div>
       <div className="mb-4 flex flex-wrap gap-2">
@@ -56,7 +60,7 @@ function WindList() {
               <tbody>
                 {shown.map((r) => (
                   <tr key={r.id} className="border-t border-border hover:bg-muted/50">
-                    <td className="px-3 py-2"><Link to="/resources/wind/$id" params={{ id: r.id }} className="font-medium text-primary hover:underline">{r.locality_name}</Link>{r.site_name && <span className="block text-xs text-muted-foreground">Site : {r.site_name}</span>}</td>
+                    <td className="px-3 py-2"><Link to="/resources/wind/$id" params={{ id: r.id }} search={search} className="font-medium text-primary hover:underline">{r.locality_name}</Link>{r.site_name && <span className="block text-xs text-muted-foreground">Site : {r.site_name}</span>}</td>
                     <td className="px-3 py-2 tabular-nums">{fmt(r.avg, "m/s")}</td>
                     <td className="px-3 py-2 tabular-nums">{fmt(r.height, "m")}</td>
                     <td className="px-3 py-2 tabular-nums">{fmt(r.direction, "°")}</td>
