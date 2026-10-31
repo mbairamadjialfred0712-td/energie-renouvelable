@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import logoAsset from "@/assets/energie-renouvelable-logo.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { getTechnicalSettings } from "@/lib/technical-settings.functions";
+import { ContextNavigation } from "./context-navigation";
 
 const nav = [
   { label: "Tableau de bord", to: "/dashboard", icon: LayoutDashboard },
@@ -48,6 +49,6 @@ export function AppShell() {
       </nav>
       <div className="border-t border-sidebar-border p-3"><Button variant="ghost" className="w-full justify-start" onClick={signOut}><LogOut />Se déconnecter</Button></div>
     </aside>
-    <main className="min-w-0"><Outlet /></main>
+    <main className="min-w-0"><ContextNavigation /><Outlet /></main>
   </div>;
 }

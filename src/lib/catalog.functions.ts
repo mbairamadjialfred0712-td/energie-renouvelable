@@ -16,7 +16,8 @@ export const getCatalogRecords = createServerFn({ method: "GET" }).middleware([r
     if (error) throw new Error("Les calculs enregistrés n’ont pas pu être chargés.");
     for (const r of data ?? []) {
       const p = r.parameters;
-      if (p && typeof p === "object" && !Array.isArray(p) && typeof p.engine === "string") simulations.push({ id: r.id, locality_id: r.locality_id, engine: p.engine });
+      const request = p && typeof p === "object" && !Array.isArray(p) ? p["request"] : null;
+      if (request && typeof request === "object" && !Array.isArray(request) && typeof request["engine"] === "string") simulations.push({ id: r.id, locality_id: r.locality_id, engine: request["engine"] });
     }
     if ((data?.length ?? 0) < 500) break;
   }
