@@ -16,7 +16,7 @@ export function TerritoryMap({ points }: { points: MapPoint[] }) {
       const L = (await import("leaflet")).default;
       await import("leaflet/dist/leaflet.css");
       if (disposed || !containerRef.current) return;
-      map = L.map(containerRef.current, { scrollWheelZoom: false }).setView([7.5, -5.5], 3);
+      map = L.map(containerRef.current, { scrollWheelZoom: false, zoomAnimation: false, fadeAnimation: false, markerZoomAnimation: false }).setView([7.5, -5.5], 3);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 18,
         attribution: "© contributeurs OpenStreetMap",
@@ -31,11 +31,13 @@ export function TerritoryMap({ points }: { points: MapPoint[] }) {
           .addTo(map);
         bounds.push([point.latitude, point.longitude]);
       }
-      if (bounds.length === 1) map.setView(bounds[0]!, 10);
-      if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
+      const first = bounds[0];
+      if (bounds.length === 1 && first) map.setView(first, 10, { animate: false });
+      if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], animate: false });
     })();
     return () => {
       disposed = true;
+      map?.stop();
       map?.remove();
     };
   }, [points]);
@@ -44,5 +46,5 @@ export function TerritoryMap({ points }: { points: MapPoint[] }) {
 }
 
 function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
+  return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char);
 }

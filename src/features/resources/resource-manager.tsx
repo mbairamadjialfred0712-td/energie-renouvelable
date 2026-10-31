@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ const nullable = (v: string | undefined) => (v && v.trim() ? v.trim() : null);
 
 export function ResourceManager({ type, title, description }: { type: ResourceType; title: string; description: string }) {
   const config = RESOURCE_DETAILS[type];
+  const filter = useSearch({ strict: false });
   const queryClient = useQueryClient();
   const queryKey = ["resources", type];
   const { data: localities } = useQuery({ queryKey: ["locality-options"], queryFn: () => listLocalityOptions() });
@@ -69,7 +71,7 @@ export function ResourceManager({ type, title, description }: { type: ResourceTy
       description={description}
       note="Chaque valeur conserve son unité, sa source et sa période. La pré-analyse IA signale les manques et points à vérifier ; elle ne calcule aucun résultat et ne modifie aucune donnée."
       queryKey={queryKey}
-      fetcher={() => listResources({ data: { type } })}
+      fetcher={async () => (await listResources({ data: { type } })).filter(r => (!filter.locality || r.locality_id === filter.locality) && (!filter.status || r.validation_status === filter.status || (filter.status === "unverified" && r.validation_status === "pending")))}
       saver={save}
       remover={(row) => deleteResource({ data: { id: row.id, type } })}
       fields={fields}

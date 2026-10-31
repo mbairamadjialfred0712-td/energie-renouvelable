@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { Sun, Wind, Leaf, Recycle, ArrowRight } from "lucide-react";
 import { WorkspacePage } from "@/components/app/page";
 import { TerritoryMap } from "@/features/geography/territory-map";
@@ -25,6 +26,9 @@ const cards = [
 function ResourcesOverview() {
   const { data, isLoading } = useQuery({ queryKey: ["dashboard-summary"], queryFn: () => getDashboardSummary() });
   const filter = Route.useSearch(); const navigate = Route.useNavigate(); const inventory = useInventory(filter);
+  const localityIds = new Set([...inventory.solar, ...inventory.wind, ...inventory.biomass, ...inventory.waste].map(r => r.locality_id));
+  const scopedIds = [...localityIds].sort().join(",");
+  const points = useMemo(() => (data?.resourcePoints ?? []).filter(p => scopedIds.split(",").includes(p.id)).map(p => ({ ...p, kind: "locality" as const })), [data?.resourcePoints, scopedIds]);
   return (
     <WorkspacePage eyebrow="Données / Ressources" title="Ressources énergétiques" description="Une fiche par ressource et par localité. Chaque fiche peut recevoir une pré-analyse IA qui liste les manques, hypothèses et points à vérifier — sans calculer ni inventer de valeur.">
       <CatalogControls filter={filter} localities={inventory.localities} onChange={value => navigate({ search: value, replace: true })} />
@@ -43,7 +47,7 @@ function ResourcesOverview() {
           </article>;
         })}
       </div>}
-      <section className="mt-8 space-y-3"><h2 className="text-lg font-semibold">Carte des localités avec ressources</h2><p className="text-sm text-muted-foreground">{data?.resourcePoints.length ?? 0} localités documentées · {data?.biomassReferences ?? 0} observations de stock de biomasse séparées, non géolocalisées.</p>{!isLoading && <TerritoryMap points={(data?.resourcePoints ?? []).map((p: { id: string; name: string; latitude: number; longitude: number; detail: string }) => ({ ...p, kind: "locality" as const }))} />}</section>
+      <section className="mt-8 space-y-3"><h2 className="text-lg font-semibold">Carte des localités avec ressources</h2><p className="text-sm text-muted-foreground">{points.length} localités géolocalisées dans la sélection · {data?.biomassReferences ?? "—"} observations de stock de biomasse séparées, non géolocalisées (référentiel global).</p>{!isLoading && !inventory.isPending && !inventory.error && <TerritoryMap points={points} />}</section>
       <h2 className="mt-8 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">Indicateurs solaires (données enregistrées)</h2>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {([["Localités avec données solaires", summarizeInventory(inventory.solar).localities], ["Jeux solaires validés", summarizeInventory(inventory.solar).validated], ["Jeux en attente de vérification", inventory.solar.filter(r => ["unverified", "in_review"].includes(r.status)).length], ["Sources distinctes", new Set(inventory.solar.map(r => r.source)).size]] as const).map(([l, v]) => (
