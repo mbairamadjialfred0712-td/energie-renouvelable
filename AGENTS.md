@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 
 ## Project architecture
+- Resource and technology overviews reuse the dedicated authenticated list functions and query keys with pure inventory selectors; distinguish resource, weather, configuration and completed-calculation counts rather than inferring scientific readiness.
+- Internal back links use explicit typed section fallbacks and root-validated resource filters; preserve filter search in detail links instead of relying on browser history.
 
 - Keep site weather datasets immutable except status and notes, with hourly UTC samples, explicit native radiation units and source provenance; separate them from energy resources and reject incomplete series for validation so imports never silently change scientific inputs.
 

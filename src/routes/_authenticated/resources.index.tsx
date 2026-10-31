@@ -28,7 +28,7 @@ function ResourcesOverview() {
   const filter = Route.useSearch(); const navigate = Route.useNavigate(); const inventory = useInventory(filter);
   const localityIds = new Set([...inventory.solar, ...inventory.wind, ...inventory.biomass, ...inventory.waste].map(r => r.locality_id));
   const scopedIds = [...localityIds].sort().join(",");
-  const points = useMemo(() => (data?.resourcePoints ?? []).filter(p => scopedIds.split(",").includes(p.id)).map(p => ({ ...p, kind: "locality" as const })), [data?.resourcePoints, scopedIds]);
+  const points = useMemo(() => (data?.resourcePoints ?? []).filter((p: { id: string }) => scopedIds.split(",").includes(p.id)).map((p: { id: string; name: string; latitude: number; longitude: number; detail: string }) => ({ ...p, kind: "locality" as const })), [data?.resourcePoints, scopedIds]);
   return (
     <WorkspacePage eyebrow="Données / Ressources" title="Ressources énergétiques" description="Une fiche par ressource et par localité. Chaque fiche peut recevoir une pré-analyse IA qui liste les manques, hypothèses et points à vérifier — sans calculer ni inventer de valeur.">
       <CatalogControls filter={filter} localities={inventory.localities} onChange={value => navigate({ search: value, replace: true })} />
