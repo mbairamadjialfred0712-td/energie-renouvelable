@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -24,7 +23,11 @@ function BiomassList() {
   const { data: rows, isLoading, error } = useQuery({ queryKey: ["biomass"], queryFn: () => listBiomass() });
   const { data: evo } = useQuery({ queryKey: ["resources", "biomass"], queryFn: () => listResources({ data: { type: "biomass" } }) });
   const { data: access } = useQuery({ queryKey: ["solar-access"], queryFn: () => getSolarAccess() });
-  const [q, setQ] = useState(""); const [status, setStatus] = useState(""); const [nature, setNature] = useState(""); const [loc, setLoc] = useState(""); const [type, setType] = useState(""); const [basis, setBasis] = useState("");
+  const search = Route.useSearch(); const navigate = Route.useNavigate();
+  const q = search["q"] ?? "", status = search["status"] ?? "", nature = search["nature"] ?? "", loc = search["locality"] ?? "";
+  const update = (key: string, value: string) => navigate({ search: previous => ({ ...previous, [key]: value || undefined }), replace: true });
+  const setQ = (v: string) => update("q", v), setStatus = (v: string) => update("status", v), setNature = (v: string) => update("nature", v), setLoc = (v: string) => update("locality", v);
+  const type = search["type"] ?? "", basis = search["basis"] ?? "", setType = (v: string) => update("type", v), setBasis = (v: string) => update("basis", v);
   const all = rows ?? [];
   const localities = [...new Map(all.map((r) => [r.locality_id, r.locality_name ?? "—"])).entries()];
   const shown = all.filter((r) => (!status || r.status === status) && (!nature || r.data_nature === nature) && (!loc || r.locality_id === loc) && (!type || r.type === type) && (!basis || r.lhv_basis === basis) &&
@@ -34,6 +37,7 @@ function BiomassList() {
 
   return (
     <WorkspacePage eyebrow="Ressources / Biomasse" title="Ressource biomasse" description={META} action={action}>
+      <div className="mb-4 flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/technologies" search={{ locality: loc || undefined, status: status || undefined }}>Voir les technologies</Link></Button><Button asChild variant="outline"><Link to="/simulations/new" search={{ tab: "biomass" }}>Configurer un calcul</Link></Button></div>
       {access && !access.canWrite && <p className="mb-4 border border-border bg-muted p-3 text-sm">Votre rôle est en lecture seule. Un administrateur peut vous attribuer le rôle Ingénieur pour saisir des données.</p>}
       <div className="mb-4 grid gap-3 sm:grid-cols-4">{[["Jeux enregistrés", all.length], ["Jeux validés", all.filter((r) => r.status === "validated").length], ["Types distincts", new Set(all.map((r) => r.type)).size], ["Localités couvertes", localities.length]].map(([k, v]) => <div key={k} className="border border-border bg-background p-4"><p className="text-xs text-muted-foreground">{k}</p><p className="mt-1 text-xl font-semibold tabular-nums">{v}</p></div>)}</div>
       <div className="mb-4 flex flex-wrap gap-2">
@@ -57,7 +61,7 @@ function BiomassList() {
               <tbody>
                 {shown.map((r) => (
                   <tr key={r.id} className="border-t border-border hover:bg-muted/50">
-                    <td className="px-3 py-2"><Link to="/resources/biomass/$id" params={{ id: r.id }} className="font-medium text-primary hover:underline">{r.locality_name}</Link>{r.site_name && <span className="block text-xs text-muted-foreground">Site : {r.site_name}</span>}</td>
+                    <td className="px-3 py-2"><Link to="/resources/biomass/$id" params={{ id: r.id }} search={search} className="font-medium text-primary hover:underline">{r.locality_name}</Link>{r.site_name && <span className="block text-xs text-muted-foreground">Site : {r.site_name}</span>}</td>
                     <td className="px-3 py-2">{typeText(r)}</td>
                     <td className="px-3 py-2 tabular-nums">{fmt(r.quantity, r.unit)}</td>
                     <td className="px-3 py-2 tabular-nums">{fmt(r.moisture, "%")}</td>

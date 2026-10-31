@@ -11,10 +11,10 @@ export function useInventory(filter: InventoryFilter) {
   const wind = useQuery({ queryKey: ["wind"], queryFn: () => listWind() });
   const biomass = useQuery({ queryKey: ["biomass"], queryFn: () => listBiomass() });
   const waste = useQuery({ queryKey: ["resources", "waste"], queryFn: () => listResources({ data: { type: "waste" } }) });
-  const weather = useQuery({ queryKey: ["weather", "list"], queryFn: () => listWeather() });
+  const weather = useQuery({ queryKey: ["weather-list"], queryFn: () => listWeather() });
   const records = useQuery({ queryKey: ["catalog-records"], queryFn: () => getCatalogRecords() });
   const queries = [solar, wind, biomass, waste, weather, records];
-  const all = [...(solar.data ?? []), ...(wind.data ?? []), ...(biomass.data ?? []), ...(weather.data ?? []).map(r => ({ ...r, locality_name: r.localities?.name }))];
+  const all = [...(solar.data ?? []), ...(wind.data ?? []), ...(biomass.data ?? []), ...(waste.data ?? []), ...(weather.data ?? []).map(r => ({ ...r, locality_name: r.localities?.name }))];
   return {
     isPending: queries.some(q => q.isPending), error: queries.find(q => q.error)?.error,
     localities: [...new Map(all.map(r => [r.locality_id, r.locality_name ?? r.locality_id])).entries()],

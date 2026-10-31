@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -20,7 +19,10 @@ const sel = "h-9 border border-input bg-background px-2 text-sm";
 function SolarList() {
   const { data: rows, isLoading, error } = useQuery({ queryKey: ["solar"], queryFn: () => listSolar() });
   const { data: access } = useQuery({ queryKey: ["solar-access"], queryFn: () => getSolarAccess() });
-  const [q, setQ] = useState(""); const [status, setStatus] = useState(""); const [nature, setNature] = useState(""); const [loc, setLoc] = useState("");
+  const search = Route.useSearch(); const navigate = Route.useNavigate();
+  const q = search["q"] ?? "", status = search["status"] ?? "", nature = search["nature"] ?? "", loc = search["locality"] ?? "";
+  const update = (key: string, value: string) => navigate({ search: previous => ({ ...previous, [key]: value || undefined }), replace: true });
+  const setQ = (v: string) => update("q", v), setStatus = (v: string) => update("status", v), setNature = (v: string) => update("nature", v), setLoc = (v: string) => update("locality", v);
   const all = rows ?? [];
   const localities = [...new Map(all.map((r) => [r.locality_id, r.locality_name ?? "—"])).entries()];
   const shown = all.filter((r) => (!status || r.status === status) && (!nature || r.data_nature === nature) && (!loc || r.locality_id === loc) &&
@@ -29,6 +31,7 @@ function SolarList() {
 
   return (
     <WorkspacePage eyebrow="Ressources / Solaire" title="Ressource solaire" description={META} action={action}>
+      <div className="mb-4 flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/technologies" search={{ locality: loc || undefined, status: status || undefined }}>Voir les technologies</Link></Button><Button asChild variant="outline"><Link to="/simulations/new" search={{ tab: "pv" }}>Configurer un calcul</Link></Button></div>
       {access && !access.canWrite && <p className="mb-4 border border-border bg-muted p-3 text-sm">Votre rôle est en lecture seule. Un administrateur peut vous attribuer le rôle Ingénieur pour saisir des données.</p>}
       <div className="mb-4 flex flex-wrap gap-2">
         <input aria-label="Rechercher" placeholder="Rechercher (localité, source, référence…)" className={`${sel} min-w-64 flex-1`} value={q} onChange={(e) => setQ(e.target.value)} />
@@ -48,7 +51,7 @@ function SolarList() {
             <tbody>
               {shown.map((r) => (
                 <tr key={r.id} className="border-t border-border hover:bg-muted/50">
-                  <td className="px-3 py-2"><Link to="/resources/solar/$id" params={{ id: r.id }} className="font-medium text-primary hover:underline">{r.locality_name}</Link>{r.site_name && <span className="block text-xs text-muted-foreground">Site : {r.site_name}</span>}</td>
+                  <td className="px-3 py-2"><Link to="/resources/solar/$id" params={{ id: r.id }} search={search} className="font-medium text-primary hover:underline">{r.locality_name}</Link>{r.site_name && <span className="block text-xs text-muted-foreground">Site : {r.site_name}</span>}</td>
                   <td className="px-3 py-2 tabular-nums">{fmt(r.ghi, r.ghiUnit)}</td>
                   <td className="px-3 py-2 tabular-nums">{fmt(r.dni, r.dniUnit)}</td>
                   <td className="px-3 py-2 tabular-nums">{fmt(r.dhi, r.dhiUnit)}</td>

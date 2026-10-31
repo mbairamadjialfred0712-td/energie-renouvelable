@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
+import { resourceListSearch } from "@/features/catalog/inventory";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { OAuthReturnHandler } from "@/components/auth/oauth-return-handler";
@@ -75,6 +76,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  validateSearch: resourceListSearch,
   head: () => ({
     meta: [
       { charSet: "utf-8" },
