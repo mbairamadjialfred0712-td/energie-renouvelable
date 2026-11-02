@@ -6,4 +6,5 @@ describe("Common resource inventory", () => {
   it("uses the same locality and status scope", () => expect(filterInventory(rows, { locality: "A", status: "validated" })).toEqual([rows[0]]));
   it("does not invent rows for empty datasets", () => expect(summarizeInventory([])).toEqual({ registered: 0, validated: 0, localities: 0 }));
   it("retains relevant filters, not arbitrary return URLs", () => expect(resourceListSearch({ locality: "A", q: "QA", nature: "measured", redirect: "https://evil.test" })).toEqual({ locality: "A", q: "QA", nature: "measured" }));
+  it("retains battery filters across detail navigation without admitting external targets", () => expect(resourceListSearch({ q: "QA", status: "validated", chem: "lfp", application: "stationary", redirect: "//evil.test", owner_id: "other" })).toEqual({ q: "QA", status: "validated", chem: "lfp", application: "stationary" }));
 });
