@@ -9,7 +9,7 @@ export function summarizeInventory(rows: InventoryRow[]) {
 export function catalogSearch(input: Record<string, unknown>): InventoryFilter {
   return { ...(typeof input["locality"] === "string" ? { locality: input["locality"] } : {}), ...(typeof input["status"] === "string" ? { status: input["status"] } : {}) };
 }
-export type ResourceListSearch = { locality?: string | undefined; status?: string | undefined; q?: string | undefined; nature?: string | undefined; height?: string | undefined; type?: string | undefined; basis?: string | undefined };
+export type ResourceListSearch = { locality?: string | undefined; status?: string | undefined; q?: string | undefined; nature?: string | undefined; height?: string | undefined; type?: string | undefined; basis?: string | undefined; chem?: string | undefined; application?: string | undefined };
 export function resourceListSearch(input: Record<string, unknown>): ResourceListSearch {
-  return Object.fromEntries(["locality", "status", "q", "nature", "height", "type", "basis"].flatMap(key => typeof input[key] === "string" ? [[key, input[key]]] : []));
+  return Object.fromEntries(["locality", "status", "q", "nature", "height", "type", "basis", "chem", "application"].flatMap(key => typeof input[key] === "string" ? [[key, input[key]]] : []));
 }
