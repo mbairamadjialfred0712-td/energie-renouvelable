@@ -11,7 +11,8 @@
 - Exécution E2E PV et batterie : Render est en ligne et SCIENTIFIC_ENGINE_URL/KEY sont enregistrés depuis le 22/10/2026, mais ENGINE_SHARED_KEY reste à configurer côté Render ; aucune simulation PV terminée n’existe pour tester la liaison production → LCOE.
 
 ## En cours
-- [ ] PROMPT 19.1 — audit des règles actives, cohérence des compteurs et retours, tests et rapport ; isolation multi-comptes bloquée par le second compte QA non désigné, aucune politique ni donnée à modifier.
+- [x] PROMPT 19.1 — règles actives inspectées, compteurs cohérents, retour batterie corrigé et testé, retours solaire/éolien/simulation et refus anonyme vérifiés ; 435 tests, build OK ; rapport VALIDATION_INTERFACES.md ; aucune politique, donnée ou moteur modifié.
+- [ ] PROMPT 19.1 — isolation multi-comptes et changement d’identité externe : second compte QA non désigné/autorisé ; retour biomasse bloqué par aucune fiche ; version publiée non vérifiée. Risque de cache résiduel et neuf avertissements linter documentés, durcissement éventuel à examiner avant toute migration.
 - [x] PROMPT 19 — compteurs communs Ressources/Technologies, liens et statuts distincts, configurations projet, météo séparée, retours avec filtres ; 434 tests réussis, build OK, navigateur connecté ordinateur/mobile sans erreur ; VALIDATION_INTERFACES.md. Aucune donnée, formule ou secret modifié.
 - [ ] PROMPT 19 — isolation multi-comptes/rôles et version publiée : comptes QA autorisés supplémentaires et publication non demandée ; vérifications locales QA seulement, pas de validation scientifique.
 - [x] PROMPT 17 OPTIMISATION : audit, V1 énumération de 1–12 calculs batterie enregistrés (ENS kWh, bornes, mêmes PV/demande et policies SOC explicites), problème dans enveloppe existante, runs complets en INSERT simulations, contrôles serveur et UI ; 384 TS + 225 Python, build OK, refus sans données sous admin Joël ; VALIDATION_OPTIMIZATION.md.
