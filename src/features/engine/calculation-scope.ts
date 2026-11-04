@@ -1,0 +1,12 @@
+/** Audited software scope, independent from runtime connectivity and scientific approval. */
+export const CALCULATION_SCOPES = {
+  photovoltaic: { name: "Photovoltaïque", tab: "pv", status: "Implémenté · tests logiciels", scope: "PVWatts v8 : production horaire, journalière, mensuelle et annuelle ; productible et facteur de capacité.", required: "Année météo validée de 8 760 h et paramètres PV documentés.", limits: "Catégories de panneaux et rendement onduleur générique ; pas de modèle fabricant ni de vieillissement détaillé." },
+  wind: { name: "Éolien", tab: "wind", status: "Implémenté · périmètre A/B/C", scope: "A : observations ; B : flux cinétique non électrique ; C : production par courbe de turbine documentée.", required: "Météo horaire validée, hauteurs compatibles ; courbe et seuils documentés pour C.", limits: "Pas d’annualisation d’une période courte, de correction de hauteur ou de pertes supposées." },
+  battery: { name: "PV + batterie", tab: "battery", status: "Implémenté · stockage horaire", scope: "SOC, limites de puissance, rendements, cycles équivalents, pertes, couverture et énergie non servie.", required: "Fiche et configuration validées, PV terminé du même projet, demande horaire alignée et SOC initial explicite.", limits: "Charge sur surplus PV seulement ; sans vieillissement, charge réseau ni pilotage de pointe garanti." },
+  biomass: { name: "Biomasse · énergie primaire", tab: "biomass", status: "Partiel · primaire uniquement", scope: "Bilan annuel d’une quantité recensée : masse reçue et PCI reçu, en MWh/an.", required: "Fiche validée, année complète, masse t/an, PCI MJ/kg et compatibilité des bases documentée.", limits: "Humidité tracée sans correction ; ni mobilisation supposée, ni chaleur, ni électricité." },
+  csp: { name: "CSP · bilan prescrit", tab: "csp", status: "Partiel · bilan prescrit", scope: "Bilan thermique signé cylindro-parabolique ; électricité brute/nette conditionnelle aux paramètres et à la chaleur utile.", required: "DNI horaire validé, surface, facteur optique et pertes sourcés ; rendement de cycle et auxiliaires pour l’électricité.", limits: "Pas de modèle dynamique de centrale, stockage thermique ou dispatch ; sorties indéterminables indisponibles." },
+} as const;
+export type CalculationEngine = keyof typeof CALCULATION_SCOPES;
+export function calculationScope(engine: string) {
+  return Object.hasOwn(CALCULATION_SCOPES, engine) ? CALCULATION_SCOPES[engine as CalculationEngine] : undefined;
+}

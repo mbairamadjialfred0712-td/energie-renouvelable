@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { EngineStatusCard } from "@/features/engine/engine-status-card";
 import { PvBatteryComparisonTable } from "@/features/engine/pv-battery-comparison-table";
 import { listSimulations } from "@/lib/engine.functions";
+import { CalculationAccess } from "@/features/engine/calculation-access";
 
 const opts = queryOptions({ queryKey: ["simulations"], queryFn: () => listSimulations() });
 const STATUS: Record<string, string> = { draft: "Brouillon", queued: "En attente", running: "En cours", completed: "Terminée", failed: "Échouée" };
@@ -18,9 +19,10 @@ export const Route = createFileRoute("/_authenticated/simulations/")({
 function Page() {
   const { data } = useSuspenseQuery(opts);
   return (
-    <WorkspacePage eyebrow="Études / Simulations" title="Simulations" description="Exécutées uniquement par le moteur scientifique Python. Aucun résultat n’est affiché sans calcul réel." action={<Button asChild><Link to="/simulations/new">Simulation PV horaire</Link></Button>}>
+    <WorkspacePage eyebrow="Études / Simulations" title="Simulations" description="Calculs énergétiques et analyses enregistrées, avec méthodes, sources et hypothèses. Aucun résultat inventé." action={<Button asChild><Link to="/simulations/new">Nouvelle simulation</Link></Button>}>
       <div className="max-w-5xl space-y-6">
         <EngineStatusCard />
+        <CalculationAccess />
         <PvBatteryComparisonTable />
         {data.length === 0 ? <p className="text-sm text-muted-foreground">Aucune simulation enregistrée.</p> : (
           <table className="w-full text-sm">
