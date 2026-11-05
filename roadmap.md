@@ -11,6 +11,7 @@
 - Exécution E2E PV et batterie : Render est en ligne et SCIENTIFIC_ENGINE_URL/KEY sont enregistrés depuis le 22/10/2026, mais ENGINE_SHARED_KEY reste à configurer côté Render ; aucune simulation PV terminée n’existe pour tester la liaison production → LCOE.
 
 ## En cours
+- [ ] PROMPT 19.2 — préparer comptes QA autorisés, matrice d’isolation et contrôles publiés dans VALIDATION_INTERFACES.md ; lecture seule, aucune création de compte/donnée, migration, modification de permission ou publication.
 - [x] Révision générale du moteur (03/11/2026) — audit A–H livré dans AUDIT_MOTEUR_SCIENTIFIQUE.md ; 225 Python + 435 TS réussis, santé Render 200/auth configurée, résultat batterie QA relu ; aucun nouveau calcul, code ou secret modifié.
 - [x] Révision générale — étape 1 approuvée : périmètres communs Simulations/Technologies, descriptions biomasse/CSP et calculs finance/optimisation distincts de Python ; cinq formulaires et résultat batterie QA ouverts, 435 tests, build OK, aucune erreur navigateur. Rapport AUDIT_MOTEUR_SCIENTIFIQUE.md.
 - [ ] Révision générale — étapes 2–6 : hors approbation de l’étape 1 ; prérequis modèles/données/validation de Joël avant extensions scientifiques, second compte QA autorisé avant isolation.
