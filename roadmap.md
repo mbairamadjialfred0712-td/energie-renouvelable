@@ -12,7 +12,8 @@
 
 ## En cours
 - [x] Révision générale du moteur (03/11/2026) — audit A–H livré dans AUDIT_MOTEUR_SCIENTIFIQUE.md ; 225 Python + 435 TS réussis, santé Render 200/auth configurée, résultat batterie QA relu ; aucun nouveau calcul, code ou secret modifié.
-- [ ] Révision générale — étape 1 statuts fidèles et accès Simulations/Technologies : attend l’approbation du plan ; extensions scientifiques ensuite soumises séparément aux modèles/données et validation de Joël.
+- [x] Révision générale — étape 1 approuvée : périmètres communs Simulations/Technologies, descriptions biomasse/CSP et calculs finance/optimisation distincts de Python ; cinq formulaires et résultat batterie QA ouverts, 435 tests, build OK, aucune erreur navigateur. Rapport AUDIT_MOTEUR_SCIENTIFIQUE.md.
+- [ ] Révision générale — étapes 2–6 : hors approbation de l’étape 1 ; prérequis modèles/données/validation de Joël avant extensions scientifiques, second compte QA autorisé avant isolation.
 - [x] PROMPT 19.1 — règles actives inspectées, compteurs cohérents, retour batterie corrigé et testé, retours solaire/éolien/simulation et refus anonyme vérifiés ; 435 tests, build OK ; rapport VALIDATION_INTERFACES.md ; aucune politique, donnée ou moteur modifié.
 - [ ] PROMPT 19.1 — isolation multi-comptes et changement d’identité externe : second compte QA non désigné/autorisé ; retour biomasse bloqué par aucune fiche ; version publiée non vérifiée. Risque de cache résiduel et neuf avertissements linter documentés, durcissement éventuel à examiner avant toute migration.
 - [x] PROMPT 19 — compteurs communs Ressources/Technologies, liens et statuts distincts, configurations projet, météo séparée, retours avec filtres ; 434 tests réussis, build OK, navigateur connecté ordinateur/mobile sans erreur ; VALIDATION_INTERFACES.md. Aucune donnée, formule ou secret modifié.
