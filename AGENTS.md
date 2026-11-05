@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project architecture
+- Share audited calculation scopes between Simulations and Technologies independently of runtime capabilities; this prevents service declarations from implying scientific validation or hiding application-side finance and optimization.
 - Resource and technology overviews reuse the dedicated authenticated list functions and query keys with pure inventory selectors; distinguish resource, weather, configuration and completed-calculation counts rather than inferring scientific readiness.
 - Internal back links use explicit typed section fallbacks and root-validated resource filters; preserve filter search in detail links instead of relying on browser history.
 

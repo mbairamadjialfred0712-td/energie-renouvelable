@@ -8,6 +8,7 @@ import { useInventory } from "@/features/catalog/use-inventory";
 import { CatalogControls } from "@/features/catalog/catalog-controls";
 import { catalogSearch, summarizeInventory } from "@/features/catalog/inventory";
 import { listTechnologyCatalog } from "@/lib/storage.functions";
+import { calculationScope } from "@/features/engine/calculation-scope";
 
 const META = "Référentiel des technologies étudiées : données d'entrée, moteurs de calcul disponibles et limites de chaque filière.";
 
@@ -19,28 +20,28 @@ type Action =
 /** Ce qui existe réellement dans l'application pour chaque filière. */
 const TECH: Record<string, { status: string; scope: string; actions: Action[] }> = {
   PV: {
-    status: "Module raccordé",
+    status: "Implémenté · tests logiciels",
     scope: "Simulation horaire PVWatts v8 (NREL PySAM) sur une année météo validée de 8 760 h.",
     actions: [{ label: "Accéder à la simulation", kind: "sim", tab: "pv" }, { label: "Ressources solaires", kind: "link", to: "/resources/solar" }, { label: "Météo par site", kind: "link", to: "/geography/weather" }],
   },
   WIND: {
-    status: "Module raccordé",
+    status: "Implémenté · périmètre A/B/C",
     scope: "Niveaux A (statistiques de vent), B (flux cinétique) et C (courbe de puissance documentée) sur météo horaire validée.",
     actions: [{ label: "Accéder à la simulation", kind: "sim", tab: "wind" }, { label: "Ressources éoliennes", kind: "link", to: "/resources/wind" }],
   },
   BATTERY: {
-    status: "Module raccordé",
+    status: "Implémenté · stockage horaire",
     scope: "Bilan horaire PV + batterie à partir d'une fiche validée et d'une simulation PV terminée du même projet.",
     actions: [{ label: "Bibliothèque des fiches", kind: "link", to: "/technologies/storage" }, { label: "Accéder à la simulation", kind: "sim", tab: "battery" }],
   },
   BIOMASS: {
-    status: "Bilan limité",
+    status: "Partiel · primaire uniquement",
     scope: "Énergie primaire uniquement (t/an × PCI). Aucune conversion thermique ou électrique n'est calculée.",
     actions: [{ label: "Calculer le bilan primaire", kind: "sim", tab: "biomass" }, { label: "Ressources biomasse", kind: "link", to: "/resources/biomass" }],
   },
   CSP: {
-    status: "Bilan limité",
-    scope: "Bilan DNI limité, sans dispatch ni production électrique ; résultats non disponibles marqués comme tels.",
+    status: "Partiel · bilan prescrit",
+    scope: "Bilan thermique signé ; électricité brute/nette conditionnelle aux paramètres et à la chaleur utile. Sans stockage ni dispatch.",
     actions: [{ label: "Accéder au bilan CSP", kind: "sim", tab: "csp" }, { label: "Ressources solaires (DNI)", kind: "link", to: "/resources/solar" }, { label: "Météo par site", kind: "link", to: "/geography/weather" }],
   },
 };
@@ -63,6 +64,7 @@ function Overview() {
     {isLoading ? <p className="text-sm text-muted-foreground">Chargement…</p> : error ? <p className="text-sm text-destructive">Le catalogue n'a pas pu être chargé.</p> :
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{data.map((t) => {
         const cfg = TECH[t.code];
+        const audited = calculationScope(engines[t.code] ?? "");
         const Icon = icons[t.code as keyof typeof icons];
         const rows = t.code === "PV" || t.code === "CSP" ? inventory.solar : t.code === "WIND" ? inventory.wind : t.code === "BIOMASS" ? inventory.biomass : inventory.configs;
         const counts = summarizeInventory(rows);
@@ -73,7 +75,7 @@ function Overview() {
             <Badge variant="secondary">{!t.active ? "Inactive" : cfg?.status ?? "Informatif"}</Badge>
           </div>
           <h2 className="mt-2 flex items-center gap-2 font-semibold">{Icon && <Icon className="h-5 w-5 text-primary" />}{t.name}</h2>
-          <p className="mt-2 text-sm text-muted-foreground">{cfg?.scope ?? t.description}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{audited?.scope ?? cfg?.scope ?? t.description}</p>
           <dl className="mt-4 grid grid-cols-2 gap-3 border-y border-border py-3 text-xs">
             <div><dt className="text-muted-foreground">{t.code === "BATTERY" ? "Configurations enregistrées" : "Ressources enregistrées"}</dt><dd className="mt-1 text-lg font-semibold">{inventory.isPending || inventory.error ? "—" : counts.registered}</dd></div>
             <div><dt className="text-muted-foreground">Fiches validées</dt><dd className="mt-1 text-lg font-semibold">{inventory.isPending || inventory.error ? "—" : counts.validated}</dd></div>
@@ -83,11 +85,12 @@ function Overview() {
           {t.code === "CSP" && <p className="mt-2 text-xs text-muted-foreground">{inventory.isPending || inventory.error ? "—" : inventory.solar.filter(r => r.dni !== null).length} fiches solaires avec DNI renseigné ; validation et météo horaire requises pour le bilan.</p>}
           {["PV", "WIND", "CSP"].includes(t.code) && <p className="mt-2 text-xs text-muted-foreground">Météo horaire : {inventory.isPending || inventory.error ? "—" : `${inventory.weather.length} fiches enregistrées, ${inventory.weather.filter(r => r.status === "validated").length} validées`}. Les fiches météo sont distinctes des ressources.</p>}
           {t.code === "BATTERY" && !inventory.error && inventory.configs.map(c => <Link key={c.id} to="/projects/$id/storage" params={{ id: c.project_id }} className="mt-2 text-xs text-primary hover:underline">Configuration du projet · {c.status === "validated" ? "Validée" : c.status}</Link>)}
-          <p className="mt-2 text-xs text-muted-foreground">{t.code === "BATTERY" ? "Configuration et fiche validées, PV terminé du même projet et demande horaire alignée requis." : t.code === "BIOMASS" ? "Quantité annuelle, PCI sur brut et disponibilité documentée requis." : "Météo horaire validée et paramètres documentés requis."} La suffisance est contrôlée avant le calcul.</p>
-          <p className="mt-2 text-xs text-muted-foreground">Connexion du moteur : à vérifier dans Simulations. Les fiches seules ne garantissent pas un calcul possible.</p>
+          <p className="mt-2 text-xs text-muted-foreground"><strong>Entrées requises : </strong>{audited?.required ?? "Paramètres documentés requis."}</p>
+          {audited && <p className="mt-2 text-xs text-muted-foreground"><strong>Limites : </strong>{audited.limits}</p>}
+          <p className="mt-2 text-xs text-muted-foreground">Validation scientifique : à confirmer par l’ingénieur. Connexion du service distincte des tests et des calculs enregistrés.</p>
           {cfg && t.active && <div className="mt-auto flex flex-wrap gap-2 pt-4">{cfg.actions.map((a, i) => <Button key={i} asChild variant={i === 0 ? "default" : "outline"} size="sm" className="h-auto min-h-8 whitespace-normal text-left">{a.kind === "sim"
             ? <Link to="/simulations/new" search={{ tab: a.tab }}>{a.label}<ArrowRight /></Link>
-            : <Link to={a.to} search={filter}>{a.label}<ArrowRight /></Link>}</Button>)}</div>}
+            : <Link to={a.to} search={filter}>{a.label}<ArrowRight /></Link>}</Button>)}<Button asChild variant="ghost" size="sm"><Link to="/simulations">Résultats enregistrés<ArrowRight /></Link></Button></div>}
 
         </article>;
       })}</div>}

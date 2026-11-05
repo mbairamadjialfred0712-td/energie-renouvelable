@@ -81,3 +81,14 @@ Le projet dispose de cinq moteurs Python, mais pas de cinq modèles physiques co
 ## 7. Fichiers modifiés à cette étape
 
 `AUDIT_MOTEUR_SCIENTIFIQUE.md`, `roadmap.md` et le plan de réalisation ; exigences mémorisées. Aucun code applicatif/Python, formule, contrat, configuration, secret, donnée, rôle ou politique modifié. La base de connaissance énergie-renouvelable a guidé la séparation données/hypothèses/résultats et la validation réservée à l’ingénieur.
+
+## 8. Étape 1 approuvée — états et accès (5 novembre 2026)
+
+- Simulations et Technologies partagent le périmètre audité des cinq calculs : statuts logiciels, entrées et limites, distincts de la connexion du service et de la validation scientifique.
+- Biomasse annoncée comme énergie primaire uniquement ; CSP décrit comme bilan prescrit avec conversion électrique conditionnelle, sans stockage/dispatch. PV et batterie ne prétendent pas simuler vieillissement ou équipements fabricant détaillés.
+- Les déclarations de capacités portent « Code déclaré » ou « Absent du service Python », pas une promesse de calcul réussi. Finance et optimisation bornée identifiées comme calculs existants dans l’application ; hybride général reste préparation/comparaison.
+- Les cinq accès ouvrent leur onglet de formulaire existant ; accès aux scénarios, à la finance et aux résultats enregistrés conservés. En cas de panne du service, l’interface précise que les résultats sauvegardés restent consultables ; bouton de revérification utilisant le composant standard.
+- Fichiers : nouveaux `src/features/engine/calculation-scope.ts`, `calculation-access.tsx` ; modifiés `engine-status-card.tsx`, `src/routes/_authenticated/simulations.index.tsx`, `technologies.index.tsx`, `AGENTS.md`, présent rapport et `roadmap.md`.
+- Tests : **435 tests TypeScript réussis / 34 fichiers**. Aucune nouvelle règle de calcul ou permission, donc aucun test de copy/styling ajouté. Dernier contrôle automatique **build OK**, après correction du paramètre requis du lien finance.
+- Navigateur connecté avec le compte demandeur : connexion du service, ouverture des cinq onglets PV/éolien/batterie/biomasse/CSP, finance, résultat batterie QA enregistré puis Technologies ; aucune erreur JavaScript. Captures Simulations/Technologies inspectées, compteurs historiques préservés. Aucun nouveau calcul, aucune donnée modifiée.
+- Reste : étapes 2–6 non implémentées par cette approbation ; qualification scientifique, nouveau dispatch hybride, dimensionnement, persistance financière complète et isolation deux comptes toujours séparés. Interface publiée non vérifiée, aucun déploiement ni secret changé. Base de connaissance énergie-renouvelable respectée.
