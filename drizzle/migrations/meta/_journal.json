@@ -169,6 +169,13 @@
       "when": 1792235666789,
       "tag": "0023_hybrid_preparation_role_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793934287391,
+      "tag": "0024_imported_files_category_history",
+      "breakpoints": true
     }
   ]
 }
