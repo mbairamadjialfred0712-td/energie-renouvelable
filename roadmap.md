@@ -11,7 +11,8 @@
 - Exécution E2E PV et batterie : Render est en ligne et SCIENTIFIC_ENGINE_URL/KEY sont enregistrés depuis le 22/10/2026, mais ENGINE_SHARED_KEY reste à configurer côté Render ; aucune simulation PV terminée n’existe pour tester la liaison production → LCOE.
 
 ## En cours
-- [ ] PROMPT 19.2 — préparer comptes QA autorisés, matrice d’isolation et contrôles publiés dans VALIDATION_INTERFACES.md ; lecture seule, aucune création de compte/donnée, migration, modification de permission ou publication.
+- [x] PROMPT 19.2 — préparation dans VALIDATION_INTERFACES.md : cinq comptes/rôles et historique inspectés, politiques/droits actifs relus, matrices ISO-01–10 et PROD-01–07, procédure d’invitation et preuves attendues ; sondages publics app/health HTTP 200, auth moteur configurée ; aucun changement applicatif, compte/donnée, permission, migration ou publication.
+- [ ] PROMPT 19.2 — exécution finale : paire A/B non administratrice à désigner et sessions à autoriser, jeux privés A/B absents, révision/connexion publiées non vérifiées ; isolation et version publiée complète NON VALIDÉES. Tout calcul/création QA requiert une phase séparément autorisée.
 - [x] Révision générale du moteur (03/11/2026) — audit A–H livré dans AUDIT_MOTEUR_SCIENTIFIQUE.md ; 225 Python + 435 TS réussis, santé Render 200/auth configurée, résultat batterie QA relu ; aucun nouveau calcul, code ou secret modifié.
 - [x] Révision générale — étape 1 approuvée : périmètres communs Simulations/Technologies, descriptions biomasse/CSP et calculs finance/optimisation distincts de Python ; cinq formulaires et résultat batterie QA ouverts, 435 tests, build OK, aucune erreur navigateur. Rapport AUDIT_MOTEUR_SCIENTIFIQUE.md.
 - [ ] Révision générale — étapes 2–6 : hors approbation de l’étape 1 ; prérequis modèles/données/validation de Joël avant extensions scientifiques, second compte QA autorisé avant isolation.
