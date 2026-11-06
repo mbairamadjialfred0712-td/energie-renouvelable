@@ -949,14 +949,54 @@ export type Database = {
           },
         ]
       }
+      imported_file_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          changes: Json | null
+          created_at: string
+          file_id: string
+          id: string
+          owner_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          changes?: Json | null
+          created_at?: string
+          file_id: string
+          id?: string
+          owner_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          changes?: Json | null
+          created_at?: string
+          file_id?: string
+          id?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imported_file_history_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "imported_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imported_files: {
         Row: {
+          category: string
           corrected_data: Json | null
           created_at: string
           error_message: string | null
           extracted_data: Json | null
           file_name: string
           id: string
+          locality_id: string | null
           mime_type: string
           owner_id: string
           project_id: string | null
@@ -967,12 +1007,14 @@ export type Database = {
           workflow_step: string
         }
         Insert: {
+          category?: string
           corrected_data?: Json | null
           created_at?: string
           error_message?: string | null
           extracted_data?: Json | null
           file_name: string
           id?: string
+          locality_id?: string | null
           mime_type: string
           owner_id?: string
           project_id?: string | null
@@ -983,12 +1025,14 @@ export type Database = {
           workflow_step?: string
         }
         Update: {
+          category?: string
           corrected_data?: Json | null
           created_at?: string
           error_message?: string | null
           extracted_data?: Json | null
           file_name?: string
           id?: string
+          locality_id?: string | null
           mime_type?: string
           owner_id?: string
           project_id?: string | null
@@ -999,6 +1043,13 @@ export type Database = {
           workflow_step?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "imported_files_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "imported_files_project_id_fkey"
             columns: ["project_id"]
