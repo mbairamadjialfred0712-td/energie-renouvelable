@@ -15,7 +15,7 @@ import {
 } from "@/features/imports/import-model";
 import { extractDocument } from "@/features/imports/extract";
 
-const searchSchema = z.object({ category: z.string().optional(), status: z.string().optional(), q: z.string().optional });
+const searchSchema = z.object({ category: z.string().optional(), status: z.string().optional(), q: z.string().optional() });
 
 export const Route = createFileRoute("/_authenticated/imports/$id")({
   validateSearch: (s: Record<string, unknown>) => searchSchema.parse(s),
