@@ -6,7 +6,7 @@ import { z } from "zod";
 import { WorkspacePage } from "@/components/app/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getImport, updateImportMeta, saveExtraction, saveCorrections, setImportStatus, deleteImport } from "@/lib/imports.functions";
+import { getImport, updateImportMeta, saveExtraction, saveCorrections, setImportStatus, deleteImport, type ImportDetail } from "@/lib/imports.functions";
 import { listProjects } from "@/lib/projects.functions";
 import { listLocalities } from "@/lib/geography.functions";
 import {
@@ -40,7 +40,7 @@ function ImportDetailPage() {
   const [corrections, setCorrections] = useState<CorrectedField[] | null>(null);
   const [meta, setMeta] = useState<{ category: ImportCategory; project_id: string; locality_id: string } | null>(null);
 
-  const { data, isLoading } = useQuery({ queryKey: ["imports", "detail", id], queryFn: () => getImport({ data: { id } }) });
+  const { data, isLoading } = useQuery<ImportDetail | null>({ queryKey: ["imports", "detail", id], queryFn: () => getImport({ data: { id } }) as Promise<ImportDetail | null> });
   const { data: projects } = useQuery({ queryKey: ["projects"], queryFn: () => listProjects() });
   const { data: localities } = useQuery({ queryKey: ["localities"], queryFn: () => listLocalities() });
 
