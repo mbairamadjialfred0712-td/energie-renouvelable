@@ -44,10 +44,24 @@ export const listImports = createServerFn({ method: "GET" })
     return list.map(({ extracted_data, ...r }) => ({ ...r, has_extraction: Boolean(extracted_data) }));
   });
 
+export type ImportItem = {
+  id: string; file_name: string; mime_type: string; size_bytes: number; category: string;
+  project_id: string | null; locality_id: string | null; workflow_step: string; validation_status: string;
+  extracted_data: unknown; corrected_data: unknown; error_message: string | null; created_at: string;
+  projects: { name: string } | null; localities: { name: string } | null;
+};
+
+export type ImportDetail = {
+  item: ImportItem;
+  history: { id: string; action: string; changes: Record<string, unknown> | null; created_at: string }[];
+  signedUrl: string | null;
+  canValidate: boolean;
+};
+
 export const getImport = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<ImportDetail | null> => {
     const sb = context.supabase as any;
     const { data: row, error } = await sb.from("imported_files").select("*, projects(name), localities(name)").eq("id", data.id).maybeSingle();
     if (error) throw new Error("Le document n’a pas pu être chargé.");
@@ -55,7 +69,7 @@ export const getImport = createServerFn({ method: "GET" })
     const { data: history } = await sb.from("imported_file_history").select("id, action, changes, created_at").eq("file_id", data.id).order("created_at", { ascending: false }).limit(100);
     const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, 300);
     return {
-      item: row as Record<string, unknown>,
+      item: row as ImportItem,
       history: (history ?? []) as { id: string; action: string; changes: Record<string, unknown> | null; created_at: string }[],
       signedUrl: (signed?.signedUrl as string | undefined) ?? null,
       canValidate: await canValidate(sb, context.userId),
