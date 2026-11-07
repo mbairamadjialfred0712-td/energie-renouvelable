@@ -74,13 +74,13 @@ function ImportsPage() {
         if (!session) throw new Error("Session expirée : reconnectez-vous.");
         const fileId = crypto.randomUUID();
         const path = importStoragePath(session.user.id, fileId, file.name);
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/project-imports/${path}`;
+        const url = `${import.meta.env["VITE_SUPABASE_URL"]}/storage/v1/object/project-imports/${path}`;
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhrRef.current = xhr;
           xhr.open("POST", url);
           xhr.setRequestHeader("Authorization", `Bearer ${session.access_token}`);
-          xhr.setRequestHeader("apikey", import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+          xhr.setRequestHeader("apikey", import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"]);
           xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) setUpload((u) => (u ? { ...u, progress: Math.round((e.loaded / e.total) * 100) } : u));

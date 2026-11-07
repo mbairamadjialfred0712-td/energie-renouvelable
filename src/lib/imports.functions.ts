@@ -44,10 +44,17 @@ export const listImports = createServerFn({ method: "GET" })
     return list.map(({ extracted_data, ...r }) => ({ ...r, has_extraction: Boolean(extracted_data) }));
   });
 
+export type ImportDetail = {
+  item: Record<string, unknown>;
+  history: { id: string; action: string; changes: Record<string, unknown> | null; created_at: string }[];
+  signedUrl: string | null;
+  canValidate: boolean;
+};
+
 export const getImport = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<ImportDetail | null> => {
     const sb = context.supabase as any;
     const { data: row, error } = await sb.from("imported_files").select("*, projects(name), localities(name)").eq("id", data.id).maybeSingle();
     if (error) throw new Error("Le document n’a pas pu être chargé.");
