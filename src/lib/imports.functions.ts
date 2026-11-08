@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Json } from "@/integrations/supabase/types";
 import {
   IMPORT_CATEGORIES, importFileError, parseCorrectedData, parseExtractedData,
   type ImportCategory,
@@ -47,7 +48,7 @@ export const listImports = createServerFn({ method: "GET" })
 export type ImportItem = {
   id: string; file_name: string; mime_type: string; size_bytes: number; category: string;
   project_id: string | null; locality_id: string | null; workflow_step: string; validation_status: string;
-  extracted_data: unknown; corrected_data: unknown; error_message: string | null; created_at: string;
+  extracted_data: Json; corrected_data: Json; error_message: string | null; created_at: string;
   projects: { name: string } | null; localities: { name: string } | null;
 };
 
