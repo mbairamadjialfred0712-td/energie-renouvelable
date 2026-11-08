@@ -74,10 +74,9 @@ export async function extractDocument(format: ImportFormat, blob: Blob, fileName
   try {
     if (format === "csv") return toTable(parseCsvText(await blob.text()));
     if (format === "xlsx") {
-      const { readSheet, readSheetNames } = await import("read-excel-file/browser");
-      const names = await readSheetNames(fileName.endsWith(".xlsx") ? blob as File : new File([blob], fileName));
-      if (names.length === 0) throw new Error("Classeur vide.");
-      const sheet = await readSheet(new File([blob], fileName), { sheet: 1 });
+      const { readSheet } = await import("read-excel-file/browser");
+      const sheet = await readSheet(new File([blob], fileName), 1);
+      if (sheet.length === 0) throw new Error("Classeur vide.");
       return toTable(sheet.map((r) => r.map((c) => (c === null || c === undefined ? "" : c instanceof Date ? c.toISOString().slice(0, 10) : String(c)))));
     }
     if (format === "pdf") return await extractPdf(blob);

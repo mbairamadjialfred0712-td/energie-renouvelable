@@ -40,6 +40,7 @@ import { Route as AuthenticatedGeographyDepartmentsRouteImport } from './routes/
 import { Route as AuthenticatedGeographyImportRouteImport } from './routes/_authenticated/geography.import'
 import { Route as AuthenticatedGeographyRegionsRouteImport } from './routes/_authenticated/geography.regions'
 import { Route as AuthenticatedGeographySitesRouteImport } from './routes/_authenticated/geography.sites'
+import { Route as AuthenticatedImportsIndexRouteImport } from './routes/_authenticated/imports.index'
 import { Route as AuthenticatedImportsIdRouteImport } from './routes/_authenticated/imports.$id'
 import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
 import { Route as AuthenticatedProjectsIdRouteImport } from './routes/_authenticated/projects.$id'
@@ -238,6 +239,12 @@ const AuthenticatedGeographySitesRoute =
     id: '/sites',
     path: '/sites',
     getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
+const AuthenticatedImportsIndexRoute =
+  AuthenticatedImportsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedImportsRoute,
   } as any)
 const AuthenticatedImportsIdRoute = AuthenticatedImportsIdRouteImport.update({
   id: '/$id',
@@ -489,6 +496,7 @@ export interface FileRoutesByFullPath {
   '/technologies/storage': typeof AuthenticatedTechnologiesStorageRouteWithChildren
   '/demand/': typeof AuthenticatedDemandIndexRoute
   '/geography/': typeof AuthenticatedGeographyIndexRoute
+  '/imports/': typeof AuthenticatedImportsIndexRoute
   '/projects/': typeof AuthenticatedProjectsIndexRoute
   '/resources/': typeof AuthenticatedResourcesIndexRoute
   '/simulations/': typeof AuthenticatedSimulationsIndexRoute
@@ -523,7 +531,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finance': typeof AuthenticatedFinanceRoute
-  '/imports': typeof AuthenticatedImportsRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/scenarios': typeof AuthenticatedScenariosRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -546,6 +553,7 @@ export interface FileRoutesByTo {
   '/simulations/new': typeof AuthenticatedSimulationsNewRoute
   '/demand': typeof AuthenticatedDemandIndexRoute
   '/geography': typeof AuthenticatedGeographyIndexRoute
+  '/imports': typeof AuthenticatedImportsIndexRoute
   '/projects': typeof AuthenticatedProjectsIndexRoute
   '/resources': typeof AuthenticatedResourcesIndexRoute
   '/simulations': typeof AuthenticatedSimulationsIndexRoute
@@ -615,6 +623,7 @@ export interface FileRoutesById {
   '/_authenticated/technologies/storage': typeof AuthenticatedTechnologiesStorageRouteWithChildren
   '/_authenticated/demand/': typeof AuthenticatedDemandIndexRoute
   '/_authenticated/geography/': typeof AuthenticatedGeographyIndexRoute
+  '/_authenticated/imports/': typeof AuthenticatedImportsIndexRoute
   '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
   '/_authenticated/resources/': typeof AuthenticatedResourcesIndexRoute
   '/_authenticated/simulations/': typeof AuthenticatedSimulationsIndexRoute
@@ -684,6 +693,7 @@ export interface FileRouteTypes {
     | '/technologies/storage'
     | '/demand/'
     | '/geography/'
+    | '/imports/'
     | '/projects/'
     | '/resources/'
     | '/simulations/'
@@ -718,7 +728,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/dashboard'
     | '/finance'
-    | '/imports'
     | '/reports'
     | '/scenarios'
     | '/settings'
@@ -741,6 +750,7 @@ export interface FileRouteTypes {
     | '/simulations/new'
     | '/demand'
     | '/geography'
+    | '/imports'
     | '/projects'
     | '/resources'
     | '/simulations'
@@ -809,6 +819,7 @@ export interface FileRouteTypes {
     | '/_authenticated/technologies/storage'
     | '/_authenticated/demand/'
     | '/_authenticated/geography/'
+    | '/_authenticated/imports/'
     | '/_authenticated/projects/'
     | '/_authenticated/resources/'
     | '/_authenticated/simulations/'
@@ -1066,6 +1077,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/geography/sites'
       preLoaderRoute: typeof AuthenticatedGeographySitesRouteImport
       parentRoute: typeof AuthenticatedGeographyRoute
+    }
+    '/_authenticated/imports/': {
+      id: '/_authenticated/imports/'
+      path: '/'
+      fullPath: '/imports/'
+      preLoaderRoute: typeof AuthenticatedImportsIndexRouteImport
+      parentRoute: typeof AuthenticatedImportsRoute
     }
     '/_authenticated/imports/$id': {
       id: '/_authenticated/imports/$id'
@@ -1371,10 +1389,12 @@ const AuthenticatedGeographyRouteWithChildren =
 
 interface AuthenticatedImportsRouteChildren {
   AuthenticatedImportsIdRoute: typeof AuthenticatedImportsIdRoute
+  AuthenticatedImportsIndexRoute: typeof AuthenticatedImportsIndexRoute
 }
 
 const AuthenticatedImportsRouteChildren: AuthenticatedImportsRouteChildren = {
   AuthenticatedImportsIdRoute: AuthenticatedImportsIdRoute,
+  AuthenticatedImportsIndexRoute: AuthenticatedImportsIndexRoute,
 }
 
 const AuthenticatedImportsRouteWithChildren =
