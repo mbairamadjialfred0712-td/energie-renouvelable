@@ -71,7 +71,7 @@ export const getImport = createServerFn({ method: "GET" })
     const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(row.storage_path, 300);
     return {
       item: row as ImportItem,
-      history: (history ?? []) as { id: string; action: string; changes: Record<string, unknown> | null; created_at: string }[],
+      history: (history ?? []) as { id: string; action: string; changes: Json; created_at: string }[],
       signedUrl: (signed?.signedUrl as string | undefined) ?? null,
       canValidate: await canValidate(sb, context.userId),
     };
