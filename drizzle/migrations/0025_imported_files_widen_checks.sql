@@ -1,0 +1,4 @@
+ALTER TABLE public.imported_files DROP CONSTRAINT imported_files_mime_type_check;
+ALTER TABLE public.imported_files ADD CONSTRAINT imported_files_mime_type_check CHECK (mime_type IN ('application/pdf','text/csv','text/plain','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/octet-stream'));
+ALTER TABLE public.imported_files DROP CONSTRAINT imported_files_workflow_step_check;
+ALTER TABLE public.imported_files ADD CONSTRAINT imported_files_workflow_step_check CHECK (workflow_step IN ('imported','extracted','extraction','identification','normalization','validation','saved','failed'));
