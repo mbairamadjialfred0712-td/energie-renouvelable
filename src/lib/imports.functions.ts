@@ -54,7 +54,7 @@ export type ImportItem = {
 
 export type ImportDetail = {
   item: ImportItem;
-  history: { id: string; action: string; changes: Record<string, unknown> | null; created_at: string }[];
+  history: { id: string; action: string; changes: Json; created_at: string }[];
   signedUrl: string | null;
   canValidate: boolean;
 };
