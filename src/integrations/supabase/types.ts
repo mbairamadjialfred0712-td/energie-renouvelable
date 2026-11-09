@@ -443,6 +443,11 @@ export type Database = {
           longitude: number | null
           name: string
           owner_id: string
+          population: number | null
+          population_method: string | null
+          population_source: string | null
+          population_updated_at: string | null
+          population_year: number | null
           status: Database["public"]["Enums"]["record_status"]
           updated_at: string
         }
@@ -459,6 +464,11 @@ export type Database = {
           longitude?: number | null
           name: string
           owner_id?: string
+          population?: number | null
+          population_method?: string | null
+          population_source?: string | null
+          population_updated_at?: string | null
+          population_year?: number | null
           status?: Database["public"]["Enums"]["record_status"]
           updated_at?: string
         }
@@ -475,6 +485,11 @@ export type Database = {
           longitude?: number | null
           name?: string
           owner_id?: string
+          population?: number | null
+          population_method?: string | null
+          population_source?: string | null
+          population_updated_at?: string | null
+          population_year?: number | null
           status?: Database["public"]["Enums"]["record_status"]
           updated_at?: string
         }
