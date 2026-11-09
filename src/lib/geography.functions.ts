@@ -55,6 +55,10 @@ const countrySchema = z.object({
   latitude: optionalNumber(-90, 90),
   longitude: optionalNumber(-180, 180),
   description: optionalText(2000),
+  population: optionalNumber(0, 10_000_000_000),
+  populationYear: optionalNumber(1900, 2100),
+  populationSource: optionalText(400),
+  populationMethod: z.enum(["recensement", "estimation", "projection"]).optional().nullable(),
   status: recordStatus,
 });
 
@@ -214,6 +218,11 @@ export const saveCountry = createServerFn({ method: "POST" })
       latitude: data.latitude,
       longitude: data.longitude,
       description: data.description,
+      population: data.population ?? null,
+      population_year: data.populationYear ?? null,
+      population_source: data.populationSource ?? null,
+      population_method: data.populationMethod ?? null,
+      population_updated_at: data.population != null ? new Date().toISOString() : null,
       status: data.status,
     };
     const query = data.id
