@@ -32,7 +32,7 @@ function Dashboard() {
       <div className="grid gap-px border border-border bg-border sm:grid-cols-3 xl:grid-cols-6">
         <Stat label="Pays" value={v(d?.countries)} /><Stat label="Régions" value={v(d?.regions)} /><Stat label="Départements" value={v(d?.departments)} />
         <Stat label="Localités" value={v(d?.localities)} /><Stat label="Sites d’étude" value={v(d?.sites)} />
-        <Stat label="Population géolocalisée" value={v(d?.populationGeolocated)} hint="Somme des populations renseignées (source indiquée par localité)" />
+        <Stat label="Population géolocalisée" value={v(d?.populationGeolocated)} hint="Somme des populations des localités renseignées — ce n'est pas la population nationale" />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
