@@ -2,15 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { deleteCountry, listCountries, saveCountry } from "@/lib/geography.functions";
 import { EntityManager, STATUS_FIELD, STATUS_LABELS, numberText, text } from "@/features/geography/entity-manager";
 import { metaFor, pick, str } from "@/features/geography/form-helpers";
+import { POPULATION_METHODS, populationLabel, populationWarning } from "@/features/geography/demography";
 
 type Row = Awaited<ReturnType<typeof listCountries>>[number];
 
 export const Route = createFileRoute("/_authenticated/geography/countries")({
-  head: () => metaFor("Pays", "Référentiel des pays : codes ISO, devise, coordonnées de référence."),
+  head: () => metaFor("Pays", "Référentiel des pays : codes ISO, devise, coordonnées et population nationale tracée."),
   component: CountriesPage,
 });
 
-const KEYS = ["name", "code", "iso2", "iso3", "currency", "latitude", "longitude", "description", "status"];
+const KEYS = ["name", "code", "iso2", "iso3", "currency", "latitude", "longitude", "description", "population", "populationYear", "populationSource", "populationMethod", "status"];
+
+const CURRENT_YEAR = new Date().getFullYear();
 
 function CountriesPage() {
   return (
@@ -24,7 +27,15 @@ function CountriesPage() {
       saver={(form, id) => saveCountry({ data: { ...pick(form, KEYS), id: id ?? undefined } as never })}
       remover={(row) => deleteCountry({ data: { id: row.id } })}
       emptyForm={{ status: "draft" }}
-      toForm={(row) => Object.fromEntries(KEYS.map((key) => [key, str((row as Record<string, unknown>)[key])]))}
+      toForm={(row) => {
+        const r = row as Record<string, unknown>;
+        return {
+          ...Object.fromEntries(KEYS.map((key) => [key, str(r[key])])),
+          populationYear: str(r["population_year"]),
+          populationSource: str(r["population_source"]),
+          populationMethod: str(r["population_method"]),
+        };
+      }}
       rowId={(row) => row.id}
       rowLabel={(row) => row.name}
       searchText={(row) => `${row.name} ${row.code} ${row.iso2 ?? ""} ${row.iso3 ?? ""}`}
