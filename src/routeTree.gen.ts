@@ -36,6 +36,7 @@ import { Route as AuthenticatedDemandIdRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDemandNewRouteImport } from './routes/_authenticated/demand.new'
 import { Route as AuthenticatedGeographyIndexRouteImport } from './routes/_authenticated/geography.index'
 import { Route as AuthenticatedGeographyCountriesRouteImport } from './routes/_authenticated/geography.countries'
+import { Route as AuthenticatedGeographyDemographyWatchRouteImport } from './routes/_authenticated/geography.demography-watch'
 import { Route as AuthenticatedGeographyDepartmentsRouteImport } from './routes/_authenticated/geography.departments'
 import { Route as AuthenticatedGeographyImportRouteImport } from './routes/_authenticated/geography.import'
 import { Route as AuthenticatedGeographyRegionsRouteImport } from './routes/_authenticated/geography.regions'
@@ -214,6 +215,12 @@ const AuthenticatedGeographyCountriesRoute =
   AuthenticatedGeographyCountriesRouteImport.update({
     id: '/countries',
     path: '/countries',
+    getParentRoute: () => AuthenticatedGeographyRoute,
+  } as any)
+const AuthenticatedGeographyDemographyWatchRoute =
+  AuthenticatedGeographyDemographyWatchRouteImport.update({
+    id: '/demography-watch',
+    path: '/demography-watch',
     getParentRoute: () => AuthenticatedGeographyRoute,
   } as any)
 const AuthenticatedGeographyDepartmentsRoute =
@@ -480,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/demand/$id': typeof AuthenticatedDemandIdRoute
   '/demand/new': typeof AuthenticatedDemandNewRoute
   '/geography/countries': typeof AuthenticatedGeographyCountriesRoute
+  '/geography/demography-watch': typeof AuthenticatedGeographyDemographyWatchRoute
   '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/geography/import': typeof AuthenticatedGeographyImportRoute
   '/geography/regions': typeof AuthenticatedGeographyRegionsRoute
@@ -541,6 +549,7 @@ export interface FileRoutesByTo {
   '/demand/$id': typeof AuthenticatedDemandIdRoute
   '/demand/new': typeof AuthenticatedDemandNewRoute
   '/geography/countries': typeof AuthenticatedGeographyCountriesRoute
+  '/geography/demography-watch': typeof AuthenticatedGeographyDemographyWatchRoute
   '/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/geography/import': typeof AuthenticatedGeographyImportRoute
   '/geography/regions': typeof AuthenticatedGeographyRegionsRoute
@@ -607,6 +616,7 @@ export interface FileRoutesById {
   '/_authenticated/demand/$id': typeof AuthenticatedDemandIdRoute
   '/_authenticated/demand/new': typeof AuthenticatedDemandNewRoute
   '/_authenticated/geography/countries': typeof AuthenticatedGeographyCountriesRoute
+  '/_authenticated/geography/demography-watch': typeof AuthenticatedGeographyDemographyWatchRoute
   '/_authenticated/geography/departments': typeof AuthenticatedGeographyDepartmentsRoute
   '/_authenticated/geography/import': typeof AuthenticatedGeographyImportRoute
   '/_authenticated/geography/regions': typeof AuthenticatedGeographyRegionsRoute
@@ -677,6 +687,7 @@ export interface FileRouteTypes {
     | '/demand/$id'
     | '/demand/new'
     | '/geography/countries'
+    | '/geography/demography-watch'
     | '/geography/departments'
     | '/geography/import'
     | '/geography/regions'
@@ -738,6 +749,7 @@ export interface FileRouteTypes {
     | '/demand/$id'
     | '/demand/new'
     | '/geography/countries'
+    | '/geography/demography-watch'
     | '/geography/departments'
     | '/geography/import'
     | '/geography/regions'
@@ -803,6 +815,7 @@ export interface FileRouteTypes {
     | '/_authenticated/demand/$id'
     | '/_authenticated/demand/new'
     | '/_authenticated/geography/countries'
+    | '/_authenticated/geography/demography-watch'
     | '/_authenticated/geography/departments'
     | '/_authenticated/geography/import'
     | '/_authenticated/geography/regions'
@@ -1048,6 +1061,13 @@ declare module '@tanstack/react-router' {
       path: '/countries'
       fullPath: '/geography/countries'
       preLoaderRoute: typeof AuthenticatedGeographyCountriesRouteImport
+      parentRoute: typeof AuthenticatedGeographyRoute
+    }
+    '/_authenticated/geography/demography-watch': {
+      id: '/_authenticated/geography/demography-watch'
+      path: '/demography-watch'
+      fullPath: '/geography/demography-watch'
+      preLoaderRoute: typeof AuthenticatedGeographyDemographyWatchRouteImport
       parentRoute: typeof AuthenticatedGeographyRoute
     }
     '/_authenticated/geography/departments': {
@@ -1350,6 +1370,7 @@ const AuthenticatedDemandRouteWithChildren =
 
 interface AuthenticatedGeographyRouteChildren {
   AuthenticatedGeographyCountriesRoute: typeof AuthenticatedGeographyCountriesRoute
+  AuthenticatedGeographyDemographyWatchRoute: typeof AuthenticatedGeographyDemographyWatchRoute
   AuthenticatedGeographyDepartmentsRoute: typeof AuthenticatedGeographyDepartmentsRoute
   AuthenticatedGeographyImportRoute: typeof AuthenticatedGeographyImportRoute
   AuthenticatedGeographyRegionsRoute: typeof AuthenticatedGeographyRegionsRoute
@@ -1365,6 +1386,8 @@ interface AuthenticatedGeographyRouteChildren {
 const AuthenticatedGeographyRouteChildren: AuthenticatedGeographyRouteChildren =
   {
     AuthenticatedGeographyCountriesRoute: AuthenticatedGeographyCountriesRoute,
+    AuthenticatedGeographyDemographyWatchRoute:
+      AuthenticatedGeographyDemographyWatchRoute,
     AuthenticatedGeographyDepartmentsRoute:
       AuthenticatedGeographyDepartmentsRoute,
     AuthenticatedGeographyImportRoute: AuthenticatedGeographyImportRoute,
