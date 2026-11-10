@@ -3,6 +3,7 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 const tabs = [
   { to: "/geography", label: "Vue d’ensemble", exact: true },
   { to: "/geography/countries", label: "Pays" },
+  { to: "/geography/demography-watch", label: "Suivi démographique" },
   { to: "/geography/regions", label: "Régions" },
   { to: "/geography/departments", label: "Départements" },
   { to: "/geography/localities", label: "Localités" },
