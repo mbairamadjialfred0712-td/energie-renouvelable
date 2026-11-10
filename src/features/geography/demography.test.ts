@@ -1,16 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { POPULATION_NOT_AVAILABLE, populationLabel, populationWarning } from "./demography";
 
+// Intl fr-FR utilise une espace fine insécable (U+202F) comme séparateur de milliers.
+const norm = (s: string) => s.replace(/\u202f/g, " ");
+
 describe("populationLabel", () => {
   it("affiche la valeur avec son année de référence", () => {
-    expect(populationLabel({ population: 33293101, population_year: 2026, population_method: "projection" }))
+    expect(norm(populationLabel({ population: 33293101, population_year: 2026, population_method: "projection" })))
       .toBe("33 293 101 hab. (2026)");
   });
   it("affiche « Donnée non disponible » quand la population est absente, sans inventer de valeur", () => {
     expect(populationLabel({ population: null, population_year: null, population_method: null })).toBe(POPULATION_NOT_AVAILABLE);
   });
   it("affiche la valeur sans année si celle-ci manque", () => {
-    expect(populationLabel({ population: 1000, population_year: null, population_method: "recensement" }))
+    expect(norm(populationLabel({ population: 1000, population_year: null, population_method: "recensement" })))
       .toBe("1 000 hab.");
   });
 });
