@@ -19,9 +19,9 @@ function PublicDashboard() {
     <PublicShell>
       <main className="mx-auto max-w-7xl p-5 sm:p-8">
         <h1 className="text-3xl font-semibold">Tableau de bord énergétique — démonstration</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">Les indicateurs territoriaux ci-dessous sont réels (GeoNames). Les ressources, la demande et les projets sont propres à chaque compte et ne s’affichent qu’après connexion.</p>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">Les indicateurs territoriaux ci-dessous sont réels (GeoNames, extraction du 05/10/2026 — estimations non mesurées). La population affichée est la somme des seules localités référencées : ce n’est pas la population nationale. Les ressources, la demande et les projets sont propres à chaque compte et ne s’affichent qu’après connexion.</p>
         <div className="mt-6 grid gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-5">
-          {[["Pays", data?.countries], ["Régions", data?.regions], ["Départements", data?.departments], ["Localités", data?.localities], ["Population des localités (hab.)", pop]].map(([l, n]) => (
+          {[["Pays", data?.countries], ["Régions", data?.regions], ["Départements", data?.departments], ["Localités", data?.localities], ["Population des localités référencées (hab.)", pop]].map(([l, n]) => (
             <div key={l as string} className="bg-background p-5"><p className="text-sm text-muted-foreground">{l}</p><p className="mt-3 text-3xl font-semibold tabular-nums">{v(n as number)}</p></div>
           ))}
         </div>
