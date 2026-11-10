@@ -48,6 +48,10 @@ function CountriesPage() {
         STATUS_FIELD,
         { key: "latitude", label: "Latitude de référence", unit: "°", type: "number", help: "-90 à 90, degrés décimaux WGS84" },
         { key: "longitude", label: "Longitude de référence", unit: "°", type: "number", help: "-180 à 180, degrés décimaux WGS84" },
+        { key: "population", label: "Population nationale", unit: "habitants", type: "number", help: "Valeur officielle uniquement, avec son année et sa source. Laisser vide si inconnue." },
+        { key: "populationYear", label: "Année de référence", type: "number", help: "Année de la donnée, ex. 2026" },
+        { key: "populationMethod", label: "Méthode", type: "select", options: Object.entries(POPULATION_METHODS).map(([value, label]) => ({ value, label })), help: "Une projection ou une estimation n'est pas un recensement." },
+        { key: "populationSource", label: "Source démographique", type: "text", help: "Organisme et référence, ex. ANStat — projection démographique 2026" },
         { key: "description", label: "Description", type: "textarea", colSpan: 2 },
       ]}
       columns={[
@@ -56,6 +60,21 @@ function CountriesPage() {
         { label: "ISO 2 / 3", render: (r) => `${text(r.iso2)} / ${text(r.iso3)}` },
         { label: "Devise", render: (r) => text(r.currency) },
         { label: "Coordonnées", render: (r) => (r.latitude !== null && r.longitude !== null ? `${numberText(r.latitude)}°, ${numberText(r.longitude)}°` : "—") },
+        { label: "Population", render: (r) => {
+          const warning = populationWarning(r, CURRENT_YEAR);
+          return (
+            <div>
+              <div>{populationLabel(r)}</div>
+              {r.population !== null && r.population !== undefined && (
+                <div className="text-xs text-muted-foreground">
+                  {r.population_method ? POPULATION_METHODS[r.population_method as keyof typeof POPULATION_METHODS] : "Méthode inconnue"}
+                  {r.population_source ? ` — ${r.population_source}` : ""}
+                </div>
+              )}
+              {warning && <div className="text-xs text-amber-600">{warning}</div>}
+            </div>
+          );
+        } },
         { label: "Statut", render: (r) => STATUS_LABELS[r.status] },
       ]}
     />
