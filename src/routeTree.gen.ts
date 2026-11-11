@@ -77,6 +77,7 @@ import { Route as AuthenticatedTechnologiesStorageIndexRouteImport } from './rou
 import { Route as AuthenticatedTechnologiesStorageIdRouteImport } from './routes/_authenticated/technologies.storage.$id'
 import { Route as AuthenticatedTechnologiesStorageCompareRouteImport } from './routes/_authenticated/technologies.storage.compare'
 import { Route as AuthenticatedTechnologiesStorageNewRouteImport } from './routes/_authenticated/technologies.storage.new'
+import { Route as ApiPublicJobsPopulationImportRouteImport } from './routes/api/public/jobs/population-import'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -461,6 +462,12 @@ const AuthenticatedTechnologiesStorageNewRoute =
     path: '/new',
     getParentRoute: () => AuthenticatedTechnologiesStorageRoute,
   } as any)
+const ApiPublicJobsPopulationImportRoute =
+  ApiPublicJobsPopulationImportRouteImport.update({
+    id: '/api/public/jobs/population-import',
+    path: '/api/public/jobs/population-import',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -524,6 +531,7 @@ export interface FileRoutesByFullPath {
   '/technologies/storage/$id': typeof AuthenticatedTechnologiesStorageIdRoute
   '/technologies/storage/compare': typeof AuthenticatedTechnologiesStorageCompareRoute
   '/technologies/storage/new': typeof AuthenticatedTechnologiesStorageNewRoute
+  '/api/public/jobs/population-import': typeof ApiPublicJobsPopulationImportRoute
   '/geography/localities/': typeof AuthenticatedGeographyLocalitiesIndexRoute
   '/geography/weather/': typeof AuthenticatedGeographyWeatherIndexRoute
   '/resources/biomass/': typeof AuthenticatedResourcesBiomassIndexRoute
@@ -582,6 +590,7 @@ export interface FileRoutesByTo {
   '/technologies/storage/$id': typeof AuthenticatedTechnologiesStorageIdRoute
   '/technologies/storage/compare': typeof AuthenticatedTechnologiesStorageCompareRoute
   '/technologies/storage/new': typeof AuthenticatedTechnologiesStorageNewRoute
+  '/api/public/jobs/population-import': typeof ApiPublicJobsPopulationImportRoute
   '/geography/localities': typeof AuthenticatedGeographyLocalitiesIndexRoute
   '/geography/weather': typeof AuthenticatedGeographyWeatherIndexRoute
   '/resources/biomass': typeof AuthenticatedResourcesBiomassIndexRoute
@@ -653,6 +662,7 @@ export interface FileRoutesById {
   '/_authenticated/technologies/storage/$id': typeof AuthenticatedTechnologiesStorageIdRoute
   '/_authenticated/technologies/storage/compare': typeof AuthenticatedTechnologiesStorageCompareRoute
   '/_authenticated/technologies/storage/new': typeof AuthenticatedTechnologiesStorageNewRoute
+  '/api/public/jobs/population-import': typeof ApiPublicJobsPopulationImportRoute
   '/_authenticated/geography/localities/': typeof AuthenticatedGeographyLocalitiesIndexRoute
   '/_authenticated/geography/weather/': typeof AuthenticatedGeographyWeatherIndexRoute
   '/_authenticated/resources/biomass/': typeof AuthenticatedResourcesBiomassIndexRoute
@@ -724,6 +734,7 @@ export interface FileRouteTypes {
     | '/technologies/storage/$id'
     | '/technologies/storage/compare'
     | '/technologies/storage/new'
+    | '/api/public/jobs/population-import'
     | '/geography/localities/'
     | '/geography/weather/'
     | '/resources/biomass/'
@@ -782,6 +793,7 @@ export interface FileRouteTypes {
     | '/technologies/storage/$id'
     | '/technologies/storage/compare'
     | '/technologies/storage/new'
+    | '/api/public/jobs/population-import'
     | '/geography/localities'
     | '/geography/weather'
     | '/resources/biomass'
@@ -852,6 +864,7 @@ export interface FileRouteTypes {
     | '/_authenticated/technologies/storage/$id'
     | '/_authenticated/technologies/storage/compare'
     | '/_authenticated/technologies/storage/new'
+    | '/api/public/jobs/population-import'
     | '/_authenticated/geography/localities/'
     | '/_authenticated/geography/weather/'
     | '/_authenticated/resources/biomass/'
@@ -870,6 +883,7 @@ export interface RootRouteChildren {
   DecouvrirProjetsRoute: typeof DecouvrirProjetsRoute
   DecouvrirTableauDeBordRoute: typeof DecouvrirTableauDeBordRoute
   DecouvrirTerritoiresRoute: typeof DecouvrirTerritoiresRoute
+  ApiPublicJobsPopulationImportRoute: typeof ApiPublicJobsPopulationImportRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1350,6 +1364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTechnologiesStorageNewRouteImport
       parentRoute: typeof AuthenticatedTechnologiesStorageRoute
     }
+    '/api/public/jobs/population-import': {
+      id: '/api/public/jobs/population-import'
+      path: '/api/public/jobs/population-import'
+      fullPath: '/api/public/jobs/population-import'
+      preLoaderRoute: typeof ApiPublicJobsPopulationImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1646,6 +1667,7 @@ const rootRouteChildren: RootRouteChildren = {
   DecouvrirProjetsRoute: DecouvrirProjetsRoute,
   DecouvrirTableauDeBordRoute: DecouvrirTableauDeBordRoute,
   DecouvrirTerritoiresRoute: DecouvrirTerritoiresRoute,
+  ApiPublicJobsPopulationImportRoute: ApiPublicJobsPopulationImportRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

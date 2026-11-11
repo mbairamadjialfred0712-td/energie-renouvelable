@@ -42,3 +42,24 @@ export const checkDemographySources = createServerFn({ method: "POST" })
     });
     return { checkedAt: new Date().toISOString(), sourceLastUpdated: parsed.lastUpdated, sourceError, rows };
   });
+
+export const runPopulationImportNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roles } = await (context.supabase as any).from("user_roles").select("role").eq("user_id", context.userId);
+    if (!(roles ?? []).some((r: any) => r.role === "admin")) throw new Error("Seuls les administrateurs peuvent lancer l’import.");
+    const { runPopulationImport } = await import("@/lib/population-import.server");
+    return runPopulationImport("manual", context.userId);
+  });
+
+export const listPopulationImports = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const sb = context.supabase as any;
+    const { data: runs } = await sb.from("population_import_runs").select("*").order("started_at", { ascending: false }).limit(20);
+    const lastId = runs?.[0]?.id;
+    const { data: history } = lastId
+      ? await sb.from("country_population_history").select("*, countries(name, iso3)").eq("run_id", lastId).neq("action", "unchanged")
+      : { data: [] };
+    return { runs: (runs ?? []) as any[], history: (history ?? []) as any[] };
+  });

@@ -69,3 +69,30 @@ export function parseWorldBankPopulation(raw: unknown): { lastUpdated: string | 
   const lu = meta?.["lastupdated"];
   return { lastUpdated: typeof lu === "string" ? lu : null, byIso3 };
 }
+
+/* ---------- Import automatique Banque mondiale ---------- */
+
+export type ImportAction = "updated" | "unchanged" | "kept_other_source" | "missing";
+
+export type ImportCountry = StoredPopulation & { id: string; name: string; iso3: string | null; population_method: string | null };
+
+export type ImportDecision = { country: ImportCountry; action: ImportAction; observation: ExternalObservation | null };
+
+/**
+ * Règles : une valeur d'une autre source (ex. ANStat) n'est jamais écrasée ;
+ * seules les valeurs vides ou déjà issues de la Banque mondiale sont remplacées ;
+ * un pays sans publication est signalé, sa valeur existante est conservée.
+ */
+export function planPopulationImport(countries: ImportCountry[], byIso3: Map<string, ExternalObservation>): ImportDecision[] {
+  return countries.map((country) => {
+    const obs = country.iso3 ? byIso3.get(country.iso3.toUpperCase()) ?? null : null;
+    if (!obs) return { country, action: "missing", observation: null };
+    const hasValue = country.population !== null && country.population !== undefined;
+    if (hasValue && !isSameSource(country.population_source, obs.source)) return { country, action: "kept_other_source", observation: obs };
+    if (hasValue && country.population === obs.value && country.population_year === obs.year) return { country, action: "unchanged", observation: obs };
+    return { country, action: "updated", observation: obs };
+  });
+}
+
+export const WORLD_BANK_SOURCE_LABEL = (lastUpdated: string | null) =>
+  `Banque mondiale — WDI SP.POP.TOTL (estimation)${lastUpdated ? `, mise à jour du ${lastUpdated}` : ""}`;
