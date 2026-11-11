@@ -495,6 +495,63 @@ export type Database = {
         }
         Relationships: []
       }
+      country_population_history: {
+        Row: {
+          action: string
+          country_id: string
+          created_at: string
+          id: string
+          observed_population: number | null
+          observed_year: number | null
+          previous_method: string | null
+          previous_population: number | null
+          previous_source: string | null
+          previous_year: number | null
+          run_id: string
+        }
+        Insert: {
+          action: string
+          country_id: string
+          created_at?: string
+          id?: string
+          observed_population?: number | null
+          observed_year?: number | null
+          previous_method?: string | null
+          previous_population?: number | null
+          previous_source?: string | null
+          previous_year?: number | null
+          run_id: string
+        }
+        Update: {
+          action?: string
+          country_id?: string
+          created_at?: string
+          id?: string
+          observed_population?: number | null
+          observed_year?: number | null
+          previous_method?: string | null
+          previous_population?: number | null
+          previous_source?: string | null
+          previous_year?: number | null
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "country_population_history_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "country_population_history_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "population_import_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           code: string | null
@@ -1150,6 +1207,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      population_import_runs: {
+        Row: {
+          countries_total: number
+          error: string | null
+          finished_at: string | null
+          id: string
+          kept_other_source_count: number
+          missing_countries: Json
+          source: string
+          source_last_updated: string | null
+          started_at: string
+          status: string
+          trigger: string
+          triggered_by: string | null
+          unchanged_count: number
+          updated_count: number
+        }
+        Insert: {
+          countries_total?: number
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          kept_other_source_count?: number
+          missing_countries?: Json
+          source?: string
+          source_last_updated?: string | null
+          started_at?: string
+          status: string
+          trigger: string
+          triggered_by?: string | null
+          unchanged_count?: number
+          updated_count?: number
+        }
+        Update: {
+          countries_total?: number
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          kept_other_source_count?: number
+          missing_countries?: Json
+          source?: string
+          source_last_updated?: string | null
+          started_at?: string
+          status?: string
+          trigger?: string
+          triggered_by?: string | null
+          unchanged_count?: number
+          updated_count?: number
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
