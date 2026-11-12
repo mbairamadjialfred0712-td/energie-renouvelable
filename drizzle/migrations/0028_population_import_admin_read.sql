@@ -1,0 +1,4 @@
+DROP POLICY IF EXISTS "Authenticated read import runs" ON public.population_import_runs;
+CREATE POLICY "Admins read import runs" ON public.population_import_runs FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles r WHERE r.user_id = auth.uid() AND r.role = 'admin'::public.app_role));
+DROP POLICY IF EXISTS "Authenticated read population history" ON public.country_population_history;
+CREATE POLICY "Admins read population history" ON public.country_population_history FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles r WHERE r.user_id = auth.uid() AND r.role = 'admin'::public.app_role));
