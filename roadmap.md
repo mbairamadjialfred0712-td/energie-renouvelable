@@ -1,5 +1,9 @@
 # Feuille de route
 
+## Audit demandé le 15/11/2026
+- [x] Auditer les systèmes hybrides, l’optimisation et l’analyse économique ; rapport `python-engine/docs/AUDIT_HYBRIDE_OPTIMISATION_ECONOMIE_2026-11.md`, inspection du code et des droits actifs, 466 tests TypeScript et 225 Python réussis ; aucune modification fonctionnelle ni donnée écrite.
+- [ ] Extensions et corrections identifiées : attendre l’approbation explicite du rapport ; données réelles et validation scientifique de Joël nécessaires. Isolation multi-comptes et parcours publiés non validés par cet audit.
+
 ## Terminé (17/10/2026)
 - [x] Moteur batterie « réservoir + rendements » dans python-engine (39 tests, bilan énergétique contrôlé)
 - [x] Raccordement batterie à Simulations (contrat TS, runBatterySimulation, formulaire avec PV simulé + demande CSV)
