@@ -1,7 +1,7 @@
 # Feuille de route
 
 ## Guide pratique demandé le 16/11/2026
-- [ ] Produire un guide PDF professionnel de simulation, avec sommaire, parcours vérifiés, prérequis, données/unités/sources, limites et un classeur vierge de préparation ; aucun calcul ni changement applicatif demandé.
+- [x] Guide professionnel livré : PDF de 13 pages avec sommaire cliquable, parcours PV/batterie et autres moteurs, données/unités/sources et limites ; classeur vierge de 8 feuilles. Toutes les pages et feuilles rendues et inspectées ; sommaire, en-têtes CSV et absence de données inventées vérifiés. Source conservée dans python-engine/docs/GUIDE_PRATIQUE_SIMULATIONS.md ; aucune modification applicative ni nouvelle simulation.
 
 ## Audit demandé le 15/11/2026
 - [x] Auditer les systèmes hybrides, l’optimisation et l’analyse économique ; rapport `python-engine/docs/AUDIT_HYBRIDE_OPTIMISATION_ECONOMIE_2026-11.md`, inspection du code et des droits actifs, 466 tests TypeScript et 225 Python réussis ; aucune modification fonctionnelle ni donnée écrite.
