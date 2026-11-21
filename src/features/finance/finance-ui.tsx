@@ -1,240 +1,27 @@
-import { useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { LCOE_FORMULA, computeLcoe, type FinanceInput, type FinanceResult, type ReplacementEvent } from "./finance-engine";
+import { LCOE_FORMULA } from "./finance-engine";
+import { CostEvidence, EconomicField, FinanceOutcome, requiredNumber, usePythonFinance } from "./python-finance-ui";
 
-const numberFmt = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 4 });
-
-function parseNumber(raw: string): number {
-  return Number(raw.replace(/\s/g, "").replace(",", "."));
-}
-
-interface FieldState {
-  currency: string;
-  capex: string;
-  annualOpex: string;
-  lifetimeYears: string;
-  discountRatePct: string;
-  yearOneProductionKwh: string;
-  degradationPctPerYear: string;
-}
-
-const EMPTY: FieldState = {
-  currency: "",
-  capex: "",
-  annualOpex: "",
-  lifetimeYears: "",
-  discountRatePct: "",
-  yearOneProductionKwh: "",
-  degradationPctPerYear: "",
-};
-
-interface ReplacementRow {
-  year: string;
-  cost: string;
-}
-
-function Field({ label, unit, value, onChange }: { label: string; unit?: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="space-y-1.5">
-      <Label>
-        {label}
-        {unit ? <span className="text-muted-foreground"> ({unit})</span> : null}
-      </Label>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} inputMode="decimal" />
-    </div>
-  );
-}
-
-export function FinanceCalculator({ initial, initialReplacements }: { initial?: Partial<FieldState> | undefined; initialReplacements?: ReplacementRow[] | undefined }) {
-  const [fields, setFields] = useState<FieldState>({ ...EMPTY, ...initial });
+type FieldState = { currency: string; capex: string; annualOpex: string; lifetimeYears: string; discountRatePct: string; yearOneProductionKwh: string; degradationPctPerYear: string };
+type ReplacementRow = { year: string; cost: string };
+export function FinanceCalculator({ initial, initialReplacements, projectId = null, productionSimulationId = null }: { initial?: Partial<FieldState>; initialReplacements?: ReplacementRow[]; projectId?: string | null; productionSimulationId?: string | null }) {
+  const [fields, setFields] = useState<FieldState>({ currency: "", capex: "", annualOpex: "", lifetimeYears: "", discountRatePct: "", yearOneProductionKwh: "", degradationPctPerYear: "", ...initial });
   const [replacements, setReplacements] = useState<ReplacementRow[]>(initialReplacements ?? []);
-  const [result, setResult] = useState<FinanceResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const set = (key: keyof FieldState) => (v: string) => setFields((f) => ({ ...f, [key]: v }));
-
-  const canCompute = useMemo(
-    () =>
-      fields.currency.trim() !== "" &&
-      fields.capex.trim() !== "" &&
-      fields.annualOpex.trim() !== "" &&
-      fields.lifetimeYears.trim() !== "" &&
-      fields.discountRatePct.trim() !== "" &&
-      fields.yearOneProductionKwh.trim() !== "" &&
-      fields.degradationPctPerYear.trim() !== "",
-    [fields],
-  );
-
-  function compute() {
-    setError(null);
-    try {
-      const parsedReplacements: ReplacementEvent[] = replacements
-        .filter((r) => r.year.trim() !== "" || r.cost.trim() !== "")
-        .map((r) => ({ year: parseNumber(r.year), cost: parseNumber(r.cost) }));
-      const input: FinanceInput = {
-        currency: fields.currency.trim(),
-        capex: parseNumber(fields.capex),
-        annualOpex: parseNumber(fields.annualOpex),
-        lifetimeYears: parseNumber(fields.lifetimeYears),
-        discountRatePct: parseNumber(fields.discountRatePct),
-        yearOneProductionKwh: parseNumber(fields.yearOneProductionKwh),
-        degradationPctPerYear: parseNumber(fields.degradationPctPerYear),
-        replacements: parsedReplacements,
-      };
-      setResult(computeLcoe(input));
-    } catch (e) {
-      setResult(null);
-      setError(e instanceof Error ? e.message : "Entrées invalides.");
-    }
-  }
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Hypothèses économiques</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Field label="Devise" value={fields.currency} onChange={set("currency")} />
-            <Field label="CAPEX" unit={fields.currency} value={fields.capex} onChange={set("capex")} />
-            <Field label="OPEX annuel" unit={fields.currency} value={fields.annualOpex} onChange={set("annualOpex")} />
-            <Field label="Durée d'étude" unit="ans" value={fields.lifetimeYears} onChange={set("lifetimeYears")} />
-            <Field label="Taux d'actualisation" unit="%" value={fields.discountRatePct} onChange={set("discountRatePct")} />
-            <Field label="Production année 1" unit="kWh" value={fields.yearOneProductionKwh} onChange={set("yearOneProductionKwh")} />
-            <Field label="Dégradation annuelle" unit="%" value={fields.degradationPctPerYear} onChange={set("degradationPctPerYear")} />
-          </div>
-
-          <Separator />
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Remplacements d'équipements</Label>
-              <Button type="button" variant="outline" size="sm" onClick={() => setReplacements((r) => [...r, { year: "", cost: "" }])}>
-                Ajouter un remplacement
-              </Button>
-            </div>
-            {replacements.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucun remplacement prévu.</p>
-            ) : (
-              replacements.map((r, i) => (
-                <div key={i} className="flex items-end gap-2">
-                  <div className="w-32 space-y-1">
-                    <Label className="text-xs">Année</Label>
-                    <Input
-                      value={r.year}
-                      inputMode="numeric"
-                      onChange={(e) => setReplacements((rows) => rows.map((row, j) => (j === i ? { ...row, year: e.target.value } : row)))}
-                    />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs">Coût ({fields.currency})</Label>
-                    <Input
-                      value={r.cost}
-                      inputMode="decimal"
-                      onChange={(e) => setReplacements((rows) => rows.map((row, j) => (j === i ? { ...row, cost: e.target.value } : row)))}
-                    />
-                  </div>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setReplacements((rows) => rows.filter((_, j) => j !== i))}>
-                    Retirer
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
-
-          <Button type="button" disabled={!canCompute} onClick={compute}>
-            Calculer le LCOE
-          </Button>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Méthode de calcul</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <p className="font-mono text-xs sm:text-sm">{LCOE_FORMULA}</p>
-          <p className="text-muted-foreground">
-            E_t = E₁ × (1−d)^(t−1) ; C_t = OPEX + R_t. CAPEX dépensé en année 0, jamais actualisé. OPEX constant en monnaie constante
-            (inflation non modélisée). Remplacements en fin d'année indiquée. Aucune valeur résiduelle, aucun revenu, aucune fiscalité.
-          </p>
-          <p className="text-muted-foreground">
-            Limite : ce LCOE n'est ni un prix de vente ni un indicateur de rentabilité ; VAN, TRI et temps de retour sont calculés dans la section « Flux de trésorerie » ci-dessous (même formule LCOE, vérifiée par test croisé).
-          </p>
-        </CardContent>
-      </Card>
-
-      {result ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              Résultats
-              <Badge variant="secondary">Résultat calculé — reproductible avec les mêmes entrées</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <p className="text-sm text-muted-foreground">LCOE</p>
-                <p className="text-2xl font-semibold">
-                  {numberFmt.format(result.lcoePerKwh)} {fields.currency}/kWh
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Coûts actualisés totaux</p>
-                <p className="text-lg font-medium">
-                  {numberFmt.format(result.totalDiscountedCost)} {fields.currency}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Énergie actualisée totale</p>
-                <p className="text-lg font-medium">{numberFmt.format(result.totalDiscountedEnergyKwh)} kWh</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Totaux (CAPEX / OPEX / remplacements)</p>
-                <p className="text-lg font-medium">
-                  {numberFmt.format(result.totalCapex)} / {numberFmt.format(result.totalOpex)} / {numberFmt.format(result.totalReplacementCost)}
-                </p>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Année</TableHead>
-                    <TableHead>Production (kWh)</TableHead>
-                    <TableHead>OPEX ({fields.currency})</TableHead>
-                    <TableHead>Remplacement ({fields.currency})</TableHead>
-                    <TableHead>Coût actualisé</TableHead>
-                    <TableHead>Énergie actualisée (kWh)</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {result.rows.map((row) => (
-                    <TableRow key={row.year}>
-                      <TableCell>{row.year}</TableCell>
-                      <TableCell>{numberFmt.format(row.productionKwh)}</TableCell>
-                      <TableCell>{numberFmt.format(row.opex)}</TableCell>
-                      <TableCell>{numberFmt.format(row.replacementCost)}</TableCell>
-                      <TableCell>{numberFmt.format(row.discountedCost)}</TableCell>
-                      <TableCell>{numberFmt.format(row.discountedEnergyKwh)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
-    </div>
-  );
+  const [reference, setReference] = useState(""); const [date, setDate] = useState(""); const [confirmed, setConfirmed] = useState(false); const [prodSource, setProdSource] = useState("");
+  const state = usePythonFinance();
+  const edit = (fn: () => void) => { state.invalidate(); fn(); };
+  const set = (key: keyof FieldState) => (v: string) => edit(() => setFields(f => ({ ...f, [key]: v })));
+  const labels: Record<keyof FieldState, string> = { currency: "Devise", capex: "CAPEX", annualOpex: "OPEX annuel", lifetimeYears: "Durée d’étude (ans)", discountRatePct: "Taux réel d’actualisation (%)", yearOneProductionKwh: "Production année 1 (kWh)", degradationPctPerYear: "Dégradation annuelle (%)" };
+  return <section className="space-y-5 border-t border-border pt-5"><h2 className="text-xl font-semibold">LCOE — coûts documentés</h2>
+    <fieldset disabled={state.busy} className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{(Object.keys(labels) as (keyof FieldState)[]).map(key => <div key={key}>{key === "yearOneProductionKwh" && productionSimulationId ? <p className="text-sm">Production liée : valeur enregistrée relue au calcul ; aucune saisie ne la remplace.</p> : <EconomicField label={`${labels[key]}${key === "capex" || key === "annualOpex" ? ` (${fields.currency || "devise"})` : ""}`} value={fields[key]} onChange={set(key)} />}</div>)}</div>
+      {!productionSimulationId && <EconomicField label="Source et nature de la production manuelle (hypothèse)" value={prodSource} onChange={v => edit(() => setProdSource(v))} />}
+      <CostEvidence reference={reference} date={date} confirmed={confirmed} onReference={v => edit(() => setReference(v))} onDate={v => edit(() => setDate(v))} onConfirm={v => edit(() => setConfirmed(v))} />
+      <div className="space-y-2"><div className="flex items-center justify-between"><h3 className="font-semibold">Remplacements prévus</h3><Button variant="outline" size="sm" onClick={() => edit(() => setReplacements(r => [...r, { year: "", cost: "" }]))}>Ajouter un remplacement</Button></div>{replacements.map((r, i) => <div key={i} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]"><EconomicField label={`Année remplacement ${i + 1}`} value={r.year} onChange={v => edit(() => setReplacements(rows => rows.map((x, j) => i === j ? { ...x, year: v } : x)))} /><EconomicField label={`Coût remplacement ${i + 1}`} value={r.cost} onChange={v => edit(() => setReplacements(rows => rows.map((x, j) => i === j ? { ...x, cost: v } : x)))} /><Button variant="ghost" onClick={() => edit(() => setReplacements(rows => rows.filter((_, j) => i !== j)))}>Retirer</Button></div>)}</div>
+      <Button disabled={state.busy} onClick={() => state.calculate("LCOE — coûts documentés", projectId, () => ({ mode: "lcoe", input: { ...Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, k === "currency" ? v.trim() : requiredNumber(v)])), replacements: replacements.map(r => ({ year: requiredNumber(r.year), cost: requiredNumber(r.cost) })) }, evidence: { reference, date, costsConfirmed: confirmed }, production: { simulationId: productionSimulationId, source: productionSimulationId ? "Production annuelle enregistrée" : prodSource, nature: "assumption" } }))}>{state.busy ? "Calcul Python en cours…" : "Calculer et enregistrer le LCOE"}</Button>
+    </fieldset>
+    <p className="text-xs text-muted-foreground">{LCOE_FORMULA}. Monnaie constante, CAPEX an 0, remplacements fin d’année ; ni fiscalité ni dette.</p>
+    <FinanceOutcome state={state} />
+  </section>;
 }

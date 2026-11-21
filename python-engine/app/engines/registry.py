@@ -48,6 +48,8 @@ def _load() -> dict[str, Engine]:
     engines["wind"] = WindEngine()
     from app.engines.biomass.engine import BiomassPrimaryEngine
     engines["biomass"] = BiomassPrimaryEngine()
+    from app.engines.finance.engine import FinanceEngine
+    engines["finance"] = FinanceEngine()
     return engines
 
 

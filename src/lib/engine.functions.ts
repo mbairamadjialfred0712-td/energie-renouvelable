@@ -11,6 +11,14 @@ import { windRequestSchema } from "@/features/engine/wind-contract";
 import { biomassRequestSchema } from "@/features/engine/biomass-contract";
 import { batteryRequestSchema } from "@/features/engine/battery-contract";
 import type { OptimizationReport } from "@/services/optimization/stored-battery-contract";
+import { runFinanceSchema, financeReportSchema, financePayloadSchema } from "@/features/finance/python-finance-contract";
+
+export const runFinanceAnalysis = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => runFinanceSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { executeFinance } = await import("./finance-run.server");
+    return executeFinance(data, context);
+  });
 
 export const getEngineStatus = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async (): Promise<EngineStatus> => {
   const { callEngine, EngineCallError } = await import("./engine-http.server");
@@ -192,6 +200,10 @@ export const getSimulation = createServerFn({ method: "GET" }).middleware([requi
     return {
       simulation: { id: sim.data.id, name: sim.data.name, status: sim.data.status, engine_version: sim.data.engine_version, created_at: sim.data.created_at },
       optimization: (sim.data.parameters as { kind?: string } | null)?.kind === "stored_battery_optimization" ? (sim.data.parameters as unknown as { report: OptimizationReport }).report : null,
+      finance: (sim.data.parameters as { kind?: string } | null)?.kind === "python_finance" && sim.data.status === "completed" ? {
+        report: financeReportSchema.parse((sim.data.parameters as { report?: unknown }).report),
+        payload: financePayloadSchema.parse((sim.data.parameters as { payload?: unknown }).payload),
+      } : null,
       inputs: params.request?.input_data ?? {},
       batterySource: (sim.data.parameters as {request?:{engine?:string}} | null)?.request?.engine === "battery" ? JSON.stringify((sim.data.parameters as {source_snapshot?:Json}|null)?.source_snapshot??null,null,2) : null,
       batterySeries: (sim.data.parameters as {request?:{engine?:string}} | null)?.request?.engine === "battery" && sim.data.status === "completed" ? (res.data??[]).filter(r=>r.result_type.startsWith("series_")).map(r=>({key:r.result_type.slice(7),unit:r.unit,values:(r.timeseries as {values?:number[]}|null)?.values??[]})) : [],
