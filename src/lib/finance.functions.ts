@@ -14,7 +14,7 @@ const assumptionSchema = z.object({
   year_one_production_kwh: z.number().finite().positive().nullable(),
   production_simulation_id: z.string().uuid().nullable(),
   replacements: z.array(replacementSchema).max(50),
-  notes: z.string().trim().max(4000).nullable(),
+  notes: z.string().trim().min(3).max(4000),
 });
 export type ProjectFinanceAssumptions = z.infer<typeof assumptionSchema> & { id: string; updated_at: string };
 
@@ -37,9 +37,8 @@ export const getProjectFinance = createServerFn({ method: "GET" }).middleware([r
     // Si une simulation de production est liée, relire sa production annuelle enregistrée (jamais recalculée ici).
     let linkedProduction: { simulationId: string; name: string; annualKwh: number } | null = null;
     if (row?.production_simulation_id) {
-      const { data: res } = await sb.from("simulation_results").select("value").eq("simulation_id", row.production_simulation_id).eq("result_type", "annual_ac_energy").maybeSingle();
-      const sim = (sims ?? []).find((s: any) => s.id === row.production_simulation_id);
-      if (res?.value != null && sim) linkedProduction = { simulationId: row.production_simulation_id, name: sim.name, annualKwh: res.value };
+      const { readFinanceProduction } = await import("./finance-source.server");
+      linkedProduction = await readFinanceProduction(sb, row.production_simulation_id, data.projectId);
     }
     return { assumptions: (row ?? null) as ProjectFinanceAssumptions | null, simulations: (sims ?? []) as { id: string; name: string; engine_version: string | null; created_at: string }[], linkedProduction, history: (hist ?? []) as { id: string; action: string; created_at: string }[] };
   });
@@ -47,16 +46,14 @@ export const getProjectFinance = createServerFn({ method: "GET" }).middleware([r
 export const saveProjectFinance = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => assumptionSchema.parse(i))
   .handler(async ({ data, context }) => {
+    if (data.replacements.some(r => r.year > data.lifetime_years)) throw new Error("Remplacement hors durée d’étude.");
     const sb = context.supabase as any;
     await assertCanWrite(sb, context.userId);
     const { project_id, ...rest } = data;
     if (rest.production_simulation_id) {
-      const { data: sim } = await sb.from("simulations").select("id,project_id,status").eq("id", rest.production_simulation_id).maybeSingle();
-      if (!sim || sim.status !== "completed") throw new Error("La simulation liée doit être terminée.");
-      if (sim.project_id && sim.project_id !== project_id) throw new Error("Cette simulation appartient à un autre projet.");
-      const { data: res } = await sb.from("simulation_results").select("value").eq("simulation_id", sim.id).eq("result_type", "annual_ac_energy").maybeSingle();
-      if (res?.value == null) throw new Error("La simulation liée ne contient pas de production annuelle enregistrée.");
-      rest.year_one_production_kwh = res.value; // la production année 1 vient de la simulation, pas d'une saisie
+      const { readFinanceProduction } = await import("./finance-source.server");
+      const production = await readFinanceProduction(sb, rest.production_simulation_id, project_id);
+      rest.year_one_production_kwh = production.annualKwh;
     } else if (rest.year_one_production_kwh == null) {
       throw new Error("Production année 1 requise : saisie explicite ou simulation liée.");
     }

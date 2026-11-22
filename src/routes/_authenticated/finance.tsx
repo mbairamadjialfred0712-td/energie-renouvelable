@@ -3,12 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { FinanceCalculator } from "@/features/finance/finance-ui";
 import { CashflowAnalysis } from "@/features/finance/cashflow-ui";
 import { getProjectFinance } from "@/lib/finance.functions";
+import { EngineStatusCard } from "@/features/engine/engine-status-card";
+import { z } from "zod";
 
 const title = "Analyse financière — Énergie Renouvelable";
-const description = "Calculateur déterministe du coût actualisé de l'énergie (LCOE) : CAPEX, OPEX, dégradation, remplacements et taux d'actualisation.";
+const description = "Analyse économique Python : coûts documentés, LCOE, VAN, TRI et flux enregistrés avec leurs sources.";
 
 export const Route = createFileRoute("/_authenticated/finance")({
-  validateSearch: (s: Record<string, unknown>) => ({ project: typeof s["project"] === "string" ? (s["project"] as string) : undefined }),
+  validateSearch: z.object({ project: z.string().uuid().optional() }),
   head: () => ({
     meta: [
       { title },
@@ -26,7 +28,7 @@ function FinancePage() {
   const { project } = Route.useSearch();
   const { data } = useQuery({
     queryKey: ["project-finance", project],
-    queryFn: () => getProjectFinance({ data: { projectId: project! } }),
+    queryFn: () => { if (!project) throw new Error("Projet absent."); return getProjectFinance({ data: { projectId: project } }); },
     enabled: !!project,
   });
   const a = data?.assumptions ?? null;
@@ -52,9 +54,9 @@ function FinancePage() {
         {project && a && <p className="text-sm text-muted-foreground">Hypothèses du projet chargées{linked ? ` ; production année 1 issue de la simulation « ${linked.name} » (valeur enregistrée, non recalculée)` : ""}.</p>}
         {project && !a && data && <p className="text-sm text-muted-foreground">Ce projet n’a pas d’hypothèses financières enregistrées.</p>}
       </header>
-      {(!project || data) && <FinanceCalculator key={project ?? "blank"} initial={initial} initialReplacements={initialReplacements} />}
-      <CashflowAnalysis />
-      <p className="text-xs text-muted-foreground">Cette analyse des flux n'est pas encore enregistrée : les résultats sont recalculés à partir des valeurs saisies.</p>
+      <EngineStatusCard />
+      {(!project || data) && <FinanceCalculator key={`${project ?? "blank"}-${a?.updated_at ?? "empty"}`} {...(initial ? { initial } : {})} {...(initialReplacements ? { initialReplacements } : {})} projectId={project ?? null} productionSimulationId={a?.production_simulation_id ?? null} />}
+      <CashflowAnalysis key={project ?? "blank"} projectId={project ?? null} />
     </div>
   );
 }

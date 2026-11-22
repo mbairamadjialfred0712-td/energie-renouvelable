@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { getProjectFinance, saveProjectFinance } from "@/lib/finance.functions";
-import { computeLcoe, LCOE_FORMULA } from "@/features/finance/finance-engine";
+import { FinanceCalculator } from "@/features/finance/finance-ui";
 
 const fmt = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 4 });
 
@@ -26,23 +26,10 @@ export function ProjectFinance({ projectId, canWrite }: { projectId: string; can
   const a = data?.assumptions ?? null;
   const linked = data?.linkedProduction ?? null;
 
-  const result = useMemo(() => {
-    const production = linked ? linked.annualKwh : a?.year_one_production_kwh;
-    if (!a || production == null) return null;
-    try {
-      return computeLcoe({
-        currency: a.currency, capex: a.capex, annualOpex: a.annual_opex, lifetimeYears: a.lifetime_years,
-        discountRatePct: a.discount_rate_pct, yearOneProductionKwh: production,
-        degradationPctPerYear: a.degradation_pct_per_year,
-        replacements: (a.replacements as { year: number; cost: number }[]) ?? [],
-      });
-    } catch { return null; }
-  }, [a, linked]);
-
   function startEdit() {
     setError(null);
     setFields({
-      currency: a?.currency ?? "EUR",
+      currency: a?.currency ?? "",
       capex: a ? String(a.capex) : "",
       annualOpex: a ? String(a.annual_opex) : "",
       lifetimeYears: a ? String(a.lifetime_years) : "",
@@ -56,20 +43,20 @@ export function ProjectFinance({ projectId, canWrite }: { projectId: string; can
     setEditing(true);
   }
 
-  const num = (s: string) => Number(s.replace(/\s/g, "").replace(",", "."));
+  const num = (s: string) => { if (!s.trim()) throw new Error("Valeur requise : saisir explicitement 0 si justifié."); return Number(s.replace(/\s/g, "").replace(",", ".")); };
 
   async function submit() {
     if (!fields) return;
     setError(null);
     try {
       await saveProjectFinance({ data: {
-        project_id: projectId, currency: fields.currency.trim() || "EUR",
+        project_id: projectId, currency: fields.currency.trim(),
         capex: num(fields.capex), annual_opex: num(fields.annualOpex), lifetime_years: num(fields.lifetimeYears),
         discount_rate_pct: num(fields.discountRatePct), degradation_pct_per_year: num(fields.degradationPctPerYear),
         year_one_production_kwh: simId ? null : (fields.yearOneProductionKwh.trim() === "" ? null : num(fields.yearOneProductionKwh)),
         production_simulation_id: simId || null,
         replacements: replacements.filter((r) => r.year.trim() || r.cost.trim()).map((r) => ({ year: num(r.year), cost: num(r.cost) })),
-        notes: fields.notes.trim() || null,
+        notes: fields.notes.trim(),
       } });
       toast.success("Hypothèses financières enregistrées et historisées.");
       setEditing(false);
@@ -123,11 +110,8 @@ export function ProjectFinance({ projectId, canWrite }: { projectId: string; can
       <p className="text-sm"><span className="text-muted-foreground">Production année 1 : </span>
         {linked ? <>{fmt.format(linked.annualKwh)} kWh <Badge variant="outline" className="ml-1">calculée — simulation « {linked.name} »</Badge></>
           : a.year_one_production_kwh != null ? <>{fmt.format(a.year_one_production_kwh)} kWh <Badge variant="secondary" className="ml-1">hypothèse saisie</Badge></> : "—"}</p>
-      {result ? <div className="border border-primary/30 bg-primary/5 p-4">
-        <p className="text-2xl font-semibold">{fmt.format(result.lcoePerKwh)} {a.currency}/kWh</p>
-        <p className="mt-1 text-xs text-muted-foreground">{LCOE_FORMULA}. Coûts actualisés {fmt.format(result.totalDiscountedCost)} {a.currency} · énergie actualisée {fmt.format(result.totalDiscountedEnergyKwh)} kWh. Indicateur, pas un prix de vente.</p>
-        <Button asChild size="sm" variant="outline" className="mt-3"><Link to="/finance" search={{ project: projectId }}>Ouvrir dans Analyse financière</Link></Button>
-      </div> : <p className="text-sm text-muted-foreground">LCOE non calculable : production année 1 manquante.</p>}
+      <FinanceCalculator key={a.updated_at} projectId={projectId} productionSimulationId={a.production_simulation_id} initial={{ currency: a.currency, capex: String(a.capex), annualOpex: String(a.annual_opex), lifetimeYears: String(a.lifetime_years), discountRatePct: String(a.discount_rate_pct), yearOneProductionKwh: String(linked?.annualKwh ?? a.year_one_production_kwh ?? ""), degradationPctPerYear: String(a.degradation_pct_per_year) }} initialReplacements={a.replacements.map(r => ({ year: String(r.year), cost: String(r.cost) }))} />
+      <Button asChild size="sm" variant="outline"><Link to="/finance" search={{ project: projectId }}>Ouvrir l’analyse des flux</Link></Button>
       {a.notes && <p className="text-xs text-muted-foreground">Notes : {a.notes}</p>}
       <p className="text-xs text-muted-foreground">Dernière mise à jour : {new Date(a.updated_at).toLocaleString("fr-FR")} · {(data?.history.length ?? 0)} version(s) historisée(s).</p>
     </>}

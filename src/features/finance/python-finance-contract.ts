@@ -2,6 +2,11 @@ import { z } from "zod";
 import { simulationResponse, type SimulationRequest } from "@/features/engine/engine-contract";
 
 export const FINANCE_VERSION = "1.0.0";
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value !== null && typeof value === "object") return `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(",")}}`;
+  return JSON.stringify(value) ?? "null";
+}
 const finite = z.number().finite();
 const replacement = z.object({ year: finite.int().min(1).max(100), cost: finite.nonnegative() }).strict();
 const common = {
@@ -54,7 +59,7 @@ export function checkFinanceResponse(request: SimulationRequest, raw: z.infer<ty
   const input = request.input_data["finance_payload"]?.value;
   if (typeof input !== "string") throw new Error("Entrées économiques absentes.");
   const payload = financePayloadSchema.parse(JSON.parse(input));
-  if (JSON.stringify(raw.calculation_metadata["payload"]) !== JSON.stringify(payload)) throw new Error("Le moteur n’a pas confirmé les mêmes entrées économiques.");
+  if (canonical(raw.calculation_metadata["payload"]) !== canonical(payload)) throw new Error("Le moteur n’a pas confirmé les mêmes entrées économiques.");
   const report = financeReportSchema.parse(raw.calculation_metadata["report"]);
   const start = report.mode === "lcoe" ? 1 : 0;
   if (report.mode !== payload.mode || report.result.rows.length !== payload.input.lifetimeYears + (start === 0 ? 1 : 0) || report.result.rows.some((r, i) => r.year !== i + start)) throw new Error("Période économique incomplète.");
@@ -63,6 +68,20 @@ export function checkFinanceResponse(request: SimulationRequest, raw: z.infer<ty
     if (raw.results["npv"]?.value !== report.result.npv || raw.results["npv"]?.unit !== payload.input.currency) throw new Error("VAN incohérente.");
     const deltas = payload.mode === "cashflow" ? payload.sensitivity?.deltasPct ?? [] : [];
     if (report.sensitivity.length !== deltas.length || report.sensitivity.some((r, i) => r.deltaPct !== deltas[i])) throw new Error("Sensibilité incomplète.");
+    if (payload.mode !== "cashflow") throw new Error("Mode économique incohérent.");
+    const close = (a: number, b: number) => Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b));
+    for (let i = 0; i < report.result.rows.length; i++) {
+      const r = report.result.rows[i];
+      if (!r) throw new Error("Flux manquant.");
+      const previous = report.result.rows[i - 1];
+      if (!close(r.net, r.revenue + r.savings + r.subsidy + r.residual - r.capex - r.opex - r.replacement) || !close(r.cumulative, (previous?.cumulative ?? 0) + r.net) || !close(r.cumulativeDiscounted, (previous?.cumulativeDiscounted ?? 0) + r.discounted)) throw new Error("Bilan des flux incohérent.");
+    }
+    if (!close(report.result.npv, report.result.rows.at(-1)?.cumulativeDiscounted ?? NaN)) throw new Error("VAN sans bilan final cohérent.");
+  } else {
+    const sumCost = report.result.totalCapex + report.result.rows.reduce((s, r) => s + r.discountedCost, 0);
+    const sumEnergy = report.result.rows.reduce((s, r) => s + r.discountedEnergyKwh, 0);
+    const close = (a: number, b: number) => Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b));
+    if (!close(sumCost, report.result.totalDiscountedCost) || !close(sumEnergy, report.result.totalDiscountedEnergyKwh) || !close(report.result.lcoePerKwh, sumCost / sumEnergy)) throw new Error("Bilan LCOE incohérent.");
   }
   return report;
 }

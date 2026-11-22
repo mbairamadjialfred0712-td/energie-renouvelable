@@ -25,6 +25,10 @@ export async function executeFinance(data: z.infer<typeof runFinanceSchema>, con
   }).select("id").single();
   if (error || saved?.id !== id) throw new Error("Calcul effectué mais non enregistré : aucun succès confirmé.");
   const { data: stored, error: readError } = await context.supabase.from("simulations").select("id,parameters").eq("id", id).single();
-  if (readError || !stored || stored.id !== id) throw new Error("Résultat enregistré mais relecture indisponible : aucun succès confirmé.");
-  return { id, report, payload, version: out.engine_version, completedAt: out.completed_at };
+  if (readError || !stored || stored.id !== id || JSON.stringify(stored.parameters) === "null") throw new Error("Résultat enregistré mais relecture indisponible : aucun succès confirmé.");
+  const envelope = stored.parameters as { request?: unknown; response?: unknown; payload?: unknown };
+  const { simulationRequest } = await import("@/features/engine/engine-contract");
+  const { financePayloadSchema } = await import("@/features/finance/python-finance-contract");
+  const reread = checkFinanceResponse(simulationRequest.parse(envelope.request), simulationResponse.parse(envelope.response), id);
+  return { id, report: reread, payload: financePayloadSchema.parse(envelope.payload), version: out.engine_version, completedAt: out.completed_at };
 }

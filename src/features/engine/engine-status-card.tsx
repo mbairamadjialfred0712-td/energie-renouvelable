@@ -16,7 +16,7 @@ export function EngineStatusCard() {
       {data?.state === "online" && (
         <div className="mt-3 space-y-2 text-sm">
           <p className="text-muted-foreground">Service {data.health.service_version} · schéma {data.health.schema_version} · authentification {data.health.auth_configured ? "configurée" : "non configurée"}</p>
-          <p className="text-xs text-muted-foreground">Déclarations du service Python, pas preuves de calcul réussi ni de validation scientifique. Finance et optimisation bornée sont calculées dans l’application.</p>
+          <p className="text-xs text-muted-foreground">Déclarations du service Python, pas preuves de calcul réussi ni de validation scientifique. Finance requiert le moteur Python v1.0.0 ; optimisation bornée dans l’application.</p>
           <ul className="grid gap-1 sm:grid-cols-2">
             {data.capabilities.engines.map((e) => (
               <li key={e.engine} className="flex justify-between gap-2 rounded border px-3 py-1.5">
