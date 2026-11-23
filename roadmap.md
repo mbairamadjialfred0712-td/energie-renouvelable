@@ -1,9 +1,9 @@
 # Feuille de route
 
 ## Analyse économique Python demandée le 20/11/2026
-- [ ] Porter LCOE, flux, VAN, TRI, retours et sensibilité dans le moteur Python avec les conventions actuelles.
-- [ ] Raccorder les écrans financiers et le projet ; exiger coûts explicites, références datées et confirmation, sans valeurs par défaut ni calcul local de secours ; relire la production liée côté serveur.
-- [ ] Conserver les instantanés et résultats ; tester contrats, calculs et parcours, distinguer livraison du code et disponibilité Render.
+- [x] Porter LCOE, flux, VAN, TRI, retours et sensibilité dans le moteur Python v1.0.0 avec les conventions actuelles ; Render annonce cette version disponible.
+- [x] Raccorder les écrans financiers et le projet ; coûts explicites, références datées et confirmation requis, aucune valeur par défaut ni calcul local de secours ; production liée relue côté serveur sous droits utilisateur.
+- [x] Conserver les instantanés et résultats ; 74 tests TS ciblés et 245 tests Python réussis. Parcours connecté QA fictif LCOE/flux/sensibilité via Render, sauvegarde et relecture en session neuve vérifiés. Rapport VALIDATION_FINANCE_PYTHON.md. Validation avec devis réels, données de terrain, isolation multi-comptes et recette publiée non effectuées.
 
 ## Guide pratique demandé le 16/11/2026
 - [x] Guide professionnel livré : PDF de 13 pages avec sommaire cliquable, parcours PV/batterie et autres moteurs, données/unités/sources et limites ; classeur vierge de 8 feuilles. Toutes les pages et feuilles rendues et inspectées ; sommaire, en-têtes CSV et absence de données inventées vérifiés. Source conservée dans python-engine/docs/GUIDE_PRATIQUE_SIMULATIONS.md ; aucune modification applicative ni nouvelle simulation.

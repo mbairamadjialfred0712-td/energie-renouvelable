@@ -163,7 +163,8 @@ def test_api_declares_only_implemented(client):
     assert engines["csp"]["status"] == "available"
     assert engines["wind"]["status"] == "available"
     assert engines["biomass"]["status"] == "available"
-    assert all(e["status"] == "not_implemented" for n, e in engines.items() if n not in ("photovoltaic", "battery", "csp", "wind", "biomass"))
+    assert engines["finance"]["status"] == "available"
+    assert all(e["status"] == "not_implemented" for n, e in engines.items() if n not in ("photovoltaic", "battery", "csp", "wind", "biomass", "finance"))
 
 
 def test_api_run_and_auth(client, base):
