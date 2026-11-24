@@ -1,5 +1,10 @@
 # Feuille de route
 
+## PROMPT 24 — audit stratégique demandé le 23/11/2026
+- [ ] Auditer les écarts des modules, données et moteurs sans modification fonctionnelle, migration, import ni configuration.
+- [ ] Vérifier les sources et limites de couverture africaine ; concevoir adaptateurs, dossier de site et parcours automatisé.
+- [ ] Livrer les cinq documents demandés, ordre de réalisation et décisions de Joël ; implémentation uniquement après validation.
+
 ## Analyse économique Python demandée le 20/11/2026
 - [x] Porter LCOE, flux, VAN, TRI, retours et sensibilité dans le moteur Python v1.0.0 avec les conventions actuelles ; Render annonce cette version disponible.
 - [x] Raccorder les écrans financiers et le projet ; coûts explicites, références datées et confirmation requis, aucune valeur par défaut ni calcul local de secours ; production liée relue côté serveur sous droits utilisateur.
