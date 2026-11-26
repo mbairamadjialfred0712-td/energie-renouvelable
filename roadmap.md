@@ -1,5 +1,11 @@
 # Feuille de route
 
+## PROMPT 25 — référentiel automatique de site (26/11/2026)
+- [ ] Auditer calendriers PV/batterie et fournisseurs ; conserver les années bissextiles brutes sans stratégie scientifique inventée.
+- [ ] Recherche géographique, adaptateurs PVGIS/NASA côté serveur, cache/quota et dossier de site traçable ; préserver les permissions existantes.
+- [ ] Préparer le passage aux fiches météo/PV existantes sans calcul automatique ni validation scientifique implicite.
+- [ ] Exécuter les tests et la recette connectée, livrer les quatre rapports avec limites et preuves.
+
 ## PROMPT 24 — audit stratégique demandé le 23/11/2026
 - [x] Auditer les écarts des modules, données et moteurs sans modification fonctionnelle, migration, import ni configuration.
 - [x] Vérifier les sources et limites de couverture africaine ; concevoir adaptateurs, dossier de site et parcours automatisé.
