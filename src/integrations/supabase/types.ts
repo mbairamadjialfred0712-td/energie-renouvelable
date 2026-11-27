@@ -1874,6 +1874,54 @@ export type Database = {
           },
         ]
       }
+      provider_requests: {
+        Row: {
+          adapter_version: string
+          cache_key: string
+          created_at: string
+          data_type: string
+          error: string | null
+          id: string
+          owner_id: string
+          params: Json
+          payload: Json | null
+          provider: string
+          request_url: string | null
+          retrieved_at: string
+          status: string
+        }
+        Insert: {
+          adapter_version: string
+          cache_key: string
+          created_at?: string
+          data_type: string
+          error?: string | null
+          id?: string
+          owner_id: string
+          params?: Json
+          payload?: Json | null
+          provider: string
+          request_url?: string | null
+          retrieved_at?: string
+          status: string
+        }
+        Update: {
+          adapter_version?: string
+          cache_key?: string
+          created_at?: string
+          data_type?: string
+          error?: string | null
+          id?: string
+          owner_id?: string
+          params?: Json
+          payload?: Json | null
+          provider?: string
+          request_url?: string | null
+          retrieved_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       regions: {
         Row: {
           code: string | null
