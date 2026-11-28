@@ -1874,10 +1874,32 @@ export type Database = {
           },
         ]
       }
+      provider_rate_limits: {
+        Row: {
+          day: string
+          day_count: number
+          last_started_at: string
+          provider: string
+        }
+        Insert: {
+          day?: string
+          day_count?: number
+          last_started_at?: string
+          provider: string
+        }
+        Update: {
+          day?: string
+          day_count?: number
+          last_started_at?: string
+          provider?: string
+        }
+        Relationships: []
+      }
       provider_requests: {
         Row: {
           adapter_version: string
           cache_key: string
+          completed_at: string | null
           created_at: string
           data_type: string
           error: string | null
@@ -1893,6 +1915,7 @@ export type Database = {
         Insert: {
           adapter_version: string
           cache_key: string
+          completed_at?: string | null
           created_at?: string
           data_type: string
           error?: string | null
@@ -1908,6 +1931,7 @@ export type Database = {
         Update: {
           adapter_version?: string
           cache_key?: string
+          completed_at?: string | null
           created_at?: string
           data_type?: string
           error?: string | null
@@ -2390,6 +2414,71 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_reference_dossiers: {
+        Row: {
+          created_at: string
+          geography: Json
+          id: string
+          name: string
+          nasa_request_id: string | null
+          owner_id: string
+          pvgis_request_id: string | null
+          site_id: string | null
+          weather_dataset_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          geography: Json
+          id?: string
+          name: string
+          nasa_request_id?: string | null
+          owner_id: string
+          pvgis_request_id?: string | null
+          site_id?: string | null
+          weather_dataset_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          geography?: Json
+          id?: string
+          name?: string
+          nasa_request_id?: string | null
+          owner_id?: string
+          pvgis_request_id?: string | null
+          site_id?: string | null
+          weather_dataset_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_reference_dossiers_nasa_request_id_fkey"
+            columns: ["nasa_request_id"]
+            isOneToOne: false
+            referencedRelation: "provider_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_reference_dossiers_pvgis_request_id_fkey"
+            columns: ["pvgis_request_id"]
+            isOneToOne: false
+            referencedRelation: "provider_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_reference_dossiers_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "study_sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_reference_dossiers_weather_dataset_id_fkey"
+            columns: ["weather_dataset_id"]
+            isOneToOne: false
+            referencedRelation: "site_weather_datasets"
             referencedColumns: ["id"]
           },
         ]
@@ -2886,6 +2975,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_site_provider: {
+        Args: {
+          _key: string
+          _owner: string
+          _params: Json
+          _provider: string
+          _ttl_seconds: number
+          _type: string
+          _url: string
+          _version: string
+        }
+        Returns: Json
+      }
       estimate_project_energy: {
         Args: {
           _assumptions: string

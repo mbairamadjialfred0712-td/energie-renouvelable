@@ -211,6 +211,13 @@
       "when": 1795760093389,
       "tag": "0029_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1795826133566,
+      "tag": "0030_site_reference_cache_and_dossiers",
+      "breakpoints": true
     }
   ]
 }
